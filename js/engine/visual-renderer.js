@@ -75,6 +75,36 @@ const VisualRenderer = {
     return this.latex(expressao, false);
   },
 
+  // ── LIMPEZA DE TEXTO PARA SVG ────────────────────────────
+  // SVGs nativos não suportam MathJax bem. Essa função converte
+  // marcações básicas de LaTeX geradas pela IA para caracteres Unicode.
+  cleanSvgText(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/\\\(/g, '')
+      .replace(/\\\)/g, '')
+      .replace(/\$\$/g, '')
+      .replace(/\$/g, '')
+      .replace(/\\Omega/g, 'Ω')
+      .replace(/\\Delta/g, 'Δ')
+      .replace(/\\mu/g, 'μ')
+      .replace(/\\alpha/g, 'α')
+      .replace(/\\beta/g, 'β')
+      .replace(/\\rightarrow/g, '→')
+      .replace(/\^\{?2\}?/g, '²')
+      .replace(/\^\{?3\}?/g, '³')
+      .replace(/\^\{?\+\}?/g, '⁺')
+      .replace(/\^\{?\-\}?/g, '⁻')
+      .replace(/\^\{?\+2\}?/g, '²⁺')
+      .replace(/\^\{?\+3\}?/g, '³⁺')
+      .replace(/_\{?1\}?/g, '₁')
+      .replace(/_\{?2\}?/g, '₂')
+      .replace(/_\{?3\}?/g, '₃')
+      .replace(/_\{?4\}?/g, '₄')
+      .replace(/\\text\{([^}]*)\}/g, '$1')
+      .replace(/\\mathrm\{([^}]*)\}/g, '$1');
+  },
+
   // ── RENDERIZAR ELEMENTO VISUAL ───────────────────────────
   renderElementoVisual(elemento) {
     if (!elemento || !elemento.tipo) return '';
@@ -165,13 +195,13 @@ const VisualRenderer = {
     const ea_x1 = x1 + 8, ea_x2 = x1 + 8;
     const dh_x  = x2 + 10;
 
-    const labelEa = label_ea || `Ea = ${estado_transicao - reagentes} kJ/mol`;
-    const labelDH = label_dh || `ΔH = ${produtos - reagentes > 0 ? '+' : ''}${produtos - reagentes} kJ/mol`;
+    const labelEa = this.cleanSvgText(label_ea || `Ea = ${estado_transicao - reagentes} kJ/mol`);
+    const labelDH = this.cleanSvgText(label_dh || `ΔH = ${produtos - reagentes > 0 ? '+' : ''}${produtos - reagentes} kJ/mol`);
 
     return `
       <div class="visual-card">
         <div class="visual-titulo">${titulo}</div>
-        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg">
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg no-math">
           <!-- Eixos -->
           <line x1="${PAD.left}" y1="${PAD.top}" x2="${PAD.left}" y2="${PAD.top + plotH + 10}" stroke="#6b7a99" stroke-width="1.5"/>
           <line x1="${PAD.left - 10}" y1="${PAD.top + plotH}" x2="${PAD.left + plotW}" y2="${PAD.top + plotH}" stroke="#6b7a99" stroke-width="1.5"/>
@@ -203,9 +233,9 @@ const VisualRenderer = {
           <text x="${dh_x + 8}" y="${(y0 + y2) / 2}" fill="${produtos < reagentes ? '#22c55e' : '#f59e0b'}" font-size="10">${labelDH}</text>
 
           <!-- Labels -->
-          <text x="${x0}" y="${y0 - 8}" fill="#22c55e" font-size="10" text-anchor="middle">${label_reagentes}</text>
-          <text x="${x1}" y="${y1 - 10}" fill="#ef4444" font-size="10" text-anchor="middle">${label_et}</text>
-          <text x="${x2}" y="${y2 - 8}" fill="#f59e0b" font-size="10" text-anchor="middle">${label_produtos}</text>
+          <text x="${x0}" y="${y0 - 8}" fill="#22c55e" font-size="10" text-anchor="middle">${this.cleanSvgText(label_reagentes)}</text>
+          <text x="${x1}" y="${y1 - 10}" fill="#ef4444" font-size="10" text-anchor="middle">${this.cleanSvgText(label_et)}</text>
+          <text x="${x2}" y="${y2 - 8}" fill="#f59e0b" font-size="10" text-anchor="middle">${this.cleanSvgText(label_produtos)}</text>
 
           <!-- Definições de setas -->
           <defs>
@@ -257,7 +287,7 @@ const VisualRenderer = {
     return `
       <div class="visual-card">
         ${titulo ? `<div class="visual-titulo">${titulo}</div>` : ''}
-        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg">
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg no-math">
           <!-- Grid -->
           ${yTicks.map(y => `<line x1="${PAD.left}" y1="${toSY(y)}" x2="${PAD.left+plotW}" y2="${toSY(y)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
 
@@ -278,8 +308,8 @@ const VisualRenderer = {
           `).join('')}
 
           <!-- Labels eixos -->
-          <text x="${PAD.left+plotW/2}" y="${H-4}" fill="#6b7a99" font-size="11" text-anchor="middle">${eixo_x}</text>
-          <text x="12" y="${PAD.top+plotH/2}" fill="#6b7a99" font-size="11" text-anchor="middle" transform="rotate(-90,12,${PAD.top+plotH/2})">${eixo_y}</text>
+          <text x="${PAD.left+plotW/2}" y="${H-4}" fill="#6b7a99" font-size="11" text-anchor="middle">${this.cleanSvgText(eixo_x)}</text>
+          <text x="12" y="${PAD.top+plotH/2}" fill="#6b7a99" font-size="11" text-anchor="middle" transform="rotate(-90,12,${PAD.top+plotH/2})">${this.cleanSvgText(eixo_y)}</text>
 
           <!-- Linhas de referência -->
           ${linha_x !== null ? `<line x1="${toSX(linha_x)}" y1="${PAD.top}" x2="${toSX(linha_x)}" y2="${PAD.top+plotH}" stroke="#c9a84c" stroke-width="1" stroke-dasharray="5,3" opacity="0.6"/>` : ''}
@@ -294,7 +324,7 @@ const VisualRenderer = {
             return `
               <path d="${pathD}" fill="none" stroke="${cor}" stroke-width="2"/>
               ${pts.map(p => `<circle cx="${toSX(p.x)}" cy="${toSY(p.y)}" r="3" fill="${cor}"/>`).join('')}
-              ${serie.label ? `<text x="${toSX(pts[pts.length-1].x)+6}" y="${toSY(pts[pts.length-1].y)+4}" fill="${cor}" font-size="10">${serie.label}</text>` : ''}
+              ${serie.label ? `<text x="${toSX(pts[pts.length-1].x)+6}" y="${toSY(pts[pts.length-1].y)+4}" fill="${cor}" font-size="10">${this.cleanSvgText(serie.label)}</text>` : ''}
             `;
           }).join('')}
 
@@ -304,7 +334,7 @@ const VisualRenderer = {
               const cor = s.cor || cores[si % cores.length];
               return `
                 <rect x="${PAD.left + si*100}" y="${H-10}" width="12" height="6" fill="${cor}" rx="2"/>
-                <text x="${PAD.left + si*100 + 16}" y="${H-5}" fill="#6b7a99" font-size="9">${s.label||''}</text>
+                <text x="${PAD.left + si*100 + 16}" y="${H-5}" fill="#6b7a99" font-size="9">${this.cleanSvgText(s.label||'')}</text>
               `;
             }).join('')}
           ` : ''}
@@ -330,7 +360,7 @@ const VisualRenderer = {
     const resistores = componentes.filter(c => c.tipo === 'resistor');
     const bateria = componentes.find(c => c.tipo === 'bateria') || componentes[0] || {};
 
-    const label = (comp) => `${comp.label || ''}${comp.valor ? ' = '+comp.valor : ''}`;
+    const label = (comp) => this.cleanSvgText(`${comp.label || ''}${comp.valor ? ' = '+comp.valor : ''}`);
 
     const resistorZigZag = (x1, x2, y, comp) => {
       const lead = 22;
@@ -363,7 +393,7 @@ const VisualRenderer = {
     return `
       <div class="visual-card">
         <div class="visual-titulo">${titulo}</div>
-        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg">
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg no-math">
           <line x1="${leftX}" y1="${topY}" x2="${leftX}" y2="${midY - 18}" stroke="#d8deeb" stroke-width="2"/>
           <line x1="${leftX}" y1="${midY + 18}" x2="${leftX}" y2="${bottomY}" stroke="#d8deeb" stroke-width="2"/>
           <line x1="${leftX}" y1="${bottomY}" x2="${rightX}" y2="${bottomY}" stroke="#d8deeb" stroke-width="2"/>
@@ -412,8 +442,8 @@ const VisualRenderer = {
       const shape = ind.sexo === 'M'
         ? `<rect x="${x-RAIO}" y="${y-RAIO}" width="${RAIO*2}" height="${RAIO*2}" fill="${fill}" stroke="${cor}" stroke-width="2" rx="2"/>`
         : `<circle cx="${x}" cy="${y}" r="${RAIO}" fill="${fill}" stroke="${cor}" stroke-width="2"/>`;
-      const labelEl = ind.label ? `<text x="${x}" y="${y+RAIO+14}" fill="#6b7a99" font-size="9" text-anchor="middle">${ind.label}</text>` : '';
-      const genoEl  = ind.genotipo ? `<text x="${x}" y="${y+4}" fill="${cor}" font-size="9" text-anchor="middle">${ind.genotipo}</text>` : '';
+      const labelEl = ind.label ? `<text x="${x}" y="${y+RAIO+14}" fill="#6b7a99" font-size="9" text-anchor="middle">${this.cleanSvgText(ind.label)}</text>` : '';
+      const genoEl  = ind.genotipo ? `<text x="${x}" y="${y+4}" fill="${cor}" font-size="9" text-anchor="middle">${this.cleanSvgText(ind.genotipo)}</text>` : '';
       return shape + labelEl + genoEl;
     };
 
@@ -457,13 +487,13 @@ const VisualRenderer = {
     return `
       <div class="visual-card">
         <div class="visual-titulo">${titulo}</div>
-        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg">
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg no-math">
           ${svgContent}
         </svg>
         <div class="visual-legenda">
-          <span><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="rgba(107,122,153,0.1)" stroke="#6b7a99" stroke-width="1.5"/></svg> Homem normal</span>
-          <span><svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="rgba(107,122,153,0.1)" stroke="#6b7a99" stroke-width="1.5"/></svg> Mulher normal</span>
-          <span><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="1.5"/></svg> Afetado</span>
+          <span><svg width="14" height="14" class="no-math"><rect x="1" y="1" width="12" height="12" fill="rgba(107,122,153,0.1)" stroke="#6b7a99" stroke-width="1.5"/></svg> Homem normal</span>
+          <span><svg width="14" height="14" class="no-math"><circle cx="7" cy="7" r="6" fill="rgba(107,122,153,0.1)" stroke="#6b7a99" stroke-width="1.5"/></svg> Mulher normal</span>
+          <span><svg width="14" height="14" class="no-math"><rect x="1" y="1" width="12" height="12" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="1.5"/></svg> Afetado</span>
         </div>
       </div>
     `;
@@ -527,7 +557,7 @@ const VisualRenderer = {
       return `
         <g>
           <circle cx="${a.x}" cy="${a.y}" r="${raio}" fill="rgba(255,255,255,0.04)" stroke="${cor}" stroke-width="2"/>
-          <text x="${a.x}" y="${a.y + 5}" fill="${cor}" font-size="14" font-weight="700" text-anchor="middle">${a.elemento}</text>
+          <text x="${a.x}" y="${a.y + 5}" fill="${cor}" font-size="14" font-weight="700" text-anchor="middle">${this.cleanSvgText(a.elemento)}</text>
         </g>
       `;
     }).join('');
@@ -535,11 +565,11 @@ const VisualRenderer = {
     return `
       <div class="visual-card">
         <div class="visual-titulo">${titulo}</div>
-        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg">
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg no-math">
           ${ligacoesSvg}
           ${atomosSvg}
         </svg>
-        ${legenda ? `<div class="visual-rodape">${legenda}</div>` : ''}
+        ${legenda ? `<div class="visual-rodape">${this.cleanSvgText(legenda)}</div>` : ''}
       </div>
     `;
   },
