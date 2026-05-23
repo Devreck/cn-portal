@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CN Portal — Revisão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- MathJax para renderização de equações (align, equation*, etc.) -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]'], ['\\begin{align}', '\\end{align}'], ['\\begin{align*}', '\\end{align*}'], ['\\begin{equation}', '\\end{equation}'], ['\\begin{equation*}', '\\end{equation*}']],
+      packages: {'[+]': ['mhchem', 'boldsymbol', 'amsmath', 'amssymb']}
+    },
+    svg: {
+      fontCache: 'global',
+      scale: 1.0
+    },
+    options: {
+      skipHtmlTags: ['script','noscript','style','textarea','pre'],
+      ignoreHtmlClass: 'no-math'
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<!-- Visual Renderer (SVG) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/engine/visual-renderer.js"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<!-- Questões -->
+<script src="js/questoes/bio.js"></script>
+<script src="js/questoes/quim.js"></script>
+<script src="js/questoes/fis.js"></script>
+<!-- Engine -->
+<script src="js/engine/questao-renderer.js"></script>
+<style>
+:root {
+  --azul-mid:#004d99; --azul-light:#1a6abf; --ouro:#c9a84c;
+  --bg:#02060f; --surface:#080e1a; --surface2:#0d1526; --surface3:#111d35;
+  --border:rgba(255,255,255,0.07); --text:#e8edf5; --text-muted:#6b7a99;
+  --green:#22c55e; --green-bg:rgba(34,197,94,0.08);
+  --amber:#f59e0b; --amber-bg:rgba(245,158,11,0.08);
+  --blue:#3b82f6; --blue-bg:rgba(59,130,246,0.08);
+  --red:#ef4444; --red-bg:rgba(239,68,68,0.08);
+  --bio-cor:#22c55e; --quim-cor:#f59e0b; --fis-cor:#3b82f6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── HEADER ── */
+.header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,15,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;padding:0 24px;gap:16px}
+.header-back{display:flex;align-items:center;gap:8px;color:var(--text-muted);text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px;transition:all 0.2s}
+.header-back:hover{background:var(--surface2);color:var(--text)}
+.header-disc-tabs{display:flex;gap:4px;flex:1;justify-content:center}
+.disc-tab{padding:8px 20px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+.disc-tab:hover{background:var(--surface2);color:var(--text)}
+.disc-tab.active.bio  {background:var(--green-bg);border-color:rgba(34,197,94,0.3);color:var(--bio-cor)}
+.disc-tab.active.quim {background:var(--amber-bg);border-color:rgba(245,158,11,0.3);color:var(--quim-cor)}
+.disc-tab.active.fis  {background:var(--blue-bg);border-color:rgba(59,130,246,0.3);color:var(--fis-cor)}
+.header-pts{font-size:13px;font-weight:700;color:var(--ouro);background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);padding:6px 14px;border-radius:100px;white-space:nowrap}
+
+/* ── PROGRESS BAR ── */
+.prog-bar-wrapper{position:fixed;top:64px;left:0;right:0;z-index:99;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px}
+.prog-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-muted)}
+.prog-fill-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.5s ease;background:linear-gradient(90deg,var(--azul-mid),var(--azul-light))}
+.prog-fill.bio  {background:linear-gradient(90deg,#16a34a,#22c55e)}
+.prog-fill.quim {background:linear-gradient(90deg,#d97706,#f59e0b)}
+.prog-fill.fis  {background:linear-gradient(90deg,#2563eb,#3b82f6)}
+
+/* ── NAVBAR QUESTÕES ── */
+.navbar-questoes{position:sticky;top:118px;z-index:90;background:rgba(2,6,15,0.95);backdrop-filter:blur(10px);padding:10px 24px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:4px}
+#questoesNavbar{display:flex;flex-wrap:wrap;gap:4px}
+.nav-q{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+.nav-q:hover{background:var(--surface3);color:var(--text)}
+.nav-q.correta{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#22c55e}
+.nav-q.errada {background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:#ef4444}
+
+/* ── MAIN ── */
+.main{padding-top:170px;padding-bottom:80px}
+.container{max-width:860px;margin:0 auto;padding:24px}
+
+/* ── QUESTÃO CARD ── */
+.questao-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;transition:border-color 0.2s;position:relative;overflow:hidden}
+.questao-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px}
+.disciplina-bio  .questao-card::before{background:var(--bio-cor)}
+.disciplina-quim .questao-card::before{background:var(--quim-cor)}
+.disciplina-fis  .questao-card::before{background:var(--fis-cor)}
+
+.questao-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.questao-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.q-num{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--ouro)}
+.q-tipo{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:0.5px}
+.tipo-c{background:var(--blue-bg);color:var(--blue)}
+.tipo-a{background:var(--amber-bg);color:var(--amber)}
+.q-nivel{font-size:11px;color:var(--text-muted)}
+.q-tema{font-size:12px;color:var(--text-muted);font-style:italic}
+
+.questao-enunciado{font-size:15px;line-height:1.75;color:var(--text);margin-bottom:20px}
+
+/* ── ALTERNATIVAS TIPO C ── */
+.alternativas{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.alt-btn{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.15s;text-align:left;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}
+.alt-btn:hover:not(:disabled){border-color:rgba(255,255,255,0.15);background:var(--surface3)}
+.alt-btn:disabled{cursor:not-allowed}
+.alt-btn.correta{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.08);color:#86efac}
+.alt-btn.errada {border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#fca5a5}
+.alt-letra{width:24px;height:24px;border-radius:6px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;margin-top:1px}
+.alt-btn.correta .alt-letra{background:rgba(34,197,94,0.2);color:#22c55e}
+.alt-btn.errada  .alt-letra{background:rgba(239,68,68,0.2);color:#ef4444}
+
+/* ── BOTÕES CERTO/ERRADO ── */
+.ce-btns{display:flex;gap:12px;margin-bottom:4px}
+.ce-btn{flex:1;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.ce-btn.certo:hover:not(:disabled){border-color:rgba(34,197,94,0.3);background:var(--green-bg);color:var(--green)}
+.ce-btn.errado:hover:not(:disabled){border-color:rgba(239,68,68,0.3);background:var(--red-bg);color:var(--red)}
+.ce-btn.correta{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.08);color:#86efac}
+.ce-btn.errada {border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#fca5a5}
+.ce-btn:disabled{cursor:not-allowed}
+
+/* ── FEEDBACK ── */
+.questao-feedback{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.feedback-msg{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:500}
+.feedback-msg.acerto{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:#86efac}
+.feedback-msg.erro  {background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#fca5a5}
+
+.pts-badge{display:inline-block;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--ouro);font-size:12px;font-weight:700;padding:3px 10px;border-radius:100px}
+
+/* ── EXPLICAÇÃO ── */
+.explicacao-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:13px;line-height:1.7;color:var(--text-muted)}
+
+/* ── STEPS ── */
+.btn-steps{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid rgba(59,130,246,0.2);background:rgba(59,130,246,0.05);color:var(--blue);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-steps:hover{background:rgba(59,130,246,0.1)}
+
+.steps-container{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.step-item{border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color 0.2s}
+.step-item.open{border-color:rgba(59,130,246,0.25)}
+.step-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;transition:background 0.15s}
+.step-header:hover{background:var(--surface2)}
+.step-num{width:26px;height:26px;border-radius:8px;background:var(--azul-mid);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.step-titulo{font-size:13px;font-weight:600;flex:1}
+.step-hint{font-size:12px;color:var(--text-muted);font-style:italic}
+.step-arrow{margin-left:auto;font-size:10px;color:var(--text-muted);transition:transform 0.2s}
+.step-item.open .step-arrow{transform:rotate(90deg)}
+.step-body{display:none;padding:16px;border-top:1px solid var(--border);background:var(--surface2)}
+.step-item.open .step-body{display:block}
+.step-explicacao{font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:10px}
+.step-latex{font-size:14px;text-align:center;margin:8px 0;overflow-x:auto}
+.step-destaque{font-size:15px;text-align:center;margin:12px 0;padding:10px;background:rgba(201,168,76,0.06);border-radius:8px;border:1px solid rgba(201,168,76,0.15);overflow-x:auto}
+
+/* ── TUTOR IA ── */
+.btn-ia-tutor{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid rgba(168,85,247,0.25);background:rgba(168,85,247,0.06);color:#a855f7;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-ia-tutor:hover{background:rgba(168,85,247,0.12)}
+.btn-ia-tutor:disabled{opacity:0.6;cursor:not-allowed}
+.ia-card{background:var(--surface2);border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:16px}
+.ia-header{font-size:12px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.ia-texto{font-size:13px;line-height:1.8;color:var(--text-muted)}
+.ia-loading{color:var(--text-muted);font-size:13px;padding:16px;text-align:center;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.ia-erro{color:#fca5a5;font-size:13px;padding:12px}
+
+/* ── GERAR QUESTÃO EXTRA ── */
+.gerar-extra{text-align:center;margin:24px 0;padding:20px;border:1px dashed rgba(168,85,247,0.25);border-radius:16px;background:rgba(168,85,247,0.05)}
+.gerar-extra p{font-size:13px;color:var(--text-muted);margin-bottom:12px}
+.btn-gerar{padding:12px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-gerar:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(168,85,247,0.3)}
+.btn-gerar-top{position:fixed;right:24px;bottom:24px;z-index:90;padding:12px 16px;border-radius:12px;border:1px solid rgba(168,85,247,0.35);background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 10px 28px rgba(168,85,247,0.25)}
+.gerar-form{display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:10px;align-items:end;text-align:left;max-width:760px;margin:0 auto}
+.gerar-field label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px}
+.gerar-field select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px}
+
+/* ── LOADING ── */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:16px}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--azul-light);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--text-muted)}
+
+/* ── RESPONSIVO ── */
+@media(max-width:768px){
+  .header-disc-tabs{gap:2px}
+  .disc-tab{padding:6px 12px;font-size:12px}
+  .container{padding:16px}
+  .questao-card{padding:20px}
+  .ce-btns{flex-direction:column}
+  .btn-gerar-top{right:16px;bottom:16px}
+  .gerar-form{grid-template-columns:1fr;text-align:left}
+}
+
+      /* MathJax ajustes */
+      mjx-container { 
+        color: var(--text) !important; 
+        font-size: 1em !important;
+      }
+      mjx-container[display="true"] { 
+        display: block !important; 
+        margin: 12px auto !important; 
+        text-align: center !important; 
+      }
+      mjx-container[display="false"] {
+        display: inline !important;
+      }
+      mjx-math {
+        font-size: inherit !important;
+      }
+    
+      /* ── VISUAL RENDERER ── */
+      .visual-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin:12px 0}
+      .visual-titulo{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px}
+      .visual-svg{width:100%;height:auto;display:block}
+      .visual-tabela-wrap{overflow-x:auto}
+      .visual-tabela{width:100%;border-collapse:collapse;font-size:13px}
+      .visual-tabela th{background:var(--surface3);color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left}
+      .visual-tabela td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text)}
+      .visual-rodape{font-size:11px;color:var(--text-muted);margin-top:8px;font-style:italic}
+      .visual-legenda{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--text-muted);align-items:center}
+      .math-render{display:inline}
+      .math-display{display:block;margin:10px 0;text-align:center}
+
+      /* ── STEPS DO QUESTAO-RENDERER ── */
+      .step-item{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:6px}
+      .step-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;background:var(--surface2);transition:background 0.15s;user-select:none}
+      .step-header:hover{background:var(--surface3)}
+      .step-num{width:26px;height:26px;border-radius:8px;background:var(--azul-mid);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+      .step-info{flex:1;display:flex;flex-direction:column;gap:2px}
+      .step-titulo{font-size:13px;font-weight:600;color:var(--text)}
+      .step-hint{font-size:11px;color:var(--text-muted);font-style:italic}
+      .step-arrow{font-size:10px;color:var(--text-muted);transition:transform 0.2s;flex-shrink:0}
+      .step-body{display:none;padding:16px;border-top:1px solid var(--border);background:var(--surface)}
+      .step-exp{font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:12px}
+      .step-latex-line{text-align:center;margin:12px 0;overflow-x:auto;padding:8px 0}
+      .step-latex-line mjx-container[display="true"]{margin:8px auto !important}
+      .step-latex-destaque{text-align:center;margin:16px 0;padding:16px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:8px;overflow-x:auto}
+      .step-latex-destaque mjx-container[display="true"]{margin:0 auto !important}
+      /* Garantir cores do MathJax nos steps */
+      .step-body mjx-container{color:var(--text) !important}
+      .step-body mjx-container[display="true"]{display:block !important;margin:8px auto !important;text-align:center !important}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingMsg">Carregando revisão...</div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <a href="portal.html" class="header-back">← Dashboard</a>
+  <div class="header-disc-tabs">
+    <button class="disc-tab bio"  id="tab-bio"  onclick="trocarDisciplina('bio')">🧬 Biologia</button>
+    <button class="disc-tab quim" id="tab-quim" onclick="trocarDisciplina('quim')">⚗️ Química</button>
+    <button class="disc-tab fis"  id="tab-fis"  onclick="trocarDisciplina('fis')">⚡ Física</button>
+  </div>
+  <div class="header-pts" id="headerPts">⭐ 0 pts</div>
+</header>
+
+<!-- Barra de progresso -->
+<div class="prog-bar-wrapper">
+  <div class="prog-info">
+    <span id="progPct">0/40 questões (0%)</span>
+    <span id="progAcertos">0 acertos (0%)</span>
+    <span id="progPontos" style="color:var(--ouro)">0 pts</span>
+  </div>
+  <div class="prog-fill-track">
+    <div class="prog-fill" id="progFill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- Navbar de questões -->
+<div class="navbar-questoes">
+  <div id="questoesNavbar"></div>
+</div>
+
+<!-- Main -->
+<main class="main">
+  <a class="btn-gerar-top" href="#gerarExtra">✨ Gerar item IA</a>
+  <div class="container" id="mainContainer">
+    <div id="questoesContainer" class="disciplina-bio"></div>
+
+    <!-- Gerar questão extra com IA -->
+    <div class="gerar-extra" id="gerarExtra">
+      <p>🤖 Gere um item inédito com base de conhecimento, MathJax profissional e ilustrações quando o tema permitir.</p>
+      <div class="gerar-form">
+        <div class="gerar-field">
+          <label>Tema</label>
+          <select id="iaTemaAluno"></select>
+        </div>
+        <div class="gerar-field">
+          <label>Dificuldade</label>
+          <select id="iaNivelAluno">
+            <option value="intermediario">Intermediário</option>
+            <option value="basico">Básico</option>
+            <option value="avancado">Avançado</option>
+          </select>
+        </div>
+        <div class="gerar-field">
+          <label>Tipo</label>
+          <select id="iaTipoAluno">
+            <option value="C">Tipo C</option>
+            <option value="A">Tipo A</option>
+          </select>
+        </div>
+        <button class="btn-gerar" onclick="gerarExtra()">✨ Gerar questão</button>
+      </div>
+    </div>
+
+    <div id="questoesExtras"></div>
+  </div>
+</main>
+
+<script>
+// ── CONFIG ──
+const sb = CN_CONFIG.createSupabaseClient();
+
+let userAtual    = null;
+let discAtual    = 'bio';
+const TEMAS_IA = {
+  bio:  ['Herança ligada ao sexo', 'Sistema ABO', 'Epistasia', 'Linkage', 'Anemia falciforme'],
+  quim: ['Leis de Faraday', 'Le Chatelier', 'Equilíbrio Químico', 'Ânodo e cátodo', 'pH e Ka'],
+  fis:  ['Efeito Joule', 'Circuitos Elétricos', 'Carga elétrica', 'Energia elétrica', 'Potência', 'mAh e baterias'],
+};
+
+// ── INIT ──
+(async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+
+  const { data: perfil } = await sb
+    .from('perfis')
+    .select('*')
+    .eq('id', session.user.id)
+    .single();
+
+  if (!perfil || !perfil.ativo) { window.location.href = 'index.html'; return; }
+  if (!perfil.senha_trocada)    { window.location.href = 'trocar-senha.html'; return; }
+  if (perfil.role === 'professor') { window.location.href = 'painel.html'; return; }
+
+  userAtual = { ...session.user, perfil };
+
+  // Verificar parâmetro de URL
+  const params = new URLSearchParams(window.location.search);
+  const disc   = params.get('disciplina') || 'bio';
+
+  await trocarDisciplina(disc);
+  document.getElementById('loadingScreen').style.display = 'none';
+  if (window.location.hash === '#gerarExtra') {
+    setTimeout(() => document.getElementById('gerarExtra')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+  }
+})();
+
+// ── TROCAR DISCIPLINA ──
+async function trocarDisciplina(disc) {
+  discAtual = disc;
+
+  // Atualizar tabs
+  ['bio','quim','fis'].forEach(d => {
+    const tab = document.getElementById(`tab-${d}`);
+    tab.classList.toggle('active', d === disc);
+  });
+
+  // Atualizar classe de cor do container
+  const container = document.getElementById('questoesContainer');
+  container.className = `disciplina-${disc}`;
+
+  // Atualizar cor da barra de progresso
+  const fill = document.getElementById('progFill');
+  fill.className = `prog-fill ${disc}`;
+
+  // Inicializar renderer
+  document.getElementById('loadingMsg').textContent = `Carregando questões de ${disc === 'bio' ? 'Biologia' : disc === 'quim' ? 'Química' : 'Física'}...`;
+
+  // Limpar state anterior
+  QuestaoRenderer.estado = {
+    disciplina: null,
+    questoes: [],
+    respostas: {},
+    streakAtual: 0,
+    streakMaximo: 0,
+    pontosTotal: 0,
+    userId: userAtual?.id,
+    iniciado: null,
+  };
+
+  container.innerHTML = '';
+  document.getElementById('questoesNavbar').innerHTML = '';
+  document.getElementById('questoesExtras').innerHTML = '';
+  atualizarTemasIAAluno(disc);
+
+  // Inicializar MathJax (apenas na primeira disciplina)
+  if (!window._visualRendererInited) {
+    await VisualRenderer.init();
+    window._visualRendererInited = true;
+  }
+  await QuestaoRenderer.init(disc, userAtual?.id);
+
+  // Atualizar pts no header
+  atualizarHeaderPts();
+
+  // Scroll para o topo
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── ATUALIZAR PONTOS HEADER ──
+async function atualizarHeaderPts() {
+  if (!userAtual) return;
+  try {
+    const { data } = await sb
+      .from('pontuacao')
+      .select('pontos_total')
+      .eq('aluno_id', userAtual.id)
+      .single();
+    if (data) {
+      document.getElementById('headerPts').textContent = `⭐ ${(data.pontos_total || 0).toLocaleString('pt-BR')} pts`;
+    }
+  } catch(e) {}
+}
+
+// ── GERAR QUESTÃO EXTRA ──
+function atualizarTemasIAAluno(disc) {
+  const select = document.getElementById('iaTemaAluno');
+  if (!select) return;
+
+  const temaAnterior = select.value;
+  const temas = TEMAS_IA[disc] || [];
+  select.innerHTML = temas.map(tema => `<option value="${tema}">${tema}</option>`).join('');
+
+  if (temas.includes(temaAnterior)) {
+    select.value = temaAnterior;
+  }
+}
+
+function gerarExtra() {
+  const tema = document.getElementById('iaTemaAluno')?.value || TEMAS_IA[discAtual]?.[0];
+  const tipo = document.getElementById('iaTipoAluno')?.value || 'C';
+  const nivel = document.getElementById('iaNivelAluno')?.value || 'intermediario';
+
+  QuestaoRenderer.gerarQuestaoExtra(discAtual, tema, tipo, nivel);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CN Portal — Criar Senha</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <style>
+      :root {
+        --azul: #003366;
+        --azul-mid: #004d99;
+        --azul-light: #1a6abf;
+        --ouro: #c9a84c;
+        --ouro-light: #e8c96a;
+        --bg: #02060f;
+        --surface: #080e1a;
+        --surface2: #0d1526;
+        --border: rgba(255, 255, 255, 0.07);
+        --text: #e8edf5;
+        --text-muted: #6b7a99;
+        --green: #22c55e;
+        --red: #ef4444;
+        --yellow: #eab308;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        position: relative;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      /* Fundo animado */
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 51, 102, 0.15) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 51, 102, 0.15) 1px, transparent 1px);
+        background-size: 60px 60px;
+        animation: gridDrift 20s linear infinite;
+        z-index: 0;
+      }
+      @keyframes gridDrift {
+        from {
+          transform: translate(0, 0);
+        }
+        to {
+          transform: translate(60px, 60px);
+        }
+      }
+      .bg-orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.2;
+        z-index: 0;
+      }
+      .bg-orb-1 {
+        width: 600px;
+        height: 600px;
+        background: #003d80;
+        top: -200px;
+        left: -200px;
+      }
+      .bg-orb-2 {
+        width: 400px;
+        height: 400px;
+        background: #c9a84c44;
+        bottom: -100px;
+        right: -100px;
+      }
+
+      /* Card central */
+      .card {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: 480px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 48px 44px;
+        animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Ícone de topo */
+      .card-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--azul-mid), var(--azul-light));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin-bottom: 28px;
+        box-shadow: 0 8px 32px rgba(0, 77, 153, 0.3);
+      }
+
+      .card-eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ouro);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+      .card-title {
+        font-family: "Syne", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        margin-bottom: 10px;
+      }
+      .card-desc {
+        font-size: 14px;
+        color: var(--text-muted);
+        line-height: 1.7;
+        margin-bottom: 36px;
+      }
+      .card-desc strong {
+        color: var(--ouro);
+      }
+
+      /* Saudação do usuário */
+      .user-greeting {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 18px;
+        margin-bottom: 28px;
+      }
+      .user-avatar {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, var(--azul-mid), var(--ouro));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+      .user-info-name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .user-info-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* Campos */
+      .field {
+        margin-bottom: 20px;
+      }
+      .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 8px;
+      }
+      .field-wrap {
+        position: relative;
+      }
+      .field-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 16px;
+        pointer-events: none;
+        opacity: 0.5;
+      }
+      .field input {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 48px 14px 44px;
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 15px;
+        outline: none;
+        transition: all 0.2s;
+      }
+      .field input::placeholder {
+        color: var(--text-muted);
+        opacity: 0.5;
+      }
+      .field input:focus {
+        border-color: var(--azul-light);
+        background: rgba(26, 106, 191, 0.05);
+        box-shadow: 0 0 0 3px rgba(26, 106, 191, 0.12);
+      }
+      .field input.success {
+        border-color: var(--green);
+      }
+      .field input.error {
+        border-color: var(--red);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+      }
+      .toggle-pwd {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px 8px;
+        z-index: 5;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+      }
+      .toggle-pwd:hover {
+        opacity: 1;
+        color: var(--text);
+      }
+
+      /* Medidor de força da senha */
+      .strength-bar {
+        margin-top: 10px;
+        display: none;
+      }
+      .strength-bar.show {
+        display: block;
+      }
+      .strength-tracks {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 6px;
+      }
+      .strength-track {
+        flex: 1;
+        height: 4px;
+        background: var(--surface2);
+        border-radius: 2px;
+        transition: background 0.3s;
+      }
+      .strength-track.fill-weak {
+        background: var(--red);
+      }
+      .strength-track.fill-fair {
+        background: var(--yellow);
+      }
+      .strength-track.fill-good {
+        background: #3b82f6;
+      }
+      .strength-track.fill-strong {
+        background: var(--green);
+      }
+      .strength-label {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* Requisitos da senha */
+      .req-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .req {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--text-muted);
+        background: var(--surface2);
+        padding: 4px 10px;
+        border-radius: 100px;
+        border: 1px solid var(--border);
+        transition: all 0.2s;
+      }
+      .req.ok {
+        color: var(--green);
+        border-color: rgba(34, 197, 94, 0.3);
+        background: rgba(34, 197, 94, 0.06);
+      }
+      .req .dot {
+        font-size: 10px;
+      }
+
+      /* Alert */
+      .alert {
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 13px;
+        margin-bottom: 20px;
+        display: none;
+        align-items: center;
+        gap: 10px;
+      }
+      .alert.show {
+        display: flex;
+      }
+      .alert-error {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+      }
+      .alert-success {
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        color: #86efac;
+      }
+
+      /* Botão */
+      .btn-primary {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, var(--azul-mid), var(--azul-light));
+        border: none;
+        border-radius: 12px;
+        color: #fff;
+        font-family: "Syne", sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 8px;
+        letter-spacing: 0.3px;
+      }
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 32px rgba(0, 77, 153, 0.4);
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-loader {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+
+    <div class="card">
+      <div class="card-icon">🔐</div>
+      <div class="card-eyebrow">Primeiro Acesso</div>
+      <h1 class="card-title">Crie sua senha pessoal</h1>
+      <p class="card-desc">
+        Por segurança, você precisa criar uma senha pessoal antes de acessar o
+        portal. Escolha uma senha forte que <strong>só você</strong> conheça.
+      </p>
+
+      <!-- Saudação -->
+      <div class="user-greeting" id="userGreeting" style="display: none">
+        <div class="user-avatar" id="userAvatar">👤</div>
+        <div>
+          <div class="user-info-name" id="userName">Carregando...</div>
+          <div class="user-info-sub" id="userSub">Turma —</div>
+        </div>
+      </div>
+
+      <!-- Alerta -->
+      <div class="alert alert-error" id="alertError">
+        <span>⚠️</span><span id="alertErrorMsg">Erro.</span>
+      </div>
+      <div class="alert alert-success" id="alertSuccess">
+        <span>✅</span><span id="alertSuccessMsg">Senha criada!</span>
+      </div>
+
+      <form id="formSenha" onsubmit="handleTrocarSenha(event)">
+        <!-- Senha Atual -->
+        <div class="field">
+          <label>Senha Atual</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔑</span>
+            <input
+              type="password"
+              id="senhaAtual"
+              placeholder="Digite sua senha atual"
+              oninput="validarFormulario()"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-pwd"
+              onclick="toggle('senhaAtual')"
+            >
+              👁
+            </button>
+          </div>
+        </div>
+
+        <!-- Nova senha -->
+        <div class="field">
+          <label>Nova Senha</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔑</span>
+            <input
+              type="password"
+              id="novaSenha"
+              placeholder="Mínimo 8 caracteres"
+              oninput="avaliarSenha(this.value)"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-pwd"
+              onclick="toggle('novaSenha')"
+            >
+              👁
+            </button>
+          </div>
+
+          <!-- Medidor de força -->
+          <div class="strength-bar" id="strengthBar">
+            <div class="strength-tracks">
+              <div class="strength-track" id="t1"></div>
+              <div class="strength-track" id="t2"></div>
+              <div class="strength-track" id="t3"></div>
+              <div class="strength-track" id="t4"></div>
+            </div>
+            <div class="strength-label" id="strengthLabel">—</div>
+          </div>
+
+          <!-- Requisitos -->
+          <div class="req-list">
+            <div class="req" id="req-len">
+              <span class="dot">○</span> 8 caracteres
+            </div>
+            <div class="req" id="req-upper">
+              <span class="dot">○</span> Maiúscula
+            </div>
+            <div class="req" id="req-lower">
+              <span class="dot">○</span> Minúscula
+            </div>
+            <div class="req" id="req-num">
+              <span class="dot">○</span> Número
+            </div>
+            <div class="req" id="req-special">
+              <span class="dot">○</span> Símbolo
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirmar senha -->
+        <div class="field">
+          <label>Confirmar Senha</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔒</span>
+            <input
+              type="password"
+              id="confirmaSenha"
+              placeholder="Repita a nova senha"
+              oninput="verificarConfirmacao()"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-pwd"
+              onclick="toggle('confirmaSenha')"
+            >
+              👁
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnSalvar" disabled>
+          Criar Senha e Acessar o Portal
+        </button>
+      </form>
+    </div>
+
+    <script>
+      const sb = CN_CONFIG.createSupabaseClient();
+
+      let perfilAtual = null;
+
+      // ── VERIFICAR SESSÃO ──
+      (async function init() {
+        const {
+          data: { session },
+        } = await sb.auth.getSession();
+        if (!session) {
+          window.location.href = "index.html";
+          return;
+        }
+
+        const { data: perfil } = await sb
+          .from("perfis")
+          .select("nome, turma, role, senha_trocada, ativo")
+          .eq("id", session.user.id)
+          .single();
+
+        if (!perfil || !perfil.ativo) {
+          window.location.href = "index.html";
+          return;
+        }
+
+        // Se já trocou a senha, redirecionar
+        if (perfil.senha_trocada) {
+          window.location.href =
+            perfil.role === "professor" ? "painel.html" : "portal.html";
+          return;
+        }
+
+        perfilAtual = perfil;
+
+        // Mostrar saudação
+        const primeiroNome = perfil.nome.split(" ")[0];
+        document.getElementById("userName").textContent = perfil.nome;
+        document.getElementById("userSub").textContent =
+          perfil.role === "professor"
+            ? "Professor(a)"
+            : `Turma ${perfil.turma}`;
+        document.getElementById("userAvatar").textContent = primeiroNome
+          .charAt(0)
+          .toUpperCase();
+        document.getElementById("userGreeting").style.display = "flex";
+      })();
+
+      // ── TOGGLE VISIBILIDADE ──
+      const toggleStates = {};
+      function toggle(inputId) {
+        const wrap = document.getElementById(inputId).parentElement;
+        const input = document.getElementById(inputId);
+        const btn = wrap.querySelector(".toggle-pwd");
+        const visivel = input.getAttribute("type") === "text";
+        input.setAttribute("type", visivel ? "password" : "text");
+        if (btn) btn.innerHTML = visivel ? "👁" : "🙈";
+      }
+
+      // ── AVALIAÇÃO DE FORÇA DA SENHA ──
+      function avaliarSenha(val) {
+        const bar = document.getElementById("strengthBar");
+        bar.classList.toggle("show", val.length > 0);
+
+        const checks = {
+          len: val.length >= 8,
+          upper: /[A-Z]/.test(val),
+          lower: /[a-z]/.test(val),
+          num: /[0-9]/.test(val),
+          special: /[^A-Za-z0-9]/.test(val),
+        };
+
+        // Atualizar requisitos visuais
+        Object.entries(checks).forEach(([key, ok]) => {
+          const el = document.getElementById(`req-${key}`);
+          if (!el) return;
+          el.classList.toggle("ok", ok);
+          el.querySelector(".dot").textContent = ok ? "✓" : "○";
+        });
+
+        const score = Object.values(checks).filter(Boolean).length;
+        const tracks = ["t1", "t2", "t3", "t4"];
+        const classes = ["fill-weak", "fill-fair", "fill-good", "fill-strong"];
+        const labels = ["Muito fraca", "Fraca", "Boa", "Forte"];
+
+        tracks.forEach((id, i) => {
+          const el = document.getElementById(id);
+          el.className = "strength-track";
+          if (i < score) el.classList.add(classes[Math.min(score - 1, 3)]);
+        });
+        document.getElementById("strengthLabel").textContent =
+          score > 0 ? labels[Math.min(score - 1, 3)] : "—";
+
+        verificarConfirmacao();
+        validarFormulario(checks);
+      }
+
+      function verificarConfirmacao() {
+        const nova = document.getElementById("novaSenha").value;
+        const confirma = document.getElementById("confirmaSenha").value;
+        const input = document.getElementById("confirmaSenha");
+        if (!confirma) {
+          input.className = "";
+          validarFormulario();
+          return;
+        }
+        input.classList.toggle("success", nova === confirma);
+        input.classList.toggle("error", nova !== confirma);
+        validarFormulario();
+      }
+
+      function validarFormulario(checks = null) {
+        const atual = document.getElementById("senhaAtual")
+          ? document.getElementById("senhaAtual").value
+          : "";
+        const nova = document.getElementById("novaSenha").value;
+        const confirma = document.getElementById("confirmaSenha").value;
+
+        // Se checks não foi passado (ex: chamado pela confirmacao), recalcular
+        if (!checks) {
+          checks = {
+            len: nova.length >= 8,
+            upper: /[A-Z]/.test(nova),
+            lower: /[a-z]/.test(nova),
+            num: /[0-9]/.test(nova),
+            special: /[^A-Za-z0-9]/.test(nova),
+          };
+        }
+
+        // Requisito mínimo: senha atual, 8 chars + senhas iguais e não vazias
+        const valido =
+          atual.length > 0 &&
+          checks.len &&
+          nova === confirma &&
+          confirma.length > 0;
+        document.getElementById("btnSalvar").disabled = !valido;
+      }
+
+      // ── TROCAR SENHA ──
+      async function handleTrocarSenha(e) {
+        e.preventDefault();
+        const atual = document.getElementById("senhaAtual").value;
+        const nova = document.getElementById("novaSenha").value;
+        const confirma = document.getElementById("confirmaSenha").value;
+        const btn = document.getElementById("btnSalvar");
+
+        if (nova !== confirma) {
+          document.getElementById("alertErrorMsg").textContent =
+            "As senhas não coincidem.";
+          document.getElementById("alertError").classList.add("show");
+          return;
+        }
+
+        // Verificar senha padrão
+        if (nova === "Marista@2026" || nova === "Marista@2026Professor") {
+          document.getElementById("alertErrorMsg").textContent =
+            "Você deve criar uma senha diferente da senha padrão.";
+          document.getElementById("alertError").classList.add("show");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn-loader"></span> Salvando…';
+        document.getElementById("alertError").classList.remove("show");
+
+        try {
+          const {
+            data: { session },
+            error: sessionError,
+          } = await sb.auth.getSession();
+
+          if (sessionError || !session) {
+            throw new Error(
+              "Sessão inválida ou expirada. Por favor, faça login novamente.",
+            );
+          }
+
+          // Atualizar a senha do usuário, enviando a senha atual.
+          // O Supabase exige a 'current_password' quando "Secure password change" está ativo.
+          // A propriedade nonce atende a versões mais antigas do GoTrue.
+          const { error: authErr } = await sb.auth.updateUser({
+            password: nova,
+            nonce: atual,
+            current_password: atual,
+          });
+
+          if (authErr) {
+            // Em versões mais novas, o parâmetro pode ser passe via reautenticação ou signIn
+            if (
+              authErr.message.includes("Current password required") ||
+              authErr.message.includes("senha atual")
+            ) {
+              const { error: reAuthErr } = await sb.auth.signInWithPassword({
+                email: session.user.email,
+                password: atual,
+              });
+              if (reAuthErr) throw new Error("Senha atual incorreta.");
+
+              const { error: secondAttemptErr } = await sb.auth.updateUser({
+                password: nova,
+              });
+              if (secondAttemptErr) throw secondAttemptErr;
+            } else {
+              throw authErr;
+            }
+          }
+
+          const userId = session.user.id;
+
+          // Tentar update direto primeiro
+          const { error: perfilErr } = await sb
+            .from("perfis")
+            .update({ senha_trocada: true })
+            .eq("id", userId);
+
+          // Se falhar por RLS, usar RPC
+          if (perfilErr) {
+            console.warn(
+              "Update direto falhou, tentando RPC:",
+              perfilErr.message,
+            );
+            const { error: rpcErr } = await sb.rpc("marcar_senha_trocada", {
+              p_user_id: userId,
+            });
+            if (rpcErr) {
+              console.error("RPC também falhou:", rpcErr.message);
+              // Continuar mesmo assim — o usuário já tem a nova senha
+            }
+          }
+
+          document.getElementById("alertSuccessMsg").textContent =
+            "Senha criada com sucesso! Redirecionando…";
+          document.getElementById("alertSuccess").classList.add("show");
+
+          setTimeout(() => {
+            window.location.href =
+              perfilAtual?.role === "professor" ? "painel.html" : "portal.html";
+          }, 1500);
+        } catch (err) {
+          console.error(err);
+          document.getElementById("alertErrorMsg").textContent =
+            err.message || "Erro ao salvar a senha. Tente novamente.";
+          document.getElementById("alertError").classList.add("show");
+          btn.disabled = false;
+          btn.innerHTML = "Criar Senha e Acessar o Portal";
+        }
+      }
+    </script>
+  </body>
+</html>

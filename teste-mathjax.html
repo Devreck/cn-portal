@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste MathJax</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #02060f;
+      color: #e8edf5;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .test-box {
+      background: #080e1a;
+      border: 1px solid #6b7a99;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-box h3 {
+      margin-top: 0;
+      color: #c9a84c;
+    }
+    button {
+      background: #1a6abf;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #004d99;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Teste de Renderização MathJax</h1>
+    
+    <div class="test-box">
+      <h3>✓ Teste 1: Equação Simples (Inline)</h3>
+      <p>A equação \(P = \frac{U^2}{R}\) deve renderizar inline.</p>
+    </div>
+
+    <div class="test-box">
+      <h3>✓ Teste 2: Equação Display (entre \[ \])</h3>
+      <p>\[P = \frac{U^2}{R}\]</p>
+      <p style="color: #999; font-size: 12px;">Se a equação acima aparecer centralizada e maior, MathJax está funcionando!</p>
+    </div>
+
+    <div class="test-box">
+      <h3>✓ Teste 3: Fração com Múltiplas Linhas</h3>
+      <p>\[\frac{P_f}{P_n} = \frac{U^2/R_f}{U^2/R_n} = \frac{R_n}{R_f}\]</p>
+    </div>
+
+    <div class="test-box">
+      <h3>✓ Teste 4: Com \boxed{}</h3>
+      <p>\[\boxed{P = 4,0\,\text{W}}\]</p>
+    </div>
+
+    <div class="test-box">
+      <h3>✓ Teste 5: Com \text{}</h3>
+      <p>\[\text{Tensão: } U = 20\,\text{V}, \quad \text{Resistência: } R = 100\,\Omega\]</p>
+    </div>
+
+    <div class="test-box">
+      <h3>Estado do MathJax</h3>
+      <p id="status">Verificando...</p>
+      <button onclick="verificarMathJax()">🔍 Verificar Status</button>
+    </div>
+  </div>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        packages: {'[+]': ['mhchem', 'boldsymbol', 'amsmath', 'amssymb']}
+      },
+      svg: {
+        fontCache: 'global',
+        scale: 1.0
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <script>
+    function verificarMathJax() {
+      const statusEl = document.getElementById('status');
+      if (window.MathJax?.typesetPromise) {
+        statusEl.innerHTML = '✅ <strong>MathJax carregado e pronto!</strong><br>Versão: MathJax 3<br><button onclick="rerender()">🔄 Renderizar Novamente</button>';
+      } else {
+        statusEl.innerHTML = '⏳ MathJax ainda está carregando... Aguarde um momento.';
+        setTimeout(verificarMathJax, 500);
+      }
+    }
+
+    function rerender() {
+      if (window.MathJax?.typesetPromise) {
+        MathJax.typesetPromise()
+          .then(() => alert('✓ Renderização completa!'))
+          .catch(err => alert('Erro: ' + err.message));
+      }
+    }
+
+    // Verificar automaticamente após carregamento
+    setTimeout(() => {
+      verificarMathJax();
+      if (window.MathJax?.typesetPromise) {
+        MathJax.typesetPromise().catch(err => console.error('Erro inicial:', err));
+      }
+    }, 2000);
+  </script>
+</body>
+</html>

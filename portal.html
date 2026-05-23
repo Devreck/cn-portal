@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CN Portal — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]'], ['\\begin{align}', '\\end{align}'], ['\\begin{align*}', '\\end{align*}']],
+      packages: {'[+]': ['amsmath', 'amssymb', 'mhchem']}
+    },
+    svg: { fontCache: 'global', scale: 1.0 },
+    options: {
+      skipHtmlTags: ['script','noscript','style','textarea','pre'],
+      ignoreHtmlClass: 'no-math'
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script src="js/questoes/bio.js"></script>
+<script src="js/questoes/quim.js"></script>
+<script src="js/questoes/fis.js"></script>
+<script src="js/engine/visual-renderer.js"></script>
+<style>
+:root {
+  --azul:       #003366;
+  --azul-mid:   #004d99;
+  --azul-light: #1a6abf;
+  --ouro:       #c9a84c;
+  --ouro-light: #e8c96a;
+  --bg:         #02060f;
+  --surface:    #080e1a;
+  --surface2:   #0d1526;
+  --surface3:   #111d35;
+  --border:     rgba(255,255,255,0.07);
+  --text:       #e8edf5;
+  --text-muted: #6b7a99;
+  --green:      #22c55e;
+  --green-bg:   rgba(34,197,94,0.08);
+  --amber:      #f59e0b;
+  --amber-bg:   rgba(245,158,11,0.08);
+  --blue:       #3b82f6;
+  --blue-bg:    rgba(59,130,246,0.08);
+  --purple:     #a855f7;
+  --red:        #ef4444;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── HEADER ── */
+.header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(2,6,15,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 32px;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.header-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.header-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.header-logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--text)}
+.header-logo-text span{color:var(--ouro)}
+.header-right{display:flex;align-items:center;gap:16px}
+.header-xp{display:flex;align-items:center;gap:8px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:100px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--ouro)}
+.header-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--azul-mid),var(--ouro));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer}
+.header-menu{position:relative}
+.header-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:8px;min-width:180px;display:none;z-index:200}
+.header-dropdown.show{display:block}
+.header-dropdown a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;color:var(--text-muted);text-decoration:none;font-size:14px;transition:all 0.15s}
+.header-dropdown a:hover{background:var(--surface3);color:var(--text)}
+.header-dropdown .sep{height:1px;background:var(--border);margin:4px 0}
+
+/* ── LAYOUT ── */
+.main{padding-top:64px;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:32px 24px}
+
+/* ── HERO BOAS VINDAS ── */
+.hero-welcome{
+  background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:32px;
+  margin-bottom:24px;
+  position:relative;
+  overflow:hidden;
+}
+.hero-welcome::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--azul-mid),var(--ouro),var(--azul-light));
+}
+.hero-grid{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--ouro);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.hero-badge::before{content:'';width:5px;height:5px;background:var(--ouro);border-radius:50%;box-shadow:0 0 6px var(--ouro);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.hero-name{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+.hero-sub{font-size:14px;color:var(--text-muted)}
+.hero-streak{text-align:center}
+.streak-num{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:var(--ouro);line-height:1;display:block}
+.streak-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+.streak-fire{font-size:24px}
+
+/* ── XP BAR ── */
+.xp-section{margin-top:20px}
+.xp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.xp-label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px}
+.xp-value{font-size:13px;font-weight:700;color:var(--ouro)}
+.xp-bar{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--azul-mid),var(--ouro));border-radius:4px;transition:width 1s cubic-bezier(0.16,1,0.3,1)}
+.xp-levels{display:flex;justify-content:space-between;margin-top:6px}
+.xp-level-label{font-size:11px;color:var(--text-muted)}
+
+/* ── GRID PRINCIPAL ── */
+.main-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px}
+
+/* ── CARDS DE DISCIPLINA ── */
+.disc-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:24px;
+  cursor:pointer;
+  transition:all 0.2s;
+  position:relative;
+  overflow:hidden;
+  text-decoration:none;
+  display:block;
+}
+.disc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;transition:opacity 0.2s;opacity:0.5}
+.disc-card.bio::before  {background:linear-gradient(90deg,#22c55e,#16a34a)}
+.disc-card.quim::before {background:linear-gradient(90deg,#f59e0b,#d97706)}
+.disc-card.fis::before  {background:linear-gradient(90deg,#3b82f6,#2563eb)}
+.disc-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.12)}
+.disc-card:hover::before{opacity:1}
+.disc-card.bloqueado{opacity:0.5;cursor:not-allowed}
+.disc-card.bloqueado:hover{transform:none}
+.disc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.disc-emoji{font-size:28px}
+.disc-status{font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:0.5px}
+.disc-status.concluida{background:rgba(34,197,94,0.15);color:#22c55e}
+.disc-status.em-andamento{background:rgba(245,158,11,0.15);color:#f59e0b}
+.disc-status.nao-iniciada{background:rgba(107,122,153,0.15);color:var(--text-muted)}
+.disc-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px}
+.disc-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px}
+.disc-progress{margin-bottom:12px}
+.disc-progress-bar{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-top:6px}
+.disc-progress-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(0.16,1,0.3,1)}
+.disc-card.bio  .disc-progress-fill{background:linear-gradient(90deg,#22c55e,#16a34a)}
+.disc-card.quim .disc-progress-fill{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.disc-card.fis  .disc-progress-fill{background:linear-gradient(90deg,#3b82f6,#2563eb)}
+.disc-stats{display:flex;gap:12px}
+.disc-stat{font-size:12px;color:var(--text-muted)}
+.disc-stat strong{color:var(--text);font-weight:600}
+
+/* ── SIMULADO CARD ── */
+.simulado-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:28px;
+  margin-bottom:24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  position:relative;
+  overflow:hidden;
+}
+.simulado-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(168,85,247,0.05),transparent);
+  pointer-events:none;
+}
+.simulado-card.bloqueado::after{
+  content:'🔒';position:absolute;top:16px;right:16px;font-size:20px;
+}
+.simulado-info{flex:1}
+.simulado-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px}
+.simulado-desc{font-size:13px;color:var(--text-muted);line-height:1.6}
+.simulado-req{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.req-chip{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:100px;border:1px solid var(--border);color:var(--text-muted)}
+.req-chip.ok{border-color:rgba(34,197,94,0.3);color:#22c55e;background:rgba(34,197,94,0.06)}
+.btn-simulado{padding:14px 28px;border-radius:12px;border:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;text-decoration:none;display:inline-block}
+.btn-simulado.ativo{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 8px 24px rgba(168,85,247,0.3)}
+.btn-simulado.ativo:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(168,85,247,0.4)}
+.btn-simulado.inativo{background:var(--surface2);color:var(--text-muted);cursor:not-allowed}
+
+/* ── TUTOR IA ── */
+.ia-tools-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:24px;
+  margin-bottom:24px;
+}
+.ia-tools-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px}
+.ia-tools-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:4px}
+.ia-tools-sub{font-size:12px;color:var(--text-muted)}
+.ia-actions{display:flex;gap:10px;flex-wrap:wrap}
+.ia-action-btn{
+  padding:11px 14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.ia-action-btn:hover{background:var(--surface3);border-color:rgba(255,255,255,0.12)}
+.ia-action-btn.primary{background:linear-gradient(135deg,#004d99,#1a6abf);border-color:rgba(26,106,191,0.4);color:#fff}
+.ia-chat-row{display:flex;gap:10px;margin-bottom:14px}
+.ia-chat-input{
+  flex:1;
+  min-width:0;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;
+}
+.ia-chat-input:focus{outline:none;border-color:rgba(26,106,191,0.5)}
+.ia-output{
+  display:none;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  font-size:14px;
+  line-height:1.7;
+  color:var(--text-muted);
+  white-space:pre-wrap;
+}
+.ia-output.show{display:block}
+.ia-output strong{color:var(--text)}
+.ia-output.loading{color:var(--ouro)}
+.ia-output.erro{color:#fca5a5;border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.06)}
+
+/* ── GRID INFERIOR ── */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+
+/* ── RANKING MINI ── */
+.ranking-card,.badges-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:24px;
+}
+.card-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px}
+.ranking-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ranking-item:last-child{border-bottom:none}
+.ranking-pos{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.ranking-pos.p1{background:rgba(201,168,76,0.15);color:var(--ouro)}
+.ranking-pos.p2{background:rgba(192,192,192,0.15);color:#c0c0c0}
+.ranking-pos.p3{background:rgba(205,127,50,0.15);color:#cd7f32}
+.ranking-pos.pn{background:var(--surface2);color:var(--text-muted)}
+.ranking-pos.me{background:rgba(0,77,153,0.2);color:var(--azul-light)}
+.ranking-nome{flex:1;font-size:13px;font-weight:500}
+.ranking-nome.me{color:var(--azul-light);font-weight:700}
+.ranking-pts{font-size:13px;font-weight:700;color:var(--ouro)}
+.ranking-sep{text-align:center;font-size:11px;color:var(--text-muted);padding:8px 0}
+
+/* ── BADGES ── */
+.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.badge-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);transition:all 0.2s;position:relative}
+.badge-item.conquistado{border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.05)}
+.badge-item:not(.conquistado){opacity:0.35;filter:grayscale(1)}
+.badge-emoji{font-size:22px}
+.badge-nome{font-size:9px;text-align:center;color:var(--text-muted);line-height:1.2}
+.badge-item.conquistado .badge-nome{color:var(--ouro)}
+.badge-new{position:absolute;top:-4px;right:-4px;background:var(--green);width:10px;height:10px;border-radius:50%;border:2px solid var(--surface)}
+
+/* ── TOAST NOTIFICAÇÃO ── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;font-size:14px;animation:toastIn 0.3s cubic-bezier(0.16,1,0.3,1);max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.toast.badge-toast{border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.08)}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(30px)}}
+
+/* ── LOADING ── */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--azul-light);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--text-muted)}
+
+/* ── RESPONSIVO ── */
+@media(max-width:900px){
+  .main-grid{grid-template-columns:1fr}
+  .bottom-grid{grid-template-columns:1fr}
+  .ia-tools-top{flex-direction:column}
+  .ia-chat-row{flex-direction:column}
+  .hero-grid{grid-template-columns:1fr}
+  .hero-streak{display:none}
+  .container{padding:24px 16px}
+  .header{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Carregando seu portal...</div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <a href="portal.html" class="header-logo">
+    <div class="header-logo-icon">⚗️</div>
+    <div class="header-logo-text">CN <span>Portal</span></div>
+  </a>
+  <div class="header-right">
+    <div class="header-xp" id="headerXP">⭐ 0 pts</div>
+    <div class="header-menu">
+      <div class="header-avatar" id="headerAvatar" onclick="toggleMenu()">?</div>
+      <div class="header-dropdown" id="headerDropdown">
+        <a href="portal.html">🏠 Dashboard</a>
+        <a href="teoria.html">🧠 Teoria</a>
+        <a href="revisao.html">📚 Revisão</a>
+        <a href="simulado.html" id="menuSimulado">🎯 Simulado</a>
+        <a href="ranking.html">🏆 Ranking</a>
+        <div class="sep"></div>
+        <a href="#" onclick="fazerLogout()">↩️ Sair</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="main">
+  <div class="container">
+
+    <!-- Hero boas-vindas -->
+    <div class="hero-welcome">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-badge" id="heroBadge">Turma —</div>
+          <h1 class="hero-name" id="heroName">Olá! 👋</h1>
+          <p class="hero-sub" id="heroSub">Carregando seu progresso...</p>
+          <div class="xp-section">
+            <div class="xp-header">
+              <span class="xp-label">Progresso geral</span>
+              <span class="xp-value" id="xpValue">0 / 0 questões</span>
+            </div>
+            <div class="xp-bar">
+              <div class="xp-fill" id="xpFill" style="width:0%"></div>
+            </div>
+            <div class="xp-levels">
+              <span class="xp-level-label">Início</span>
+              <span class="xp-level-label" id="xpPct">0%</span>
+              <span class="xp-level-label">Meta: gabaritar</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-streak">
+          <span class="streak-fire">🔥</span>
+          <span class="streak-num" id="streakNum">0</span>
+          <span class="streak-label">Streak máx.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards de disciplina -->
+    <div class="main-grid" id="discGrid">
+      <!-- Gerado por JS -->
+    </div>
+
+    <!-- Simulado -->
+    <div class="simulado-card" id="simuladoCard">
+      <div class="simulado-info">
+        <div class="simulado-title">🎯 Simulado Final</div>
+        <p class="simulado-desc">60 questões inéditas no formato da AV4, com textos-base interdisciplinares e cronometrado. Disponível após concluir as 3 revisões.</p>
+        <div class="simulado-req" id="simuladoReq">
+          <!-- Gerado por JS -->
+        </div>
+      </div>
+      <a href="simulado.html" class="btn-simulado inativo" id="btnSimulado">🔒 Bloqueado</a>
+    </div>
+
+    <!-- Tutor IA -->
+    <section class="ia-tools-card">
+      <div class="ia-tools-top">
+        <div>
+          <div class="ia-tools-title">🤖 Tutor IA</div>
+          <div class="ia-tools-sub">Diagnóstico, resumo personalizado, dúvidas e geração de itens da AV4</div>
+        </div>
+        <div class="ia-actions">
+          <a class="ia-action-btn primary" href="revisao.html#gerarExtra" style="text-decoration:none">Gerar item</a>
+          <button class="ia-action-btn primary" onclick="gerarDiagnosticoIA()">Diagnóstico</button>
+          <button class="ia-action-btn" onclick="gerarResumoIA()">Resumo</button>
+        </div>
+      </div>
+      <div class="ia-chat-row">
+        <input class="ia-chat-input" id="iaChatInput" type="text" placeholder="Tire uma dúvida de Ciências da Natureza" onkeydown="if(event.key === 'Enter') enviarChatIA()">
+        <button class="ia-action-btn primary" onclick="enviarChatIA()">Enviar</button>
+      </div>
+      <div class="ia-output" id="iaOutput"></div>
+    </section>
+
+    <!-- Grid inferior -->
+    <div class="bottom-grid">
+
+      <!-- Ranking mini -->
+      <div class="ranking-card">
+        <div class="card-title">🏆 Ranking</div>
+        <div class="card-sub">Sua posição na turma</div>
+        <div id="rankingList">
+          <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Carregando...</div>
+        </div>
+        <a href="ranking.html" style="display:block;text-align:center;margin-top:16px;font-size:13px;color:var(--azul-light);text-decoration:none">Ver ranking completo →</a>
+      </div>
+
+      <!-- Badges -->
+      <div class="badges-card">
+        <div class="card-title">🏅 Conquistas</div>
+        <div class="card-sub" id="badgesSub">0 de 16 badges conquistados</div>
+        <div class="badges-grid" id="badgesGrid">
+          <!-- Gerado por JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── CONFIG ──
+const sb = CN_CONFIG.createSupabaseClient();
+
+const DISCIPLINAS = {
+  bio:  { nome:'Biologia',  emoji:'🧬', classe:'bio',  cor:'#22c55e', total:40 },
+  quim: { nome:'Química',   emoji:'⚗️',  classe:'quim', cor:'#f59e0b', total:40 },
+  fis:  { nome:'Física',    emoji:'⚡', classe:'fis',  cor:'#3b82f6', total:40 },
+};
+
+const BADGES = [
+  {id:'primeiro_acesso',     emoji:'🚀', nome:'Primeiro Acesso'},
+  {id:'dna_ativo',           emoji:'🧬', nome:'DNA Ativo'},
+  {id:'reacao_em_cadeia',    emoji:'⚗️',  nome:'Reação em Cadeia'},
+  {id:'forca_total',         emoji:'⚡', nome:'Força Total'},
+  {id:'triforce',            emoji:'🔱', nome:'Triforce'},
+  {id:'simulado_desbloq',    emoji:'🔓', nome:'Simulado Desbloqueado'},
+  {id:'sobrevivente',        emoji:'🎯', nome:'Sobrevivente'},
+  {id:'streak_fogo',         emoji:'🔥', nome:'Streak de Fogo'},
+  {id:'perfeccionista',      emoji:'💎', nome:'Perfeccionista'},
+  {id:'mestre_genetica',     emoji:'🧬', nome:'Mestre da Genética'},
+  {id:'expert_eletroquimica',emoji:'⚗️',  nome:'Expert Eletroquímica'},
+  {id:'senhor_joule',        emoji:'⚡', nome:'Senhor do Joule'},
+  {id:'maratonista',         emoji:'⏱️', nome:'Maratonista'},
+  {id:'consistente',         emoji:'📅', nome:'Consistente'},
+  {id:'top3',                emoji:'🥇', nome:'Top 3'},
+  {id:'lenda_marista',       emoji:'👑', nome:'Lenda Marista'},
+];
+
+let userAtual = null;
+let badgesConquistados = new Set();
+let iaHistorico = [];
+
+const QUESTOES_MAP = {};
+
+// ── INIT ──
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+
+  const { data: perfil } = await sb
+    .from('perfis')
+    .select('*')
+    .eq('id', session.user.id)
+    .single();
+
+  if (!perfil || !perfil.ativo) { await sb.auth.signOut(); window.location.href = 'index.html'; return; }
+  if (!perfil.senha_trocada) { window.location.href = 'trocar-senha.html'; return; }
+  if (perfil.role === 'professor') { window.location.href = 'painel.html'; return; }
+
+  userAtual = { ...session.user, perfil };
+
+  // Badge primeiro acesso
+  await garantirBadge('primeiro_acesso');
+
+  // Iniciar rastreamento de sessão
+  await iniciarSessao('portal');
+
+  // Carregar dados
+  await Promise.all([
+    carregarHeader(),
+    carregarProgresso(),
+    carregarRanking(),
+    carregarBadges(),
+  ]);
+
+  document.getElementById('loadingScreen').style.display = 'none';
+}
+
+// ── HEADER ──
+async function carregarHeader() {
+  const p = userAtual.perfil;
+  const inicial = p.nome.split(' ')[0].charAt(0).toUpperCase();
+  document.getElementById('headerAvatar').textContent = inicial;
+
+  const { data: pts } = await sb
+    .from('pontuacao')
+    .select('pontos_total, streak_maximo')
+    .eq('aluno_id', userAtual.id)
+    .single();
+
+  const total = pts?.pontos_total || 0;
+  document.getElementById('headerXP').textContent = `⭐ ${total.toLocaleString('pt-BR')} pts`;
+
+  // Hero
+  document.getElementById('heroBadge').textContent = `Turma ${p.turma}`;
+  const primeiroNome = p.nome.split(' ')[0];
+  document.getElementById('heroName').textContent = `Olá, ${primeiroNome}! 👋`;
+  document.getElementById('streakNum').textContent = pts?.streak_maximo || 0;
+}
+
+// ── PROGRESSO ──
+async function carregarProgresso() {
+  const { data: progressos } = await sb
+    .from('progresso_revisao')
+    .select('*')
+    .eq('aluno_id', userAtual.id);
+
+  let totalRespondidas = 0;
+  let totalQuestoes = 120;
+  let todasConcluidas = true;
+  const grid = document.getElementById('discGrid');
+  grid.innerHTML = '';
+
+  for (const [key, disc] of Object.entries(DISCIPLINAS)) {
+    const prog = progressos?.find(p => p.disciplina === key) || {};
+    const acertos   = prog.acertos || 0;
+    const respondidas = prog.total_questoes || 0;
+    const concluida = prog.concluida || false;
+    const pct = disc.total > 0 ? Math.round((respondidas / disc.total) * 100) : 0;
+
+    totalRespondidas += respondidas;
+    if (!concluida) todasConcluidas = false;
+
+    let statusTexto = 'Não iniciada';
+    let statusClasse = 'nao-iniciada';
+    if (concluida) { statusTexto = '✓ Concluída'; statusClasse = 'concluida'; }
+    else if (respondidas > 0) { statusTexto = 'Em andamento'; statusClasse = 'em-andamento'; }
+
+    grid.innerHTML += `
+      <a href="revisao.html?disciplina=${key}" class="disc-card ${disc.classe}" style="text-decoration:none;color:inherit">
+        <div class="disc-header">
+          <span class="disc-emoji">${disc.emoji}</span>
+          <span class="disc-status ${statusClasse}">${statusTexto}</span>
+        </div>
+        <div class="disc-name">${disc.nome}</div>
+        <div class="disc-sub">${respondidas}/${disc.total} questões respondidas</div>
+        <div class="disc-progress">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)">
+            <span>Progresso</span><span style="color:${disc.cor}">${pct}%</span>
+          </div>
+          <div class="disc-progress-bar">
+            <div class="disc-progress-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
+        <div class="disc-stats">
+          <div class="disc-stat">Acertos: <strong>${acertos}</strong></div>
+          <div class="disc-stat">Taxa: <strong>${respondidas > 0 ? Math.round(acertos/respondidas*100) : 0}%</strong></div>
+        </div>
+      </a>
+    `;
+  }
+
+  // XP geral
+  const pctGeral = Math.round((totalRespondidas / totalQuestoes) * 100);
+  document.getElementById('xpValue').textContent = `${totalRespondidas} / ${totalQuestoes} questões`;
+  document.getElementById('xpFill').style.width = pctGeral + '%';
+  document.getElementById('xpPct').textContent = pctGeral + '%';
+  document.getElementById('heroSub').textContent =
+    pctGeral === 0 ? 'Comece pela revisão de qualquer disciplina!' :
+    pctGeral < 50  ? 'Boa progressão! Continue estudando.' :
+    pctGeral < 100 ? 'Você está quase lá! 💪' : '🎉 Todas as revisões concluídas!';
+
+  // Simulado
+  atualizarSimulado(progressos || [], todasConcluidas);
+}
+
+// ── SIMULADO ──
+function atualizarSimulado(progressos, desbloqueado) {
+  const req = document.getElementById('simuladoReq');
+  const btn = document.getElementById('btnSimulado');
+  const card = document.getElementById('simuladoCard');
+
+  const chips = ['bio','quim','fis'].map(key => {
+    const prog = progressos.find(p => p.disciplina === key);
+    const ok = prog?.concluida || false;
+    const disc = DISCIPLINAS[key];
+    return `<span class="req-chip ${ok ? 'ok' : ''}">${ok ? '✓' : '○'} ${disc.emoji} ${disc.nome}</span>`;
+  }).join('');
+
+  req.innerHTML = chips;
+
+  if (desbloqueado) {
+    btn.className = 'btn-simulado ativo';
+    btn.textContent = '🚀 Iniciar Simulado';
+    btn.href = 'simulado.html';
+    card.classList.remove('bloqueado');
+    garantirBadge('simulado_desbloq');
+  } else {
+    btn.className = 'btn-simulado inativo';
+    btn.textContent = '🔒 Bloqueado';
+    btn.href = '#';
+    btn.onclick = (e) => { e.preventDefault(); mostrarToast('⚠️', 'Conclua as 3 revisões para desbloquear o simulado!'); };
+    card.classList.add('bloqueado');
+  }
+}
+
+// ── RANKING ──
+async function carregarRanking() {
+  const { data: ranking } = await sb.rpc('get_ranking');
+  if (!ranking) return;
+
+  const minha = ranking.find(r => r.aluno_id === userAtual.id);
+  const top3  = ranking.slice(0, 3);
+  const list  = document.getElementById('rankingList');
+
+  let html = '';
+
+  // Top 3
+  top3.forEach(r => {
+    const pos = Number(r.posicao);
+    const classe = pos === 1 ? 'p1' : pos === 2 ? 'p2' : 'p3';
+    const icone  = pos === 1 ? '🥇' : pos === 2 ? '🥈' : '🥉';
+    const euMesmo = r.aluno_id === userAtual.id;
+    html += `
+      <div class="ranking-item">
+        <div class="ranking-pos ${classe}">${icone}</div>
+        <div class="ranking-nome ${euMesmo ? 'me' : ''}">${r.nome.split(' ')[0]} ${r.nome.split(' ').slice(-1)[0]}${euMesmo ? ' (você)' : ''}</div>
+        <div class="ranking-pts">${Number(r.pontos_total).toLocaleString('pt-BR')}</div>
+      </div>`;
+  });
+
+  // Minha posição se não estiver no top 3
+  if (minha && Number(minha.posicao) > 3) {
+    html += `<div class="ranking-sep">• • •</div>`;
+    html += `
+      <div class="ranking-item">
+        <div class="ranking-pos me">${minha.posicao}º</div>
+        <div class="ranking-nome me">${minha.nome.split(' ')[0]} (você)</div>
+        <div class="ranking-pts">${Number(minha.pontos_total).toLocaleString('pt-BR')}</div>
+      </div>`;
+  }
+
+  if (!minha || Number(minha.pontos_total) === 0) {
+    html += `<div class="ranking-sep" style="font-size:12px;color:var(--text-muted);padding:8px 0">Responda questões para entrar no ranking!</div>`;
+  }
+
+  list.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Nenhuma pontuação ainda</div>';
+
+  // Badge top 3
+  if (minha && Number(minha.posicao) <= 3) {
+    await garantirBadge('top3');
+  }
+}
+
+// ── BADGES ──
+async function carregarBadges() {
+  const { data: conquistados } = await sb
+    .from('badges_conquistados')
+    .select('badge_id')
+    .eq('aluno_id', userAtual.id);
+
+  badgesConquistados = new Set((conquistados || []).map(b => b.badge_id));
+
+  const grid = document.getElementById('badgesGrid');
+  grid.innerHTML = '';
+
+  BADGES.forEach(badge => {
+    const ok = badgesConquistados.has(badge.id);
+    grid.innerHTML += `
+      <div class="badge-item ${ok ? 'conquistado' : ''}" title="${badge.nome}">
+        <span class="badge-emoji">${badge.emoji}</span>
+        <span class="badge-nome">${badge.nome}</span>
+      </div>`;
+  });
+
+  const total = badgesConquistados.size;
+  document.getElementById('badgesSub').textContent = `${total} de 16 badges conquistados`;
+
+  // Badge lenda marista
+  if (total >= 15) await garantirBadge('lenda_marista');
+}
+
+// ── GARANTIR BADGE ──
+async function garantirBadge(badgeId) {
+  if (badgesConquistados.has(badgeId)) return;
+
+  const { error } = await sb
+    .from('badges_conquistados')
+    .insert({ aluno_id: userAtual.id, badge_id: badgeId })
+    .select()
+    .single();
+
+  if (!error) {
+    badgesConquistados.add(badgeId);
+    const badge = BADGES.find(b => b.id === badgeId);
+    if (badge) {
+      mostrarToast(badge.emoji, `Badge conquistado: ${badge.nome}!`, 'badge');
+    }
+  }
+}
+
+// ── SESSÃO ──
+async function iniciarSessao(pagina) {
+  try {
+    const { data } = await sb
+      .from('sessoes')
+      .insert({ aluno_id: userAtual.id, pagina })
+      .select('id')
+      .single();
+    if (data) sessionStorage.setItem('cn_sessao_id', data.id);
+  } catch(e) { /* silencioso */ }
+
+  window.addEventListener('beforeunload', async () => {
+    const id = sessionStorage.getItem('cn_sessao_id');
+    if (id) await sb.rpc('fechar_sessao', { p_sessao_id: id });
+  });
+}
+
+// ── TOAST ──
+function mostrarToast(emoji, msg, tipo = 'normal') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${tipo === 'badge' ? 'badge-toast' : ''}`;
+  toast.innerHTML = `<span style="font-size:20px">${emoji}</span><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'toastOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ── MENU ──
+function toggleMenu() {
+  document.getElementById('headerDropdown').classList.toggle('show');
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.header-menu')) {
+    document.getElementById('headerDropdown').classList.remove('show');
+  }
+});
+
+// ── LOGOUT ──
+async function fazerLogout() {
+  const id = sessionStorage.getItem('cn_sessao_id');
+  if (id) await sb.rpc('fechar_sessao', { p_sessao_id: id });
+  await sb.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+// ── TUTOR IA ──
+function montarMapaQuestoesIA() {
+  if (Object.keys(QUESTOES_MAP).length > 0) return;
+
+  [
+    ...(typeof QUESTOES_BIO  !== 'undefined' ? QUESTOES_BIO  : []),
+    ...(typeof QUESTOES_QUIM !== 'undefined' ? QUESTOES_QUIM : []),
+    ...(typeof QUESTOES_FIS  !== 'undefined' ? QUESTOES_FIS  : []),
+  ].forEach(q => {
+    QUESTOES_MAP[q.id] = q;
+  });
+}
+
+function textoIA(texto) {
+  const seguro = String(texto || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return seguro.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
+function setIAOutput(tipo, texto) {
+  const out = document.getElementById('iaOutput');
+  out.className = `ia-output show ${tipo || ''}`;
+  out.innerHTML = textoIA(texto);
+  if (window.MathJax?.typesetPromise) {
+    MathJax.typesetPromise([out]).catch(e => console.warn('MathJax IA:', e));
+  }
+}
+
+function garantirCSSVisualRenderer() {
+  if (document.getElementById('visualRendererCSS') || typeof VisualRenderer === 'undefined') return;
+  const style = document.createElement('style');
+  style.id = 'visualRendererCSS';
+  style.textContent = VisualRenderer.getCSSGlobal();
+  document.head.appendChild(style);
+}
+
+function montarVisuaisResumo(dados) {
+  const textoBase = JSON.stringify({
+    disciplinas: dados.disciplinas_fracas || [],
+    erros: dados.erros_detalhados || [],
+  }).toLowerCase();
+  const visuais = [];
+
+  if (textoBase.includes('física') || textoBase.includes('fis') || textoBase.includes('joule') || textoBase.includes('circuit')) {
+    visuais.push({
+      tipo: 'circuito_serie',
+      titulo: 'Circuito simples em série',
+      componentes: [
+        { tipo: 'bateria', label: 'V', valor: '12 V' },
+        { tipo: 'resistor', label: 'R_1', valor: '2 Ω' },
+        { tipo: 'resistor', label: 'R_2', valor: '4 Ω' },
+      ],
+    });
+    visuais.push({
+      tipo: 'tabela',
+      titulo: 'Roteiro de potência e energia',
+      cabecalho: ['Grandeza', 'Relação útil'],
+      linhas: [
+        ['Corrente', '\\(I = \\frac{Q}{\\Delta t}\\)'],
+        ['Potência elétrica', '\\(P = VI = \\frac{V^2}{R} = RI^2\\)'],
+        ['Energia elétrica', '\\(E = P\\Delta t = VQ\\)'],
+        ['Série', '\\(R_{eq} = R_1 + R_2 + \\cdots\\)'],
+      ],
+    });
+  }
+
+  if (textoBase.includes('química') || textoBase.includes('quim') || textoBase.includes('faraday') || textoBase.includes('equilíbrio')) {
+    visuais.push({
+      tipo: 'equacao_quimica',
+      equacao: 'aA + bB ⇌ cC + dD',
+      legenda: 'Em equilíbrio: \\(K_c = \\frac{[C]^c[D]^d}{[A]^a[B]^b}\\).',
+    });
+    visuais.push({
+      tipo: 'grafico_energia',
+      titulo: 'Energia de ativação e catálise',
+      reagentes: 25,
+      estado_transicao: 100,
+      produtos: 55,
+      com_catalisador: 65,
+      label_ea: 'Ea',
+      label_dh: 'ΔH',
+    });
+  }
+
+  if (textoBase.includes('biologia') || textoBase.includes('bio') || textoBase.includes('herança') || textoBase.includes('genética')) {
+    visuais.push({
+      tipo: 'heredograma',
+      titulo: 'Leitura de heredograma',
+      geracoes: [
+        { individuos: [{ sexo: 'M', afetado: false, label: 'I-1' }, { sexo: 'F', afetado: false, label: 'I-2' }], unioes: [{ pai: 0, mae: 1 }] },
+        { individuos: [{ sexo: 'M', afetado: true, label: 'II-1' }, { sexo: 'F', afetado: false, label: 'II-2' }, { sexo: 'M', afetado: false, label: 'II-3' }] },
+      ],
+    });
+  }
+
+  if (!visuais.length) {
+    visuais.push({
+      tipo: 'tabela',
+      titulo: 'Checklist de estudo',
+      cabecalho: ['Etapa', 'Ação'],
+      linhas: [
+        ['1', 'Identificar as grandezas e unidades do enunciado.'],
+        ['2', 'Escolher a relação matemática ou conceitual principal.'],
+        ['3', 'Resolver com unidades explícitas e conferir a ordem de grandeza.'],
+      ],
+    });
+  }
+
+  return visuais;
+}
+
+async function anexarVisuaisResumo(dados) {
+  const out = document.getElementById('iaOutput');
+  if (!out || typeof VisualRenderer === 'undefined') return;
+  garantirCSSVisualRenderer();
+  await VisualRenderer.init();
+  const html = montarVisuaisResumo(dados)
+    .map(v => VisualRenderer.renderElementoVisual(v))
+    .join('');
+  out.insertAdjacentHTML('beforeend', `<div class="resumo-visuais">${html}</div>`);
+  await VisualRenderer.renderMath(out);
+}
+
+function nomeDisciplina(key) {
+  return DISCIPLINAS[key]?.nome || key;
+}
+
+async function coletarDadosAlunoIA() {
+  montarMapaQuestoesIA();
+
+  const [{ data: respostas }, { data: progressos }] = await Promise.all([
+    sb.from('respostas')
+      .select('questao_id, disciplina, tipo, correta')
+      .eq('aluno_id', userAtual.id),
+    sb.from('progresso_revisao')
+      .select('disciplina, total_questoes, acertos')
+      .eq('aluno_id', userAtual.id),
+  ]);
+
+  const acertos_por_disciplina = {};
+  (progressos || []).forEach(p => {
+    const total = Number(p.total_questoes || 0);
+    acertos_por_disciplina[p.disciplina] = total > 0
+      ? Math.round((Number(p.acertos || 0) / total) * 100)
+      : 0;
+  });
+
+  ['bio','quim','fis'].forEach(d => {
+    if (acertos_por_disciplina[d] === undefined) acertos_por_disciplina[d] = 0;
+  });
+
+  const erros_por_tema = {};
+  const erros_detalhados = [];
+
+  (respostas || []).forEach(r => {
+    if (r.correta) return;
+    const q = QUESTOES_MAP[r.questao_id] || {};
+    const tema = q.tema || `${nomeDisciplina(r.disciplina)} — Tipo ${r.tipo}`;
+    erros_por_tema[tema] = (erros_por_tema[tema] || 0) + 1;
+    erros_detalhados.push({
+      tema,
+      conceito_errado: q.subtema || q.enunciado || `Erro em questão Tipo ${r.tipo} de ${nomeDisciplina(r.disciplina)}`,
+    });
+  });
+
+  if (Object.keys(erros_por_tema).length === 0) {
+    erros_por_tema['Revisão geral'] = 0;
+    erros_detalhados.push({
+      tema: 'Revisão geral',
+      conceito_errado: 'Ainda não há erros registrados suficientes; reforçar fórmulas, conceitos-chave e pegadinhas da AV4.',
+    });
+  }
+
+  const disciplinas_fracas = Object.entries(acertos_por_disciplina)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 2)
+    .map(([disc]) => nomeDisciplina(disc));
+
+  return {
+    nome_aluno: userAtual.perfil?.nome?.split(' ')[0] || 'Aluno',
+    erros_por_tema,
+    acertos_por_disciplina,
+    erros_detalhados,
+    disciplinas_fracas,
+  };
+}
+
+async function chamarGeminiIA(funcao, dados, campoResposta) {
+  const resp = await sb.functions.invoke('gemini', {
+    body: { funcao, dados }
+  });
+
+  if (resp.error) throw resp.error;
+  if (resp.data?.error) throw new Error(resp.data.detalhe || resp.data.error);
+
+  const texto = resp.data?.[campoResposta];
+  if (!texto) throw new Error(`Resposta da IA sem o campo ${campoResposta}.`);
+  return texto;
+}
+
+async function gerarDiagnosticoIA() {
+  setIAOutput('loading', 'Gerando diagnóstico...');
+  try {
+    const dados = await coletarDadosAlunoIA();
+    const relatorio = await chamarGeminiIA('diagnostico', {
+      nome_aluno: dados.nome_aluno,
+      erros_por_tema: dados.erros_por_tema,
+      acertos_por_disciplina: dados.acertos_por_disciplina,
+    }, 'relatorio');
+    setIAOutput('', relatorio);
+  } catch (e) {
+    console.error('Erro Diagnóstico IA:', e);
+    setIAOutput('erro', 'Diagnóstico IA indisponível no momento.');
+  }
+}
+
+async function gerarResumoIA() {
+  setIAOutput('loading', 'Gerando resumo personalizado...');
+  try {
+    const dados = await coletarDadosAlunoIA();
+    const resumo = await chamarGeminiIA('resumo', {
+      nome_aluno: dados.nome_aluno,
+      erros_detalhados: dados.erros_detalhados,
+      disciplinas_fracas: dados.disciplinas_fracas,
+    }, 'resumo');
+    setIAOutput('', resumo);
+    await anexarVisuaisResumo(dados);
+  } catch (e) {
+    console.error('Erro Resumo IA:', e);
+    setIAOutput('erro', 'Resumo IA indisponível no momento.');
+  }
+}
+
+async function enviarChatIA() {
+  const input = document.getElementById('iaChatInput');
+  const mensagem = input.value.trim();
+  if (!mensagem) return;
+
+  input.value = '';
+  setIAOutput('loading', 'Consultando tutor...');
+
+  try {
+    const resposta = await chamarGeminiIA('chat', {
+      mensagem,
+      historico: iaHistorico,
+      nome_aluno: userAtual.perfil?.nome?.split(' ')[0] || 'Aluno',
+    }, 'resposta');
+
+    iaHistorico.push({ role: 'user', content: mensagem });
+    iaHistorico.push({ role: 'model', content: resposta });
+    iaHistorico = iaHistorico.slice(-8);
+
+    setIAOutput('', resposta);
+  } catch (e) {
+    console.error('Erro Chat IA:', e);
+    setIAOutput('erro', 'Chat IA indisponível no momento.');
+  }
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>

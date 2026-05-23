@@ -1,0 +1,17 @@
+.DS_Store
+node_modules/
+
+# Backups locais podem conter dados pessoais de estudantes.
+backups/
+*.dump
+*.sql.gz
+
+# Ambiente local e estado interno do Supabase CLI.
+.env
+.env.*
+supabase/.temp/
+
+# Logs e artefatos temporarios.
+*.log
+tmp/
+dist/
