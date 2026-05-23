@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Diagnóstico — CN Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  body { font-family: monospace; background: #0a0a0a; color: #e0e0e0; padding: 32px; }
+  h2 { color: #c9a84c; margin-bottom: 24px; }
+  .test { margin: 12px 0; padding: 14px 18px; border-radius: 8px; border-left: 4px solid #333; }
+  .ok   { border-color: #22c55e; background: #0f2a1a; color: #86efac; }
+  .fail { border-color: #ef4444; background: #2a0f0f; color: #fca5a5; }
+  .info { border-color: #3b82f6; background: #0f1a2a; color: #93c5fd; }
+  .warn { border-color: #f59e0b; background: #2a1f0f; color: #fcd34d; }
+  pre  { margin-top: 8px; font-size: 12px; opacity: 0.8; white-space: pre-wrap; word-break: break-all; }
+  button {
+    margin: 8px 4px 0;
+    padding: 10px 20px;
+    background: #004d99;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 14px;
+  }
+  button:hover { background: #1a6abf; }
+  #results { margin-top: 24px; }
+</style>
+</head>
+<body>
+<h2>🔧 Diagnóstico de Conexão — CN Portal Marista</h2>
+<p style="color:#6b7a99; margin-bottom:20px;">
+  Esta página testa cada componente da conexão com o Supabase.<br>
+  Abra o <strong style="color:#c9a84c">Console do navegador (F12)</strong> para detalhes completos.
+</p>
+
+<button onclick="rodarDiagnostico()">▶ Rodar Diagnóstico Completo</button>
+<button onclick="limpar()">🗑 Limpar</button>
+
+<div id="results"></div>
+
+<script>
+// ── CONFIGURAÇÃO ──
+const URL = CN_CONFIG.supabase.url;
+const KEY = CN_CONFIG.supabase.anonKey;
+
+const results = document.getElementById('results');
+
+function log(tipo, titulo, detalhe = '') {
+  const div = document.createElement('div');
+  div.className = `test ${tipo}`;
+  const icone = { ok: '✅', fail: '❌', info: 'ℹ️', warn: '⚠️' }[tipo];
+  div.innerHTML = `<strong>${icone} ${titulo}</strong>${detalhe ? `<pre>${detalhe}</pre>` : ''}`;
+  results.appendChild(div);
+  console.log(`[${tipo.toUpperCase()}] ${titulo}`, detalhe || '');
+}
+
+function limpar() {
+  results.innerHTML = '';
+}
+
+async function rodarDiagnostico() {
+  limpar();
+  log('info', 'Iniciando diagnóstico...', `URL: ${URL}\nKEY: ${KEY.substring(0,30)}...`);
+
+  // ── TESTE 1: Formato da chave ──
+  if (KEY.startsWith('sb_publishable_')) {
+    log('warn', 'Formato de chave: sb_publishable_ (novo formato Supabase)',
+      'Este formato pode exigir configuração diferente. Vamos testar se funciona.');
+  } else if (KEY.startsWith('eyJ')) {
+    log('ok', 'Formato de chave: JWT (formato clássico)', 'Formato correto.');
+  } else {
+    log('fail', 'Formato de chave não reconhecido', KEY.substring(0, 40));
+  }
+
+  // ── TESTE 2: Inicializar cliente ──
+  let client;
+  try {
+    const { createClient } = supabase;
+    client = createClient(URL, KEY);
+    log('ok', 'Cliente Supabase inicializado com sucesso');
+  } catch(e) {
+    log('fail', 'Erro ao inicializar cliente Supabase', e.message);
+    return;
+  }
+
+  // ── TESTE 3: Conectividade básica (health check) ──
+  try {
+    const resp = await fetch(`${URL}/rest/v1/`, {
+      headers: {
+        'apikey': KEY,
+        'Authorization': `Bearer ${KEY}`
+      }
+    });
+    if (resp.ok || resp.status === 200) {
+      log('ok', `REST API acessível — Status ${resp.status}`);
+    } else {
+      const txt = await resp.text();
+      log('fail', `REST API retornou status ${resp.status}`, txt.substring(0,300));
+    }
+  } catch(e) {
+    log('fail', 'Erro de rede ao acessar REST API', e.message);
+  }
+
+  // ── TESTE 4: Auth — getSession ──
+  try {
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      log('fail', 'Erro ao obter sessão', error.message);
+    } else {
+      log('ok', 'Auth.getSession() funcionou', `Sessão ativa: ${data.session ? 'SIM' : 'NÃO (esperado para usuário deslogado)'}`);
+    }
+  } catch(e) {
+    log('fail', 'Exceção em Auth.getSession()', e.message);
+  }
+
+  // ── TESTE 5: Login com credencial de teste ──
+  log('info', 'Testando login com deyko.teixeira@maristabrasil.org...');
+  try {
+    const { data, error } = await client.auth.signInWithPassword({
+      email: 'deyko.teixeira@maristabrasil.org',
+      password: 'Marista@2026Professor'
+    });
+
+    if (error) {
+      log('fail', `Erro no login: ${error.message}`,
+        `Status: ${error.status || 'N/A'}\nCódigo: ${error.code || 'N/A'}\n\nMensagem completa: ${JSON.stringify(error, null, 2)}`);
+
+      // Diagnóstico específico por tipo de erro
+      if (error.message.includes('Invalid login credentials')) {
+        log('warn', 'Credenciais inválidas — o seed pode não ter sido executado ainda',
+          'Execute o arquivo 03_seed_v2.sql no SQL Editor do Supabase e tente novamente.');
+      }
+      if (error.status === 400) {
+        log('warn', 'Status 400 — problema na requisição à API Auth',
+          'Possível causa: a chave sb_publishable_ não está sendo aceita como anon key.\nVeja o Teste 6 abaixo.');
+      }
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        log('warn', 'Problema de rede ou CORS', 'Verifique se a URL do Supabase está correta.');
+      }
+    } else if (data?.user) {
+      log('ok', `Login bem-sucedido! Usuário: ${data.user.email}`);
+      // Logout imediato após teste
+      await client.auth.signOut();
+      log('info', 'Logout realizado (era apenas um teste)');
+    }
+  } catch(e) {
+    log('fail', 'Exceção durante tentativa de login', e.message + '\n' + e.stack);
+  }
+
+  // ── TESTE 6: Verificar a chave no painel Supabase ──
+  log('info', '─────────────────────────────────────────');
+  log('info', 'PRÓXIMO PASSO — Obter a chave correta no Supabase',
+    `1. Acesse: https://supabase.com/dashboard/project/uupwqztczuryouhpiblx/settings/api\n` +
+    `2. Procure por "Project API keys"\n` +
+    `3. Copie a chave chamada "anon" "public" (começa com eyJ...)\n` +
+    `4. Cole aqui no diagnóstico e no config.js`);
+
+  // ── TESTE 7: Verificar se o seed foi executado ──
+  log('info', '─────────────────────────────────────────');
+  log('info', 'Verificando se as tabelas existem...');
+  try {
+    const resp = await fetch(`${URL}/rest/v1/perfis?select=count&limit=1`, {
+      headers: {
+        'apikey': KEY,
+        'Authorization': `Bearer ${KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (resp.status === 200) {
+      log('ok', 'Tabela "perfis" existe e está acessível');
+    } else if (resp.status === 401 || resp.status === 403) {
+      log('warn', `Tabela existe mas retornou ${resp.status} — RLS ativo (normal para anon sem login)`);
+    } else if (resp.status === 404) {
+      log('fail', 'Tabela "perfis" não encontrada — execute o 01_schema.sql primeiro');
+    } else {
+      const txt = await resp.text();
+      log('warn', `Tabela retornou status ${resp.status}`, txt.substring(0,200));
+    }
+  } catch(e) {
+    log('fail', 'Erro ao verificar tabela', e.message);
+  }
+
+  log('info', '─────────────────────────────────────────');
+  log('info', 'Diagnóstico concluído. Verifique os resultados acima.');
+}
+</script>
+</body>
+</html>
