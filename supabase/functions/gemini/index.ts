@@ -213,9 +213,10 @@ REGRAS ABSOLUTAS:
    - Física/circuitos: use "circuito_serie" ou "grafico_xy".
    - Química/eletroquímica/equilíbrio: use "equacao_quimica", "tabela" ou "grafico_energia".
    O elemento deve ficar em "elementos_visuais" no topo da questão. Não duplique o mesmo elemento em "texto_base.elementos_visuais".
+   - REGRAS PARA TEXTOS NAS IMAGENS: Para evitar poluição visual, use APENAS incógnitas curtas (ex: "R1", "R2", "E") e seus valores nos campos "label" dos elementos visuais. Coloque o significado de cada incógnita (ex: "Sensor Cardíaco") no enunciado da questão ou no campo "legenda" / "titulo" da imagem. NUNCA escreva textos longos dentro dos gráficos ou circuitos.
 9. Tipos de elemento visual aceitos pelo site:
    - tabela: { "tipo":"tabela", "titulo":"...", "cabecalho":["..."], "linhas":[["..."]] }
-   - circuito_serie: { "tipo":"circuito_serie", "titulo":"...", "componentes":[{"tipo":"bateria","label":"Fonte","valor":"20 V"},{"tipo":"resistor","label":"R","valor":"100 \\Omega"}] }
+   - circuito_serie: { "tipo":"circuito_serie", "titulo":"...", "componentes":[{"tipo":"bateria","label":"V","valor":"20 V"},{"tipo":"resistor","label":"R1","valor":"100 \\Omega"}] }
    - heredograma: { "tipo":"heredograma", "titulo":"...", "geracoes":[{"individuos":[{"sexo":"M","afetado":false,"label":"I-1"},{"sexo":"F","afetado":false,"label":"I-2"}],"unioes":[{"pai":0,"mae":1}]},{"individuos":[{"sexo":"M","afetado":true,"label":"II-1"}]}] }
    - equacao_quimica: { "tipo":"equacao_quimica", "equacao":"Cu^{2+}_{(aq)} + 2e^- \\rightarrow Cu_{(s)}", "legenda":"Redução no cátodo" }
    - grafico_energia: { "tipo":"grafico_energia", "reagentes":0, "estado_transicao":80, "produtos":-30, "com_catalisador":35 }
