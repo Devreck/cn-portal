@@ -197,6 +197,7 @@ REGRAS ABSOLUTAS:
 3. Toda matemática deve ser em LaTeX profissional compatível com MathJax.
    - Em "linhas_latex" e "destaque_latex", use APENAS a expressão LaTeX, sem \\[ \\], sem $$.
    - Para várias linhas, prefira \\begin{aligned} ... \\end{aligned} ou \\begin{array} ... \\end{array}.
+   - PREVINA SOBREPOSIÇÃO DE PALAVRAS: Ao usar \\text{}, SEMPRE adicione espaço físico (\\ ) ou \\quad antes de números e variáveis. Exemplo: \\text{Resultado: } x = 2.
    - Use \\frac{}, \\cdot, \\Omega, \\text{}, \\mathrm{}, expoentes e unidades corretamente.
    - Em LaTeX, escreva vírgula decimal como {,}: 0{,}40, 18{,}0, 216{,}5.
    - Em LaTeX, escreva milhar com espaço fino: 18\\,000, não 18.000.

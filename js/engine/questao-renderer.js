@@ -350,13 +350,30 @@ const QuestaoRenderer = {
   htmlSteps(steps) {
     // Gera HTML dos steps com equações em align*/equation* para renderização profissional
     return steps.map((s, i) => {
-      // Renderizar LaTeX com \[ \] para display (compatível com align, equation*, etc)
+      // Limpa e prepara linhas_latex
       const latexLines = (s.linhas_latex || [])
-        .map(l => `<div class="step-latex-line">\\[${l}\\]</div>`)
+        .map(l => {
+          let clean = l.trim();
+          // Remove delimitadores residuais se a IA os enviou por engano
+          clean = clean.replace(/^\\\[|\\\]$/g, '').replace(/^\$\$|\$\$$/g, '').trim();
+          // Se já contém um display block que não aceita ser envolvido em \[, deixamos sem.
+          // Atenção: \begin{aligned} PRECISA do \[ \], mas \begin{align} e \begin{align*} NÃO!
+          if (
+            clean.startsWith('\\begin{align}') && !clean.startsWith('\\begin{aligned}') ||
+            clean.startsWith('\\begin{equation}')
+          ) {
+            return `<div class="step-latex-line">${clean}</div>`;
+          }
+          return `<div class="step-latex-line">\\[${clean}\\]</div>`;
+        })
         .join('');
-      const destaque = s.destaque_latex
-        ? `<div class="step-latex-destaque">\\[${s.destaque_latex}\\]</div>`
-        : '';
+
+      let destaque = '';
+      if (s.destaque_latex) {
+        let cleanDestaque = s.destaque_latex.trim();
+        cleanDestaque = cleanDestaque.replace(/^\\\[|\\\]$/g, '').replace(/^\$\$|\$\$$/g, '').trim();
+        destaque = `<div class="step-latex-destaque">\\[${cleanDestaque}\\]</div>`;
+      }
       return `
         <div class="step-item" id="step-item-${i}">
           <div class="step-header" onclick="QuestaoRenderer.toggleStep(this)">
