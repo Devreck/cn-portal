@@ -618,8 +618,8 @@ const QuestaoRenderer = {
     if (!this.estado.userId || typeof sb === 'undefined') return;
 
     try {
-      // 1. Salvar resposta individual (ignoreSilently se já existir — constraint única)
-      await sb.from('respostas').upsert({
+      // 1. Salvar resposta individual — retorna vazio se já existia (ignoreDuplicates)
+      const { data: novaResposta } = await sb.from('respostas').upsert({
         aluno_id:       this.estado.userId,
         questao_id:     qId,
         disciplina:     this.estado.disciplina,
@@ -627,7 +627,10 @@ const QuestaoRenderer = {
         correta,
         pontos_ganhos:  pontos,
         streak_momento: this.estado.streakAtual,
-      }, { onConflict: 'aluno_id,questao_id', ignoreDuplicates: true });
+      }, { onConflict: 'aluno_id,questao_id', ignoreDuplicates: true }).select('questao_id');
+
+      // Questão já foi respondida antes — não recontabilizar pontos
+      if (!novaResposta || novaResposta.length === 0) return;
 
       // 2. Atualizar progresso da disciplina
       const total     = this.estado.questoes.length;
@@ -658,7 +661,7 @@ const QuestaoRenderer = {
           pontos_total: novoTotal,
           streak_atual: this.estado.streakAtual,
           streak_maximo: novoStreak,
-          questoes_respondidas: sb.rpc ? undefined : respondidas,
+          questoes_respondidas: respondidas,
           questoes_corretas: acertos,
         })
         .eq('aluno_id', this.estado.userId);

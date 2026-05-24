@@ -219,12 +219,11 @@ REGRAS ABSOLUTAS:
 11. Preencha os campos "nivel_cognitivo", "habilidade" e "fonte_ids" corretamente.
     nivel_cognitivo segue: Basico (reconhecimento/memorização), Operacional (aplicação de procedimento), Global (análise/síntese interdisciplinar).
 12. CENÁRIOS PROIBIDOS — rejeite qualquer questão que contenha:
-    - Casais compostos por parentes biológicos (irmãos, primos, pai/filha, etc.) como casal reprodutor principal.
-    - Qualquer relação consanguínea implícita entre o casal que planeja filhos.
+    - Casais compostos por irmãos ou primos como parceiros reprodutores.
     - Personagens sem nome ou genericidade excessiva que tornem a situação implausível ("dois indivíduos AA").
     CORRETO: "uma mulher portadora casa-se com um homem normal" (sem parentesco entre eles).
-    CORRETO: mencionar um familiar como CONTEXTO genético ("seu irmão é hemofílico") sem que esse familiar seja o parceiro reprodutivo.
-    PROIBIDO: "dois irmãos biológicos planejam ter filhos", "um casal de primos", "pai e filha com a mesma condição se reproduzem".
+    CORRETO: mencionar familiares como CONTEXTO genético ("seu pai é portador", "a avó tinha daltonismo") sem que esse familiar seja o parceiro reprodutivo.
+    PROIBIDO: "dois irmãos planejam ter filhos", "um casal de primos".
 
 PROTOCOLO DE AUDITORIA INTERNA — execute silenciosamente antes de retornar o JSON:
 A. DADOS: Os dados fornecidos no enunciado são suficientes para chegar à resposta? Falta alguma constante, massa molar, unidade ou restrição de contorno?
