@@ -467,7 +467,7 @@ const QUESTOES_QUIM = [
 {
   id: 'quim_c_14', tipo: 'C', nivel: 'intermediario',
   tema: 'Perfil energético — ΔH e Ea',
-  enunciado: 'Em um gráfico de perfil energético de uma reação de oxirredução, os reagentes estão a 0 kJ/mol, o estado de transição está a 100 kJ/mol e os produtos estão a 30 kJ/mol. Quais são os valores de ΔH e da energia de ativação (Ea) no sentido direto?',
+  enunciado: 'Em um gráfico de perfil energético de uma reação de oxirredução, os reagentes estão a 0 kJ/mol, o estado de transição está a 100 kJ/mol e os produtos estão a −30 kJ/mol. Quais são os valores de ΔH e da energia de ativação (Ea) no sentido direto?',
   alternativas: {
     A: '+30 kJ/mol e 50 kJ/mol',
     B: '−30 kJ/mol e 50 kJ/mol',
@@ -476,7 +476,7 @@ const QUESTOES_QUIM = [
     E: '−50 kJ/mol e 20 kJ/mol'
   },
   gabarito: 'C',
-  explicacao: 'ΔH = H(produtos) − H(reagentes) = 30 − 0 = +30 kJ/mol... Espera — produtos (30) > reagentes (0): ΔH = +30 kJ/mol. Porém, a questão tem ΔH = produto − reagente = 30−0 = +30. Revisando a alternativa C: −30 kJ/mol. Isso indica produtos a −30. Corrigindo: reagentes = 0, ET = 100, produtos = −30. ΔH = −30 − 0 = −30 kJ/mol; Ea = 100 − 0 = 100 kJ/mol.',
+  explicacao: 'ΔH = H(produtos) − H(reagentes) = −30 − 0 = −30 kJ/mol (reação exotérmica). Ea = H(estado de transição) − H(reagentes) = 100 − 0 = 100 kJ/mol.',
   steps: [
     {
       titulo: 'Calcular a variação de entalpia ΔH',

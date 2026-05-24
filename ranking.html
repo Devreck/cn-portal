@@ -26,27 +26,103 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);lin
 .nav a{color:var(--text-muted);text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px}
 .nav a:hover{background:var(--surface3);color:var(--text)}
 .main{max-width:800px;margin:0 auto;padding:34px 20px 64px}
-.hero{padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px;text-align:center;}
+.hero{padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px;text-align:center}
 .eyebrow{color:var(--ouro);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 h1{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05;letter-spacing:0;margin-bottom:14px}
-.lead{max-width:880px;margin: 0 auto;color:var(--text-muted);font-size:17px}
+.lead{max-width:880px;margin:0 auto;color:var(--text-muted);font-size:17px}
 
-.ranking-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.ranking-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
 .ranking-item{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--border)}
 .ranking-item:last-child{border-bottom:none}
 .ranking-pos{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
-.ranking-pos.p1{background:rgba(201,168,76,0.15);color:var(--ouro); font-size: 20px;}
-.ranking-pos.p2{background:rgba(192,192,192,0.15);color:#c0c0c0; font-size: 20px;}
-.ranking-pos.p3{background:rgba(205,127,50,0.15);color:#cd7f32; font-size: 20px;}
+.ranking-pos.p1{background:rgba(201,168,76,0.15);color:var(--ouro);font-size:20px}
+.ranking-pos.p2{background:rgba(192,192,192,0.15);color:#c0c0c0;font-size:20px}
+.ranking-pos.p3{background:rgba(205,127,50,0.15);color:#cd7f32;font-size:20px}
 .ranking-pos.pn{background:var(--surface2);color:var(--text-muted)}
 .ranking-pos.me{background:rgba(0,77,153,0.2);color:var(--azul-light)}
-.ranking-nome{flex:1;font-size:16px;font-weight:500}
+.ranking-nome-wrap{flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.ranking-nome{font-size:16px;font-weight:500}
 .ranking-nome.me{color:var(--azul-light);font-weight:700}
-.ranking-pts{font-size:16px;font-weight:700;color:var(--ouro); background:rgba(201,168,76,0.1); padding: 4px 12px; border-radius: 100px;}
+.ranking-nome.clicavel{cursor:pointer;transition:color 0.15s}
+.ranking-nome.clicavel:hover{color:var(--ouro-light)}
+.ranking-pts{font-size:16px;font-weight:700;color:var(--ouro);background:rgba(201,168,76,0.1);padding:4px 12px;border-radius:100px;white-space:nowrap;flex-shrink:0}
 .ranking-sep{text-align:center;font-size:11px;color:var(--text-muted);padding:8px 0}
+
+/* Badge única pill no ranking */
+.badge-unica-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(168,85,247,0.08));
+  border:1px solid rgba(168,85,247,0.35);
+  color:#c084fc;
+  font-size:11px;font-weight:700;
+  padding:2px 9px;border-radius:100px;
+  white-space:nowrap;
+  cursor:default;
+}
+.badge-unica-pill .pill-emoji{font-size:13px}
+
+/* ── MODAL PERFIL ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(2,6,15,0.75);
+  backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity 0.2s
+}
+.modal-overlay.aberto{opacity:1;pointer-events:auto}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;width:100%;max-width:480px;
+  max-height:90vh;overflow-y:auto;padding:32px;
+  transform:translateY(12px);transition:transform 0.2s;
+}
+.modal-overlay.aberto .modal{transform:translateY(0)}
+.modal-close{
+  position:absolute;top:16px;right:20px;
+  background:none;border:none;color:var(--text-muted);
+  font-size:22px;cursor:pointer;line-height:1;padding:4px;
+  transition:color 0.15s
+}
+.modal-close:hover{color:var(--text)}
+.modal-header{position:relative;margin-bottom:24px}
+.modal-nome{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px}
+.modal-turma{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;color:var(--text-muted);padding:2px 10px}
+.modal-xp-total{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--ouro);line-height:1;margin:20px 0 4px}
+.modal-xp-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px}
+.modal-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.modal-stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);line-height:1}
+.modal-stat-val.verde{color:var(--green)}
+.modal-stat-val.ouro{color:var(--ouro)}
+.modal-stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
+.xp-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.xp-disc{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
+.xp-disc-val{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;line-height:1}
+.xp-disc-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}
+.xp-disc.bio .xp-disc-val{color:#22c55e}
+.xp-disc.quim .xp-disc-val{color:#f59e0b}
+.xp-disc.fis .xp-disc-val{color:#3b82f6}
+.xp-disc.sim .xp-disc-val{color:#a855f7}
+.modal-badges-row{display:flex;flex-wrap:wrap;gap:8px}
+.modal-badge-unica{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(168,85,247,0.06));
+  border:1px solid rgba(168,85,247,0.4);
+  border-radius:12px;padding:10px 14px;
+}
+.modal-badge-unica-emoji{font-size:24px}
+.modal-badge-unica-info{}
+.modal-badge-unica-nome{font-size:13px;font-weight:700;color:#c084fc;display:block}
+.modal-badge-unica-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+.modal-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+
 @media(max-width:860px){
   .header{padding:0 16px}
   .nav a{padding:7px 8px}
+  .xp-breakdown{grid-template-columns:repeat(2,1fr)}
+  .modal-stats-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -75,49 +151,192 @@ h1{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05
   </div>
 </main>
 
+<!-- Modal de Perfil -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModalSeFora(event)">
+  <div class="modal" id="modalPerfil">
+    <button class="modal-close" onclick="fecharModal()">✕</button>
+    <div id="modalConteudo"></div>
+  </div>
+</div>
+
 <script>
-  const sb = supabase.createClient(CN_CONFIG.supabase.url, CN_CONFIG.supabase.anonKey);
-  let userAtual = null;
+const sb = supabase.createClient(CN_CONFIG.supabase.url, CN_CONFIG.supabase.anonKey);
+let userAtual = null;
+let rankingData = [];
+let uniqueBadgesMap = {};
 
-  async function init() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      window.location.href = 'index.html';
-      return;
-    }
-    userAtual = session.user;
-    carregarRankingFull();
+// Badge catalog loaded from DB at runtime
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  userAtual = session.user;
+  await carregarRankingFull();
+}
+
+async function carregarRankingFull() {
+  const [rankingResult, uniqueResult] = await Promise.all([
+    sb.rpc('get_ranking'),
+    sb.from('badges_unicas').select('aluno_id, badge_id, nome, emoji, imagem_url, descricao')
+  ]);
+
+  const list = document.getElementById('rankingList');
+
+  if (rankingResult.error || !rankingResult.data || rankingResult.data.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:14px;padding:40px">Nenhuma pontuação registrada ainda.</div>';
+    return;
   }
 
-  async function carregarRankingFull() {
-    const { data: ranking, error } = await sb.rpc('get_ranking');
-    const list = document.getElementById('rankingList');
-    
-    if (error || !ranking || ranking.length === 0) {
-      list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:14px;padding:40px">Nenhuma pontuação registrada ainda.</div>';
-      return;
-    }
+  // Build unique badges map: aluno_id → [badge objects]
+  uniqueBadgesMap = {};
+  (uniqueResult.data || []).forEach(ub => {
+    if (!uniqueBadgesMap[ub.aluno_id]) uniqueBadgesMap[ub.aluno_id] = [];
+    uniqueBadgesMap[ub.aluno_id].push(ub);
+  });
 
-    let html = '';
-    
-    ranking.forEach((r, index) => {
-      const pos = Number(r.posicao) || (index + 1); // get_ranking returns 'posicao'
-      const classe = pos === 1 ? 'p1' : pos === 2 ? 'p2' : pos === 3 ? 'p3' : 'pn';
-      const icone = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
-      const euMesmo = r.aluno_id === userAtual.id;
-      
-      html += `
-        <div class="ranking-item">
-          <div class="ranking-pos ${classe} ${euMesmo && pos > 3 ? 'me' : ''}">${icone}</div>
-          <div class="ranking-nome ${euMesmo ? 'me' : ''}">${r.nome}${euMesmo ? ' (você)' : ''}</div>
-          <div class="ranking-pts">${Number(r.pontos_total).toLocaleString('pt-BR')} XP</div>
-        </div>`;
-    });
+  rankingData = rankingResult.data;
 
-    list.innerHTML = html;
-  }
+  let html = '';
+  rankingData.forEach((r, index) => {
+    const pos = Number(r.posicao) || (index + 1);
+    const classe = pos === 1 ? 'p1' : pos === 2 ? 'p2' : pos === 3 ? 'p3' : 'pn';
+    const icone = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
+    const euMesmo = r.aluno_id === userAtual.id;
 
-  init();
+    const myUniques = uniqueBadgesMap[r.aluno_id] || [];
+    const pills = myUniques.map(b => {
+      const icon = b.imagem_url
+        ? `<img src="${b.imagem_url}" style="width:14px;height:14px;border-radius:3px;object-fit:cover">`
+        : `<span class="pill-emoji">${b.emoji || '✨'}</span>`;
+      return `<span class="badge-unica-pill" title="${b.descricao || ''}">${icon}${b.nome || b.badge_id}</span>`;
+    }).join('');
+
+    html += `
+      <div class="ranking-item">
+        <div class="ranking-pos ${classe}${euMesmo && pos > 3 ? ' me' : ''}">${icone}</div>
+        <div class="ranking-nome-wrap">
+          <span class="ranking-nome clicavel${euMesmo ? ' me' : ''}" data-index="${index}">${r.nome}${euMesmo ? ' (você)' : ''}</span>
+          ${pills}
+        </div>
+        <div class="ranking-pts">${Number(r.pontos_total).toLocaleString('pt-BR')} XP</div>
+      </div>`;
+  });
+
+  list.innerHTML = html;
+
+  list.addEventListener('click', e => {
+    const target = e.target.closest('.clicavel[data-index]');
+    if (!target || target.dataset.index === undefined) return;
+    abrirPerfil(Number(target.dataset.index));
+  });
+}
+
+function abrirPerfil(index) {
+  const r = rankingData[index];
+  if (!r) return;
+
+  const euMesmo = r.aluno_id === userAtual.id;
+  const pos = Number(r.posicao) || (index + 1);
+  const posLabel = pos === 1 ? '🥇 1º lugar' : pos === 2 ? '🥈 2º lugar' : pos === 3 ? '🥉 3º lugar' : `${pos}º lugar`;
+
+  const respondidas = Number(r.questoes_respondidas) || 0;
+  const corretas = Number(r.questoes_corretas) || 0;
+  const pct = respondidas > 0 ? Math.round((corretas / respondidas) * 100) : 0;
+
+  const myUniques = uniqueBadgesMap[r.aluno_id] || [];
+  const uniquesBadgesHtml = myUniques.length > 0 ? `
+    <hr class="modal-divider">
+    <div class="modal-section">
+      <div class="modal-section-title">✨ Badges Únicas</div>
+      <div class="modal-badges-row">
+        ${myUniques.map(b => {
+          const icon = b.imagem_url
+            ? `<img src="${b.imagem_url}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">`
+            : `<span class="modal-badge-unica-emoji">${b.emoji || '✨'}</span>`;
+          return `
+            <div class="modal-badge-unica">
+              ${icon}
+              <div class="modal-badge-unica-info">
+                <span class="modal-badge-unica-nome">${b.nome || b.badge_id}</span>
+                <span class="modal-badge-unica-desc">${b.descricao || ''}</span>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
+  document.getElementById('modalConteudo').innerHTML = `
+    <div class="modal-header">
+      <div class="modal-nome">${r.nome}${euMesmo ? ' <span style="font-size:13px;color:var(--azul-light)">(você)</span>' : ''}</div>
+      <span class="modal-turma">${r.turma || '—'}</span>
+      <span style="margin-left:8px;font-size:12px;color:var(--text-muted)">${posLabel}</span>
+    </div>
+
+    <div class="modal-xp-total">${Number(r.pontos_total).toLocaleString('pt-BR')}</div>
+    <div class="modal-xp-label">XP Total</div>
+
+    <div class="xp-breakdown">
+      <div class="xp-disc bio">
+        <div class="xp-disc-val">${Number(r.pontos_bio || 0).toLocaleString('pt-BR')}</div>
+        <div class="xp-disc-label">🧬 Bio</div>
+      </div>
+      <div class="xp-disc quim">
+        <div class="xp-disc-val">${Number(r.pontos_quim || 0).toLocaleString('pt-BR')}</div>
+        <div class="xp-disc-label">⚗️ Quím</div>
+      </div>
+      <div class="xp-disc fis">
+        <div class="xp-disc-val">${Number(r.pontos_fis || 0).toLocaleString('pt-BR')}</div>
+        <div class="xp-disc-label">⚡ Fís</div>
+      </div>
+      <div class="xp-disc sim">
+        <div class="xp-disc-val">${Number(r.pontos_simulado || 0).toLocaleString('pt-BR')}</div>
+        <div class="xp-disc-label">🎯 Simu</div>
+      </div>
+    </div>
+
+    <div class="modal-stats-grid">
+      <div class="modal-stat">
+        <div class="modal-stat-val">${respondidas}</div>
+        <div class="modal-stat-label">Questões respondidas</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val verde">${corretas}</div>
+        <div class="modal-stat-label">Questões corretas</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val ${pct >= 70 ? 'verde' : pct >= 50 ? 'ouro' : ''}">${pct}%</div>
+        <div class="modal-stat-label">Taxa de acerto</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val ouro">${Number(r.streak_maximo) || 0}🔥</div>
+        <div class="modal-stat-label">Streak máximo</div>
+      </div>
+    </div>
+
+    <div class="modal-section" style="margin-top:16px">
+      <div class="modal-section-title">Badges conquistadas</div>
+      <div style="font-size:22px;font-weight:800;color:var(--text)">${Number(r.badges_count) || 0} <span style="font-size:13px;font-weight:400;color:var(--text-muted)">de 16</span></div>
+    </div>
+
+    ${uniquesBadgesHtml}
+  `;
+
+  document.getElementById('modalOverlay').classList.add('aberto');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharModal() {
+  document.getElementById('modalOverlay').classList.remove('aberto');
+  document.body.style.overflow = '';
+}
+
+function fecharModalSeFora(e) {
+  if (e.target === document.getElementById('modalOverlay')) fecharModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+init();
 </script>
 </body>
 </html>

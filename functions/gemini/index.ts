@@ -60,41 +60,30 @@ const SCHEMA_QUESTAO_C = `
   "subtema": "string",
   "tipo": "C",
   "nivel": "basico|intermediario|avancado",
+  "nivel_cognitivo": "Basico|Operacional|Global",
+  "habilidade": "string — habilidade específica avaliada (ex: 'Aplicar P=I²R para calcular potência')",
+  "fonte_ids": ["string — ID e seção do documento da Base de Dados utilizado (ex: 'ID 12, Seção: Efeito Joule')"],
   "interdisciplinar_com": ["bio","quim","fis"],
   "texto_base": {
-    "paragrafos": ["string"],
-    "elementos_visuais": [
-      {
-        "tipo": "tabela|grafico_energia|grafico_xy|circuito_serie|heredograma|equacao_quimica",
-        "titulo": "string",
-        "cabecalho": ["string"],
-        "linhas": [["string"]],
-        "componentes": [{"tipo":"bateria|resistor|lamp","label":"string","valor":"string"}],
-        "geracoes": [{"individuos":[{"sexo":"M|F","afetado":false,"portador":false,"label":"string","genotipo":"string"}],"unioes":[{"pai":0,"mae":1}]}],
-        "equacao": "string",
-        "condicoes": "string",
-        "legenda": "string",
-        "series": [{"label":"string","pontos":[{"x":0,"y":0}]}]
-      }
-    ]
+    "paragrafos": ["string"]
   },
   "elementos_visuais": [],
   "enunciado": "string",
   "alternativas": {
     "A": "string",
-    "B": "string", 
+    "B": "string",
     "C": "string",
     "D": "string",
     "E": "string"
   },
   "gabarito": "A|B|C|D|E",
-  "explicacao": "string explicando cada alternativa",
+  "explicacao": "string — resolução completa passo a passo + para cada distrator incorreto: qual equívoco de raciocínio o torna atraente e por que está errado",
   "steps": [
     {
       "titulo": "string",
       "hint": "string curto",
       "explicacao": "string detalhado",
-      "linhas_latex": ["expressão LaTeX"],
+      "linhas_latex": ["expressão LaTeX pura, sem delimitadores"],
       "destaque_latex": "expressão LaTeX do resultado final"
     }
   ]
@@ -107,20 +96,17 @@ const SCHEMA_QUESTAO_A = `
   "subtema": "string",
   "tipo": "A",
   "nivel": "basico|intermediario|avancado",
+  "nivel_cognitivo": "Basico|Operacional|Global",
+  "habilidade": "string — habilidade específica avaliada",
+  "fonte_ids": ["string — ID e seção do documento da Base de Dados utilizado"],
   "interdisciplinar_com": ["bio","quim","fis"],
   "texto_base": {
-    "paragrafos": ["string"],
-    "elementos_visuais": [
-      {
-        "tipo": "tabela|grafico_energia|grafico_xy|circuito_serie|heredograma|equacao_quimica",
-        "titulo": "string"
-      }
-    ]
+    "paragrafos": ["string"]
   },
   "elementos_visuais": [],
   "enunciado": "string — afirmativa completa para julgar CERTO ou ERRADO",
   "gabarito": "CERTO|ERRADO",
-  "explicacao": "string explicando por que é certo ou errado, destacando a pegadinha conceitual"
+  "explicacao": "string — explica por que é CERTO ou ERRADO, identifica a pegadinha conceitual e justifica por que a interpretação oposta é incorreta"
 }`;
 
 // ── HANDLER PRINCIPAL ───────────────────────────────────────
@@ -182,6 +168,9 @@ async function gerarQuestao(key: string, dados: any) {
   const prompt = `
 ${CONTEXTO_PROVA}
 
+IDENTIDADE E PADRÃO DE INFALIBILIDADE:
+Você atua como a síntese de três especialistas seniores — Biólogo, Físico e Químico — com domínio absoluto de design instrucional e psicometria. Tolerância zero para imprecisões conceituais, erros de cálculo, aproximações não informadas ou ambiguidades lógicas.
+
 TAREFA: Gere UMA questão de ${contextoTipo} sobre "${tema}" (${disciplina}),
 integrando com ${disciplinas_integradas?.join(' e ') || 'outra disciplina'}.
 Nível: ${nivel}.
@@ -192,43 +181,53 @@ ${chunksBase.length
   : 'Nenhum chunk fornecido nesta chamada.'}
 
 REGRAS ABSOLUTAS:
-1. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois
-2. Todos os valores numéricos devem ser cientificamente corretos
+1. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.
+2. Todos os valores numéricos devem ser cientificamente exatos. Cálculos que resultem em dízimas periódicas ou exijam aproximações não informadas no enunciado são proibidos.
 3. Toda matemática deve ser em LaTeX profissional compatível com MathJax.
    - Em "linhas_latex" e "destaque_latex", use APENAS a expressão LaTeX, sem \\[ \\], sem $$.
    - Para várias linhas, prefira \\begin{aligned} ... \\end{aligned} ou \\begin{array} ... \\end{array}.
    - Use \\frac{}, \\cdot, \\Omega, \\text{}, \\mathrm{}, expoentes e unidades corretamente.
-   - Em LaTeX, escreva vírgula decimal como {,}: 0{,}40, 18{,}0, 216{,}5.
-   - Em LaTeX, escreva milhar com espaço fino: 18\\,000, não 18.000.
+   - Em LaTeX, vírgula decimal como {,}: 0{,}40, 18{,}0. Milhar com espaço fino: 18\\,000.
    - NÃO escreva contas em texto corrido como "P = V²/R = 400/100".
-   - NÃO use Unicode matemático como ², Ω solto, Δ solto quando estiver em fórmula; use LaTeX.
-4. O contexto deve ser tecnológico e contemporâneo (nunca exemplos genéricos)
+   - NÃO use Unicode matemático (², Ω, Δ soltos) em fórmulas; use LaTeX.
+4. O contexto deve ser tecnológico e contemporâneo (nunca exemplos genéricos).
 5. Para Tipo C: os steps devem resolver o cálculo passo a passo como um professor.
    Cada step deve ter explicação textual curta e uma ou mais "linhas_latex" bem formatadas.
-6. Para Tipo A: a pegadinha deve ser sutil — uma palavra errada muda tudo
-7. Não use nenhuma questão da prova original AV4
-8. Gere pelo menos 1 elemento visual quando o tema permitir:
-   - Biologia/genética: use "heredograma" ou "tabela".
-   - Física/circuitos: use "circuito_serie" ou "grafico_xy".
-   - Química/eletroquímica/equilíbrio: use "equacao_quimica", "tabela" ou "grafico_energia".
-   O elemento deve ficar em "elementos_visuais" no topo da questão. Não duplique o mesmo elemento em "texto_base.elementos_visuais".
-9. Tipos de elemento visual aceitos pelo site:
+   O campo "explicacao" deve incluir a resolução completa E a justificativa do erro específico de cada distrator.
+6. Para Tipo A: a pegadinha deve ser sutil — uma única palavra ou negação muda tudo.
+   O campo "explicacao" deve identificar a pegadinha e explicar por que a interpretação oposta falha.
+7. Não reproduza questões, dados, figuras ou alternativas da prova original AV4.
+8. ELEMENTOS VISUAIS — inclua SOMENTE quando o elemento for INDISPENSÁVEL para responder à questão:
+   INCLUA quando: a questão exige leitura direta de valores de um gráfico/tabela de dados, um circuito com componentes nomeados e rotulados que o aluno deve interpretar, um heredograma com indivíduos específicos, uma equação química referenciada diretamente no enunciado.
+   NÃO INCLUA quando: todos os dados já estão completos no texto do enunciado e o visual apenas os repete; ou quando a tabela mostraria passos da resolução (entregando o gabarito).
+   EM CASO DE DÚVIDA: não inclua.
+   Se incluir, use apenas "elementos_visuais" no nível raiz. Deixe "texto_base" com apenas "paragrafos".
+   Formatos aceitos:
    - tabela: { "tipo":"tabela", "titulo":"...", "cabecalho":["..."], "linhas":[["..."]] }
    - circuito_serie: { "tipo":"circuito_serie", "titulo":"...", "componentes":[{"tipo":"bateria","label":"Fonte","valor":"20 V"},{"tipo":"resistor","label":"R","valor":"100 \\Omega"}] }
    - heredograma: { "tipo":"heredograma", "titulo":"...", "geracoes":[{"individuos":[{"sexo":"M","afetado":false,"label":"I-1"},{"sexo":"F","afetado":false,"label":"I-2"}],"unioes":[{"pai":0,"mae":1}]},{"individuos":[{"sexo":"M","afetado":true,"label":"II-1"}]}] }
    - equacao_quimica: { "tipo":"equacao_quimica", "equacao":"Cu^{2+}_{(aq)} + 2e^- \\rightarrow Cu_{(s)}", "legenda":"Redução no cátodo" }
    - grafico_energia: { "tipo":"grafico_energia", "reagentes":0, "estado_transicao":80, "produtos":-30, "com_catalisador":35 }
    - grafico_xy: { "tipo":"grafico_xy", "eixo_x":"t (s)", "eixo_y":"Q (C)", "series":[{"label":"Q = It","pontos":[{"x":0,"y":0},{"x":10,"y":50}]}] }
-10. Se o tema for "Circuitos Elétricos", restrinja a circuitos simples com resistores em série:
-   - resistência equivalente: R_{eq} = R_1 + R_2 + ...
-   - Lei de Ohm: V = R \\cdot I
-   - potência simples: P = V \\cdot I, P = R \\cdot I^2 ou P = \\frac{V^2}{R}
-   Não gere associação em paralelo, malhas complexas, Leis de Kirchhoff avançadas ou capacitores.
+9. Se o tema for "Circuitos Elétricos", restrinja a circuitos simples com resistores em série:
+   R_eq = R_1 + R_2 + ...; V = R·I; P = V·I, P = R·I², P = V²/R.
+   Não gere paralelo, malhas complexas, Kirchhoff avançado ou capacitores.
+10. INTERDISCIPLINARIDADE NATURAL: a conexão entre disciplinas deve ser narrativa e real.
+    PROIBIDO: usar resultado numérico de genética/biologia como dado direto de cálculo físico/químico.
+    EXEMPLOS ACEITÁVEIS: biossensor (física+bio), eletroforese diagnóstica (física+bio+quim), bateria de veículo em estudo populacional (física+quim).
+    EXEMPLOS PROIBIDOS: "use a probabilidade genotípica como tempo t", "gametas recombinantes = corrente em mA".
+11. Preencha os campos "nivel_cognitivo", "habilidade" e "fonte_ids" corretamente.
+    nivel_cognitivo segue: Basico (reconhecimento/memorização), Operacional (aplicação de procedimento), Global (análise/síntese interdisciplinar).
+
+PROTOCOLO DE AUDITORIA INTERNA — execute silenciosamente antes de retornar o JSON:
+A. DADOS: Os dados fornecidos no enunciado são suficientes para chegar à resposta? Falta alguma constante, massa molar, unidade ou restrição de contorno?
+B. PROVA REAL: Resolva a questão de forma independente. O resultado coincide com exatamente UMA alternativa? As unidades estão consistentes do início ao fim?
+C. DISTRATORES: Cada distrator representa um erro real e comum de raciocínio? Algum distrator pode ser considerado parcialmente correto sob interpretação alternativa válida? (Se sim: reescreva o distrator.)
+D. FONTE E NÍVEL: A questão respeita o nível do Ensino Médio e não exige conhecimento de nível superior não fornecido no texto-base?
+→ Se qualquer etapa falhar: descarte o item e reescreva do zero antes de retornar.
 
 SCHEMA OBRIGATÓRIO:
 ${schema}
-
-Valide internamente: os cálculos estão corretos? O LaTeX é válido?
 `;
 
   let ultimoResultado = '';

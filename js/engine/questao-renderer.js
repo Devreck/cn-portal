@@ -165,7 +165,9 @@ const QuestaoRenderer = {
         .eq('disciplina', this.estado.disciplina);
 
       if (data) {
+        // Guard against duplicate rows: count each questao_id only once
         data.forEach(r => {
+          if (this.estado.respostas[r.questao_id]) return;
           this.estado.respostas[r.questao_id] = {
             correta: r.correta,
             pontos: r.pontos_ganhos,
@@ -239,7 +241,7 @@ const QuestaoRenderer = {
             <span class="q-num">Questão ${num}</span>
             <span class="q-tipo tipo-c">Múltipla Escolha</span>
             <span class="q-nivel">${nivelEmoji[q.nivel]} ${q.nivel.charAt(0).toUpperCase()+q.nivel.slice(1)}</span>
-            <span class="q-tema">${q.tema}</span>
+            <span class="q-tema" id="tema-${q.id}" style="display:none">${q.tema}</span>
           </div>
           <div class="questao-pts" id="pts-${q.id}"></div>
         </div>
@@ -285,7 +287,7 @@ const QuestaoRenderer = {
             <span class="q-num">Questão ${num}</span>
             <span class="q-tipo tipo-a">Certo / Errado</span>
             <span class="q-nivel">${nivelEmoji[q.nivel]} ${q.nivel.charAt(0).toUpperCase()+q.nivel.slice(1)}</span>
-            <span class="q-tema">${q.tema}</span>
+            <span class="q-tema" id="tema-${q.id}" style="display:none">${q.tema}</span>
           </div>
           <div class="questao-pts" id="pts-${q.id}"></div>
         </div>
@@ -474,6 +476,10 @@ const QuestaoRenderer = {
     if (!fb || !msg) return;
     fb.style.display = 'block';
 
+    // Revelar o tema após responder
+    const temaEl = document.getElementById(`tema-${qId}`);
+    if (temaEl) temaEl.style.display = '';
+
     if (correta) {
       msg.className = 'feedback-msg acerto';
       msg.innerHTML = `✅ <strong>Correto!</strong> +${pontos} pontos${this.estado.streakAtual >= 5 ? ` 🔥 Streak ×${this.estado.streakAtual}` : ''}`;
@@ -553,6 +559,10 @@ const QuestaoRenderer = {
 
     fb.style.display = 'block';
 
+    // Revelar o tema (questão já respondida em sessão anterior)
+    const temaEl = document.getElementById(`tema-${qId}`);
+    if (temaEl) temaEl.style.display = '';
+
     if (q.tipo === 'C') {
       ['A','B','C','D','E'].forEach(l => {
         const btn = document.getElementById(`alt-${qId}-${l}`);
@@ -590,8 +600,8 @@ const QuestaoRenderer = {
     if (!this.estado.userId || typeof sb === 'undefined') return;
 
     try {
-      // 1. Salvar resposta individual
-      await sb.from('respostas').insert({
+      // 1. Salvar resposta individual (ignoreSilently se já existir — constraint única)
+      await sb.from('respostas').upsert({
         aluno_id:       this.estado.userId,
         questao_id:     qId,
         disciplina:     this.estado.disciplina,
@@ -599,7 +609,7 @@ const QuestaoRenderer = {
         correta,
         pontos_ganhos:  pontos,
         streak_momento: this.estado.streakAtual,
-      });
+      }, { onConflict: 'aluno_id,questao_id', ignoreDuplicates: true });
 
       // 2. Atualizar progresso da disciplina
       const total     = this.estado.questoes.length;

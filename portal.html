@@ -102,10 +102,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .hero-name{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
 .hero-sub{font-size:14px;color:var(--text-muted)}
-.hero-streak{text-align:center}
-.streak-num{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:var(--ouro);line-height:1;display:block}
-.streak-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
-.streak-fire{font-size:24px}
+.hero-streak{display:flex;align-items:center;gap:12px}
+.streak-item{text-align:center}
+.streak-divider{width:1px;height:40px;background:rgba(255,255,255,0.12)}
+.streak-num{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--ouro);line-height:1;display:block}
+.streak-num-max{font-size:28px;color:var(--text-muted)}
+.streak-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+.streak-fire{font-size:20px}
 
 /* ── XP BAR ── */
 .xp-section{margin-top:20px}
@@ -280,7 +283,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .badge-emoji{font-size:22px}
 .badge-nome{font-size:9px;text-align:center;color:var(--text-muted);line-height:1.2}
 .badge-item.conquistado .badge-nome{color:var(--ouro)}
+.badge-como{font-size:8px;text-align:center;color:var(--text-muted);line-height:1.3;display:none;margin-top:2px}
+.badge-item:hover .badge-como{display:block}
 .badge-new{position:absolute;top:-4px;right:-4px;background:var(--green);width:10px;height:10px;border-radius:50%;border:2px solid var(--surface)}
+
+/* ── BADGES ÚNICAS ── */
+.badges-unicas-card{
+  background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03));
+  border:1px solid rgba(168,85,247,0.3);
+  border-radius:16px;padding:24px;margin-bottom:24px;
+}
+.badges-unicas-card .card-title{color:#c084fc}
+.badges-unicas-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}
+.badge-unica-item{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);
+  border-radius:14px;padding:14px 18px;
+}
+.badge-unica-emoji{font-size:30px}
+.badge-unica-nome{font-size:14px;font-weight:700;color:#c084fc}
+.badge-unica-desc{font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:2px}
 
 /* ── TOAST NOTIFICAÇÃO ── */
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
@@ -366,9 +388,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           </div>
         </div>
         <div class="hero-streak">
-          <span class="streak-fire">🔥</span>
-          <span class="streak-num" id="streakNum">0</span>
-          <span class="streak-label">Streak máx.</span>
+          <div class="streak-item streak-atual-item">
+            <span class="streak-fire">🔥</span>
+            <span class="streak-num" id="streakAtualNum">0</span>
+            <span class="streak-label">Streak atual</span>
+          </div>
+          <div class="streak-divider"></div>
+          <div class="streak-item">
+            <span class="streak-fire" style="opacity:0.5">⭐</span>
+            <span class="streak-num streak-num-max" id="streakMaxNum">0</span>
+            <span class="streak-label">Streak máx.</span>
+          </div>
         </div>
       </div>
     </div>
@@ -433,6 +463,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
 
     </div>
+
+    <!-- Badges Únicas (visível apenas se o aluno tiver) -->
+    <div class="badges-unicas-card" id="badgesUnicasCard" style="display:none">
+      <div class="card-title">✨ Badges Únicas</div>
+      <div class="card-sub">Conquistas especiais atribuídas por tarefas ocultas</div>
+      <div class="badges-unicas-row" id="badgesUnicasRow">
+        <!-- Gerado por JS -->
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -449,23 +489,25 @@ const DISCIPLINAS = {
   fis:  { nome:'Física',    emoji:'⚡', classe:'fis',  cor:'#3b82f6', total:40 },
 };
 
+// Badge catalog loaded from DB at runtime
+
 const BADGES = [
-  {id:'primeiro_acesso',     emoji:'🚀', nome:'Primeiro Acesso'},
-  {id:'dna_ativo',           emoji:'🧬', nome:'DNA Ativo'},
-  {id:'reacao_em_cadeia',    emoji:'⚗️',  nome:'Reação em Cadeia'},
-  {id:'forca_total',         emoji:'⚡', nome:'Força Total'},
-  {id:'triforce',            emoji:'🔱', nome:'Triforce'},
-  {id:'simulado_desbloq',    emoji:'🔓', nome:'Simulado Desbloqueado'},
-  {id:'sobrevivente',        emoji:'🎯', nome:'Sobrevivente'},
-  {id:'streak_fogo',         emoji:'🔥', nome:'Streak de Fogo'},
-  {id:'perfeccionista',      emoji:'💎', nome:'Perfeccionista'},
-  {id:'mestre_genetica',     emoji:'🧬', nome:'Mestre da Genética'},
-  {id:'expert_eletroquimica',emoji:'⚗️',  nome:'Expert Eletroquímica'},
-  {id:'senhor_joule',        emoji:'⚡', nome:'Senhor do Joule'},
-  {id:'maratonista',         emoji:'⏱️', nome:'Maratonista'},
-  {id:'consistente',         emoji:'📅', nome:'Consistente'},
-  {id:'top3',                emoji:'🥇', nome:'Top 3'},
-  {id:'lenda_marista',       emoji:'👑', nome:'Lenda Marista'},
+  {id:'primeiro_acesso',     emoji:'🚀', nome:'Primeiro Acesso',        como:'Acesse o portal pela primeira vez.'},
+  {id:'dna_ativo',           emoji:'🧬', nome:'DNA Ativo',              como:'Complete toda a revisão de Biologia.'},
+  {id:'reacao_em_cadeia',    emoji:'⚗️',  nome:'Reação em Cadeia',       como:'Complete toda a revisão de Química.'},
+  {id:'forca_total',         emoji:'⚡', nome:'Força Total',            como:'Complete toda a revisão de Física.'},
+  {id:'triforce',            emoji:'🔱', nome:'Triforce',               como:'Complete as revisões das 3 disciplinas.'},
+  {id:'simulado_desbloq',    emoji:'🔓', nome:'Simulado Desbloqueado',  como:'Desbloqueie o simulado completando as revisões.'},
+  {id:'sobrevivente',        emoji:'🎯', nome:'Sobrevivente',           como:'Conclua o simulado completo.'},
+  {id:'streak_fogo',         emoji:'🔥', nome:'Streak de Fogo',         como:'Acerte 10 questões seguidas em qualquer revisão.'},
+  {id:'perfeccionista',      emoji:'💎', nome:'Perfeccionista',         como:'Acerte 100% de uma disciplina.'},
+  {id:'mestre_genetica',     emoji:'🧬', nome:'Mestre da Genética',     como:'Acerte 100% da revisão de Biologia.'},
+  {id:'expert_eletroquimica',emoji:'⚗️',  nome:'Expert Eletroquímica',   como:'Acerte 100% da revisão de Química.'},
+  {id:'senhor_joule',        emoji:'⚡', nome:'Senhor do Joule',        como:'Acerte 100% da revisão de Física.'},
+  {id:'maratonista',         emoji:'⏱️', nome:'Maratonista',            como:'Complete uma revisão em menos de 30 minutos.'},
+  {id:'consistente',         emoji:'📅', nome:'Consistente',            como:'Acesse o portal em 3 dias diferentes.'},
+  {id:'top3',                emoji:'🥇', nome:'Top 3',                  como:'Entre no top 3 do ranking geral.'},
+  {id:'lenda_marista',       emoji:'👑', nome:'Lenda Marista',          como:'Conquiste todos os outros badges.'},
 ];
 
 let userAtual = null;
@@ -503,6 +545,7 @@ async function init() {
     carregarProgresso(),
     carregarRanking(),
     carregarBadges(),
+    carregarBadgesUnicas(),
   ]);
 
   document.getElementById('loadingScreen').style.display = 'none';
@@ -516,7 +559,7 @@ async function carregarHeader() {
 
   const { data: pts } = await sb
     .from('pontuacao')
-    .select('pontos_total, streak_maximo')
+    .select('pontos_total, streak_atual, streak_maximo')
     .eq('aluno_id', userAtual.id)
     .single();
 
@@ -527,7 +570,8 @@ async function carregarHeader() {
   document.getElementById('heroBadge').textContent = `Turma ${p.turma}`;
   const primeiroNome = p.nome.split(' ')[0];
   document.getElementById('heroName').textContent = `Olá, ${primeiroNome}! 👋`;
-  document.getElementById('streakNum').textContent = pts?.streak_maximo || 0;
+  document.getElementById('streakAtualNum').textContent = pts?.streak_atual || 0;
+  document.getElementById('streakMaxNum').textContent = pts?.streak_maximo || 0;
 }
 
 // ── PROGRESSO ──
@@ -689,9 +733,10 @@ async function carregarBadges() {
   BADGES.forEach(badge => {
     const ok = badgesConquistados.has(badge.id);
     grid.innerHTML += `
-      <div class="badge-item ${ok ? 'conquistado' : ''}" title="${badge.nome}">
+      <div class="badge-item ${ok ? 'conquistado' : ''}" title="${badge.como}">
         <span class="badge-emoji">${badge.emoji}</span>
         <span class="badge-nome">${badge.nome}</span>
+        <span class="badge-como">${badge.como}</span>
       </div>`;
   });
 
@@ -700,6 +745,33 @@ async function carregarBadges() {
 
   // Badge lenda marista
   if (total >= 15) await garantirBadge('lenda_marista');
+}
+
+// ── BADGES ÚNICAS ──
+async function carregarBadgesUnicas() {
+  const { data } = await sb
+    .from('badges_unicas')
+    .select('badge_id, nome, emoji, imagem_url, descricao')
+    .eq('aluno_id', userAtual.id);
+
+  if (!data || data.length === 0) return;
+
+  const row = document.getElementById('badgesUnicasRow');
+  row.innerHTML = data.map(b => {
+    const icon = b.imagem_url
+      ? `<img src="${b.imagem_url}" style="width:48px;height:48px;border-radius:10px;object-fit:cover" alt="${b.nome}">`
+      : `<span class="badge-unica-emoji">${b.emoji || '✨'}</span>`;
+    return `
+      <div class="badge-unica-item">
+        ${icon}
+        <div>
+          <div class="badge-unica-nome">${b.nome || b.badge_id}</div>
+          <div class="badge-unica-desc">${b.descricao || ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('badgesUnicasCard').style.display = 'block';
 }
 
 // ── GARANTIR BADGE ──

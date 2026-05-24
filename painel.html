@@ -182,6 +182,32 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .alerta-ok {background:var(--green-bg);border:1px solid rgba(34,197,94,0.2);color:#86efac}
 .alerta-err{background:var(--red-bg);border:1px solid rgba(239,68,68,0.2);color:#fca5a5}
 
+/* ── BADGES ÚNICAS ── */
+.badge-form{background:var(--surface2);border:1px solid rgba(168,85,247,0.2);border-radius:14px;padding:24px;margin-bottom:24px}
+.badge-form-title{font-family:Syne,sans-serif;font-size:15px;font-weight:700;color:#c084fc;margin-bottom:4px}
+.badge-form-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px}
+.badge-form-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.badge-form-full{grid-column:1/-1}
+.badge-form .form-field textarea{width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;resize:vertical;min-height:70px;transition:border-color 0.2s}
+.badge-form .form-field textarea:focus{border-color:rgba(168,85,247,0.5)}
+.badge-form .form-field input:focus,.badge-form .form-field select:focus{border-color:rgba(168,85,247,0.5)}
+.btn-atribuir{padding:11px 24px;border-radius:8px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-family:Syne,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px}
+.btn-atribuir:hover{filter:brightness(1.1)}
+.btn-atribuir:disabled{opacity:0.5;cursor:not-allowed}
+.badge-preview-box{display:flex;align-items:center;gap:12px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:12px 16px;margin-top:16px}
+.badge-preview-img{width:48px;height:48px;border-radius:10px;object-fit:cover;background:rgba(168,85,247,0.15);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.badge-unica-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.badge-unica-row:last-child{border-bottom:none}
+.badge-unica-icon{width:44px;height:44px;border-radius:10px;background:rgba(168,85,247,0.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden}
+.badge-unica-icon img{width:100%;height:100%;object-fit:cover}
+.badge-unica-info{flex:1;min-width:0}
+.badge-unica-nome-p{font-size:14px;font-weight:700;color:#c084fc}
+.badge-unica-aluno{font-size:12px;color:var(--text-muted)}
+.badge-unica-desc-p{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge-unica-data{font-size:11px;color:var(--text-muted);white-space:nowrap}
+.btn-excluir-badge{padding:6px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+.btn-excluir-badge:hover{background:rgba(239,68,68,0.15)}
+
 @media(max-width:1100px){
   .stats-grid{grid-template-columns:repeat(2,1fr)}
   .two-col{grid-template-columns:1fr}
@@ -293,6 +319,11 @@ mjx-container[display="false"] {
     </button>
     <button class="nav-item" onclick="irPara('banco-aprovado')">
       <span class="nav-icon">✅</span> Banco Aprovado
+    </button>
+
+    <div class="nav-section">Reconhecimento</div>
+    <button class="nav-item" onclick="irPara('badges-unicas')">
+      <span class="nav-icon">✨</span> Badges Únicas
     </button>
 
     <div class="nav-section">Dados</div>
@@ -690,6 +721,71 @@ mjx-container[display="false"] {
     </div>
   </div>
 
+  <!-- ── BADGES ÚNICAS ── -->
+  <div class="page" id="page-badges-unicas">
+    <div class="page-title">✨ Badges Únicas</div>
+    <div class="page-sub">Atribua conquistas especiais e personalizadas para alunos</div>
+
+    <!-- Formulário de atribuição -->
+    <div class="badge-form">
+      <div class="badge-form-title">Nova Badge Única</div>
+      <div class="badge-form-sub">Preencha os dados e escolha o aluno. A badge aparecerá no ranking e no perfil do estudante.</div>
+
+      <div class="badge-form-grid">
+        <div class="form-field badge-form-full">
+          <label>Aluno</label>
+          <select id="badgeAlunoSelect">
+            <option value="">Selecione o aluno...</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Nome da Badge</label>
+          <input type="text" id="badgeNome" placeholder="Ex: The First" maxlength="40" oninput="atualizarPreviewBadge()">
+        </div>
+
+        <div class="form-field">
+          <label>Emoji</label>
+          <input type="text" id="badgeEmoji" placeholder="✨" maxlength="4" value="✨" oninput="atualizarPreviewBadge()">
+        </div>
+
+        <div class="form-field badge-form-full">
+          <label>Descrição</label>
+          <textarea id="badgeDescricao" placeholder="Descreva como essa badge foi conquistada..." oninput="atualizarPreviewBadge()"></textarea>
+        </div>
+
+        <div class="form-field badge-form-full">
+          <label>Imagem (opcional — substitui o emoji)</label>
+          <input type="file" id="badgeImagem" accept="image/*" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;width:100%" onchange="atualizarPreviewBadge()">
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="badge-preview-box" id="badgePreviewBox">
+        <div class="badge-preview-img" id="badgePreviewIcon">✨</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#c084fc" id="badgePreviewNome">Nome da badge</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="badgePreviewDesc">Descrição aparece aqui</div>
+        </div>
+      </div>
+
+      <div id="alertaBadge" class="alerta"></div>
+
+      <div style="margin-top:16px">
+        <button class="btn-atribuir" id="btnAtribuir" onclick="atribuirBadgeUnica()">✨ Atribuir Badge</button>
+      </div>
+    </div>
+
+    <!-- Lista de badges já atribuídas -->
+    <div class="panel">
+      <div class="panel-title">Badges atribuídas</div>
+      <div class="panel-sub">Todas as conquistas únicas ativas na plataforma</div>
+      <div id="badgesUnicasList">
+        <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:24px">Carregando...</div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -840,6 +936,7 @@ function htmlPreviewQuestaoPainel(q, opcoes = {}) {
       carregarBancoPendentes(),
       carregarBancoAprovado(),
       carregarSolicitacoesSimulado(),
+      carregarBadgesUnicasPainel(),
     ]);
 
     const paginaInicial = window.location.hash?.replace('#', '');
@@ -1664,6 +1761,169 @@ function abrirQuestaoModal(qId) {
 function fecharModalQuestao(e) {
   if (e.target === document.getElementById('modalQuestao')) {
     document.getElementById('modalQuestao').classList.remove('show');
+  }
+}
+
+// ── BADGES ÚNICAS ──
+async function carregarBadgesUnicasPainel() {
+  try {
+    // Popula o select de alunos (usa dadosAlunos se já carregado)
+    popularSelectAlunos();
+
+    const { data, error } = await sb
+      .from('badges_unicas')
+      .select('id, aluno_id, badge_id, nome, emoji, imagem_url, descricao, concedido_em, perfis!badges_unicas_aluno_id_fkey(nome, turma)')
+      .order('concedido_em', { ascending: false });
+
+    const lista = document.getElementById('badgesUnicasList');
+    if (error || !data || data.length === 0) {
+      lista.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:24px">Nenhuma badge única atribuída ainda.</div>';
+      return;
+    }
+
+    lista.innerHTML = data.map(b => {
+      const icon = b.imagem_url
+        ? `<div class="badge-unica-icon"><img src="${b.imagem_url}" alt="${b.nome}"></div>`
+        : `<div class="badge-unica-icon">${b.emoji || '✨'}</div>`;
+      const alunoNome = b.perfis?.nome || '—';
+      const turmaBadge = b.perfis?.turma ? `<span class="turma-badge" style="margin-left:6px">${b.perfis.turma}</span>` : '';
+      const data_fmt = b.concedido_em ? new Date(b.concedido_em).toLocaleDateString('pt-BR') : '—';
+      return `
+        <div class="badge-unica-row">
+          ${icon}
+          <div class="badge-unica-info">
+            <div class="badge-unica-nome-p">${b.nome || b.badge_id}</div>
+            <div class="badge-unica-aluno">${alunoNome}${turmaBadge}</div>
+            <div class="badge-unica-desc-p">${b.descricao || ''}</div>
+          </div>
+          <div class="badge-unica-data">${data_fmt}</div>
+          <button class="btn-excluir-badge" onclick="excluirBadgeUnica('${b.id}', '${b.imagem_url || ''}')">Remover</button>
+        </div>`;
+    }).join('');
+  } catch(e) { console.warn('Erro badges únicas:', e); }
+}
+
+function popularSelectAlunos() {
+  const sel = document.getElementById('badgeAlunoSelect');
+  if (!sel || sel.options.length > 1) return; // já populado
+  const sorted = [...dadosAlunos].sort((a, b) =>
+    (a.turma || '').localeCompare(b.turma || '') || a.nome.localeCompare(b.nome));
+  sorted.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = `${a.nome} — ${a.turma || '?'}`;
+    sel.appendChild(opt);
+  });
+}
+
+function atualizarPreviewBadge() {
+  const nome = document.getElementById('badgeNome').value || 'Nome da badge';
+  const emoji = document.getElementById('badgeEmoji').value || '✨';
+  const desc = document.getElementById('badgeDescricao').value || 'Descrição aparece aqui';
+  const file = document.getElementById('badgeImagem').files?.[0];
+
+  document.getElementById('badgePreviewNome').textContent = nome;
+  document.getElementById('badgePreviewDesc').textContent = desc;
+
+  const iconEl = document.getElementById('badgePreviewIcon');
+  if (file) {
+    const url = URL.createObjectURL(file);
+    iconEl.innerHTML = `<img src="${url}" style="width:48px;height:48px;border-radius:10px;object-fit:cover">`;
+  } else {
+    iconEl.textContent = emoji;
+  }
+}
+
+async function atribuirBadgeUnica() {
+  const alunoId   = document.getElementById('badgeAlunoSelect').value;
+  const nome      = document.getElementById('badgeNome').value.trim();
+  const emoji     = document.getElementById('badgeEmoji').value.trim() || '✨';
+  const descricao = document.getElementById('badgeDescricao').value.trim();
+  const imagemFile = document.getElementById('badgeImagem').files?.[0];
+
+  const alerta = document.getElementById('alertaBadge');
+  const btn    = document.getElementById('btnAtribuir');
+
+  const mostrarAlerta = (msg, tipo) => {
+    alerta.className = `alerta ${tipo} show`;
+    alerta.textContent = msg;
+    setTimeout(() => alerta.classList.remove('show'), 4000);
+  };
+
+  if (!alunoId)   return mostrarAlerta('Selecione um aluno.', 'alerta-err');
+  if (!nome)      return mostrarAlerta('Informe o nome da badge.', 'alerta-err');
+  if (!descricao) return mostrarAlerta('Escreva uma descrição.', 'alerta-err');
+
+  btn.disabled = true;
+  btn.textContent = 'Atribuindo...';
+
+  try {
+    const badge_id = nome.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+    let imagem_url = null;
+    if (imagemFile) {
+      const ext = imagemFile.name.split('.').pop();
+      const path = `${alunoId}/${badge_id}_${Date.now()}.${ext}`;
+      const { error: upErr } = await sb.storage.from('badge-images').upload(path, imagemFile, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = sb.storage.from('badge-images').getPublicUrl(path);
+      imagem_url = urlData.publicUrl;
+    }
+
+    const { error } = await sb.from('badges_unicas').insert({
+      aluno_id: alunoId,
+      badge_id,
+      nome,
+      emoji,
+      imagem_url,
+      descricao,
+      concedido_por: userAtual.id,
+    });
+
+    if (error) {
+      if (error.code === '23505') {
+        mostrarAlerta('Este aluno já possui uma badge com esse nome.', 'alerta-err');
+      } else {
+        throw error;
+      }
+    } else {
+      mostrarAlerta('Badge atribuída com sucesso!', 'alerta-ok');
+      document.getElementById('badgeAlunoSelect').value = '';
+      document.getElementById('badgeNome').value = '';
+      document.getElementById('badgeEmoji').value = '✨';
+      document.getElementById('badgeDescricao').value = '';
+      document.getElementById('badgeImagem').value = '';
+      document.getElementById('badgePreviewNome').textContent = 'Nome da badge';
+      document.getElementById('badgePreviewDesc').textContent = 'Descrição aparece aqui';
+      document.getElementById('badgePreviewIcon').textContent = '✨';
+      await carregarBadgesUnicasPainel();
+    }
+  } catch(e) {
+    mostrarAlerta('Erro ao atribuir badge: ' + (e.message || e), 'alerta-err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Atribuir Badge';
+  }
+}
+
+async function excluirBadgeUnica(badgeRowId, imagemUrl) {
+  if (!confirm('Remover esta badge do aluno? Essa ação não pode ser desfeita.')) return;
+  try {
+    if (imagemUrl) {
+      // Extrai o path do URL público para deletar do storage
+      const url = new URL(imagemUrl);
+      const pathParts = url.pathname.split('/badge-images/');
+      if (pathParts[1]) {
+        await sb.storage.from('badge-images').remove([pathParts[1]]);
+      }
+    }
+    const { error } = await sb.from('badges_unicas').delete().eq('id', badgeRowId);
+    if (error) throw error;
+    await carregarBadgesUnicasPainel();
+  } catch(e) {
+    alert('Erro ao remover badge: ' + (e.message || e));
   }
 }
 

@@ -565,16 +565,6 @@ Com base nesse contexto, avalie os itens sobre pleiotropia, equilíbrio químico
   id: 'sim_t10_03', texto_base: 10, tipo: 'C', nivel: 'avancado',
   disciplinas: ['bio'],
   tema: 'Probabilidade genética independente',
-  elementos_visuais: [{
-    tipo: 'tabela',
-    titulo: 'Probabilidades independentes',
-    cabecalho: ['Evento', 'Probabilidade'],
-    linhas: [
-      ['Hemoglobinopatia recessiva: \\(Aa\\times Aa\\rightarrow aa\\)', '\\(\\frac{1}{4}\\)'],
-      ['Grupo O: \\(I^Ai\\times I^Bi\\rightarrow ii\\)', '\\(\\frac{1}{4}\\)'],
-      ['Eventos independentes', '\\(\\frac{1}{4}\\cdot\\frac{1}{4}\\)'],
-    ],
-  }],
   enunciado: 'Um casal é heterozigoto para uma hemoglobinopatia autossômica recessiva \\((Aa\\times Aa)\\). Além disso, o genótipo ABO do casal é \\(I^Ai\\times I^Bi\\). Admitindo segregação independente, assinale a probabilidade de nascer uma criança \\(aa\\) e do grupo sanguíneo O.',
   alternativas: { A:'1/4', B:'1/8', C:'1/16', D:'3/16', E:'9/16' },
   gabarito: 'C',
@@ -585,14 +575,6 @@ Com base nesse contexto, avalie os itens sobre pleiotropia, equilíbrio químico
   id: 'sim_t10_04', texto_base: 10, tipo: 'C', nivel: 'intermediario',
   disciplinas: ['fis'],
   tema: 'Aquecimento resistivo em capilar',
-  elementos_visuais: [{
-    tipo: 'circuito_serie',
-    titulo: 'Resistor ôhmico do aquecedor',
-    componentes: [
-      { tipo: 'bateria', label: 'V', valor: '16 V' },
-      { tipo: 'resistor', label: 'R', valor: '8 Ω' },
-    ],
-  }],
   enunciado: 'Um resistor ôhmico de \\(8{,}0\\ \\Omega\\) é submetido a \\(16\\ \\mathrm{V}\\) durante \\(5{,}0\\ \\mathrm{min}\\). Assinale a energia elétrica dissipada em calor no intervalo.',
   alternativas: { A:'960 J', B:'2400 J', C:'4800 J', D:'9600 J', E:'19200 J' },
   gabarito: 'D',
