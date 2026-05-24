@@ -456,7 +456,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <!-- Badges -->
       <div class="badges-card">
         <div class="card-title">🏅 Conquistas</div>
-        <div class="card-sub" id="badgesSub">0 de 16 badges conquistados</div>
+        <div class="card-sub" id="badgesSub">0 badges conquistadas</div>
         <div class="badges-grid" id="badgesGrid">
           <!-- Gerado por JS -->
         </div>
@@ -741,7 +741,7 @@ async function carregarBadges() {
   });
 
   const total = badgesConquistados.size;
-  document.getElementById('badgesSub').textContent = `${total} de 16 badges conquistados`;
+  document.getElementById('badgesSub').textContent = `${total} badge${total !== 1 ? 's' : ''} conquistada${total !== 1 ? 's' : ''}`;
 
   // Badge lenda marista
   if (total >= 15) await garantirBadge('lenda_marista');
