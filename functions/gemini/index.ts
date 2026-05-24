@@ -155,10 +155,44 @@ Deno.serve(async (req) => {
   }
 });
 
+// ── BUSCA NA INTERNET (Google Search grounding) ─────────────
+async function buscarContextoInternet(key: string, disciplina: string, tema: string): Promise<string> {
+  const disc = { bio: 'Biologia', quim: 'Química', fis: 'Física', inter: 'Ciências da Natureza' }[disciplina] || disciplina;
+  const prompt = `Forneça contexto científico preciso e atual sobre o tema "${tema}" (${disc}, Ensino Médio brasileiro) para elaborar questões de vestibular. Inclua:
+1. Fórmulas e equações principais com grandezas e unidades
+2. Valores numéricos típicos usados em problemas (ex: tensões, massas molares, constantes relevantes)
+3. Dois ou três exemplos de aplicações tecnológicas contemporâneas com dados reais
+4. Uma ou duas pegadinhas conceituais comuns neste tema
+Seja factualmente rigoroso. Máximo 600 palavras em português.`;
+
+  try {
+    // Tentar Gemini 2.0 com grounding
+    const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1000 },
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    return texto ? `\n\nCONTEXTO VERIFICADO NA INTERNET:\n${texto}` : '';
+  } catch {
+    // Grounding não disponível neste modelo — ignorar silenciosamente
+    return '';
+  }
+}
+
 // ── FUNÇÃO 1: GERAR QUESTÃO ─────────────────────────────────
 async function gerarQuestao(key: string, dados: any) {
   const { disciplina, tema, tipo, nivel, disciplinas_integradas, contexto_chunks = [] } = dados;
-  const chunksBase = await buscarChunksConhecimento(disciplina, tema, contexto_chunks);
+  const [chunksBase, contextoInternet] = await Promise.all([
+    buscarChunksConhecimento(disciplina, tema, contexto_chunks),
+    buscarContextoInternet(key, disciplina, tema),
+  ]);
 
   const schema = tipo === 'C' ? SCHEMA_QUESTAO_C : SCHEMA_QUESTAO_A;
   const contextoTipo = tipo === 'C'
@@ -175,10 +209,23 @@ TAREFA: Gere UMA questão de ${contextoTipo} sobre "${tema}" (${disciplina}),
 integrando com ${disciplinas_integradas?.join(' e ') || 'outra disciplina'}.
 Nível: ${nivel}.
 
+REQUISITO DE AUTOSSUFICIÊNCIA — OBRIGATÓRIO:
+Esta questão deve ser completamente independente e autocontida. O estudante NÃO pode precisar de contexto externo, aulas anteriores ou outras questões para respondê-la. Tudo que é necessário — enunciado, dados numéricos, contexto narrativo, grandezas, unidades — deve estar presente dentro da própria questão.
+
+Para questões Tipo C com cálculo:
+- Liste EXPLICITAMENTE no enunciado: todas as grandezas numéricas (tensão, corrente, resistência, tempo, massa, concentração, temperatura, constantes — o que se aplicar ao tema)
+- Nunca escreva "dados fornecidos acima" ou "conforme o texto" sem fornecer os dados
+- Cada alternativa deve ser numericamente distinta com pelo menos 2 algarismos significativos de diferença
+
+Para questões com heredograma:
+- O heredograma deve ser autoexplicativo com legendas
+- A questão não deve perguntar APENAS "qual é o padrão?" — deve pedir cálculo de probabilidade, identificação de genótipos, ou análise de casos específicos, COM os dados necessários no enunciado
+
 CONTEXTO VALIDADO DA BASE DO PROFESSOR:
 ${chunksBase.length
   ? chunksBase.slice(0, 4).map((c: any, i: number) => `CHUNK ${i + 1}: ${typeof c === 'string' ? c : c.texto || c.content || JSON.stringify(c)}`).join('\n\n')
   : 'Nenhum chunk fornecido nesta chamada.'}
+${contextoInternet}
 
 REGRAS ABSOLUTAS:
 1. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.

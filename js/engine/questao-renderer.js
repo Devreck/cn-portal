@@ -216,10 +216,35 @@ const QuestaoRenderer = {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
+  // ── EMBARALHAR ALTERNATIVAS (por sessão) ─────────────────
+  // Cada carregamento sorteia uma ordem diferente para as alternativas
+  // evitando que o estudante memorize posições em vez de raciocinar.
+  // Os campos _altExibicao e _gabExibicao armazenam o mapeamento desta sessão.
+  _embaralharAlts(q) {
+    if (q.tipo !== 'C' || !q.alternativas) return;
+    const posicoes = ['A','B','C','D','E'].filter(l => q.alternativas[l] != null);
+    // Fisher-Yates
+    const shuffled = [...posicoes];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    // Display A → conteúdo de shuffled[0], etc.
+    q._altExibicao = {};
+    shuffled.forEach((origLetra, i) => {
+      q._altExibicao[posicoes[i]] = q.alternativas[origLetra];
+    });
+    // Posição de exibição da resposta correta
+    q._gabExibicao = posicoes[shuffled.indexOf(q.gabarito)];
+  },
+
   // ── RENDERIZAR TODAS AS QUESTÕES ─────────────────────────
   renderizarTodasQuestoes() {
     const container = document.getElementById('questoesContainer');
     if (!container) return;
+
+    // Embaralhar alternativas desta sessão ANTES de gerar o HTML
+    this.estado.questoes.forEach(q => this._embaralharAlts(q));
 
     container.innerHTML = this.estado.questoes.map((q, i) =>
       q.tipo === 'C'
@@ -238,16 +263,19 @@ const QuestaoRenderer = {
     const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
     const alts = ['A','B','C','D','E'];
 
-    const alternativasHtml = alts.map(letra => `
-      <button
-        class="alt-btn"
-        id="alt-${q.id}-${letra}"
-        onclick="QuestaoRenderer.responderC('${q.id}', '${letra}')"
-      >
-        <span class="alt-letra">${letra}</span>
-        <span class="alt-texto">${q.alternativas[letra]}</span>
-      </button>
-    `).join('');
+    const altSource = q._altExibicao || q.alternativas;
+    const alternativasHtml = alts
+      .filter(letra => altSource[letra] != null)
+      .map(letra => `
+        <button
+          class="alt-btn"
+          id="alt-${q.id}-${letra}"
+          onclick="QuestaoRenderer.responderC('${q.id}', '${letra}')"
+        >
+          <span class="alt-letra">${letra}</span>
+          <span class="alt-texto">${altSource[letra]}</span>
+        </button>
+      `).join('');
 
     const stepsHtml = q.steps ? this.htmlSteps(q.steps) : '';
     const elementosVisuaisHtml = this.htmlElementosVisuais(q);
@@ -421,7 +449,9 @@ const QuestaoRenderer = {
     const q = this.estado.questoes.find(q => q.id === qId);
     if (!q) return;
 
-    const correta = letraSelecionada === q.gabarito;
+    // Usar gabarito da sessão (posição embaralhada) para avaliar a resposta
+    const gabExibicao = q._gabExibicao || q.gabarito;
+    const correta = letraSelecionada === gabExibicao;
     const pontos  = this.calcularPontos('C', correta);
 
     // Feedback visual nas alternativas
@@ -430,7 +460,7 @@ const QuestaoRenderer = {
       const btn = document.getElementById(`alt-${qId}-${letra}`);
       if (!btn) return;
       btn.disabled = true;
-      if (letra === q.gabarito) btn.classList.add('correta');
+      if (letra === gabExibicao) btn.classList.add('correta');
       else if (letra === letraSelecionada) btn.classList.add('errada');
     });
 
@@ -582,12 +612,13 @@ const QuestaoRenderer = {
     if (temaEl) temaEl.style.display = '';
 
     if (q.tipo === 'C') {
+      const gabExibicao = q._gabExibicao || q.gabarito;
       ['A','B','C','D','E'].forEach(l => {
         const btn = document.getElementById(`alt-${qId}-${l}`);
         if (btn) {
           btn.disabled = true;
-          if (l === q.gabarito) btn.classList.add('correta');
-          else if (l === resposta && !correta) btn.classList.add('errada');
+          if (l === gabExibicao) btn.classList.add('correta');
+          // Não destacar o erro no reload pois o shuffle mudou
         }
       });
     } else {
@@ -633,11 +664,17 @@ const QuestaoRenderer = {
       if (!novaResposta || novaResposta.length === 0) return;
 
       // 2. Atualizar progresso da disciplina
-      const total     = this.estado.questoes.length;
-      const acertos   = Object.values(this.estado.respostas).filter(r => r.correta).length;
+      // "concluida" usa apenas questões nativas (banco_id ausente);
+      // questões de IA são bônus e não bloqueiam o simulado.
+      const questoesNativas = this.estado.questoes.filter(q => !q.banco_id);
+      const nativasRespondidas = questoesNativas.filter(q => !!this.estado.respostas[q.id]).length;
+      const concluida   = questoesNativas.length > 0 && nativasRespondidas >= questoesNativas.length;
+
+      const total       = this.estado.questoes.length;
+      const acertos     = Object.values(this.estado.respostas).filter(r => r.correta).length;
       const respondidas = Object.keys(this.estado.respostas).length;
-      const concluida = respondidas === total;
-      const percentual = Math.round((respondidas / total) * 100);
+      const percentual  = questoesNativas.length > 0
+        ? Math.round((nativasRespondidas / questoesNativas.length) * 100) : 0;
 
       await sb.from('progresso_revisao')
         .update({ total_questoes: respondidas, acertos, concluida, percentual, ultima_atividade: new Date().toISOString() })

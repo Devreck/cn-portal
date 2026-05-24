@@ -615,8 +615,9 @@ mjx-container[display="false"] {
     <div class="page-title">🤖 Fila de Revisão</div>
     <div class="page-sub">Questões geradas pela IA aguardando sua aprovação</div>
 
+    <!-- ── Geração manual (tema livre) ── -->
     <div class="panel" style="margin-bottom:20px">
-      <div class="panel-title">✨ Gerar Item com IA</div>
+      <div class="panel-title">✨ Gerar Item — Tema Livre</div>
       <div class="panel-sub">Crie um item com matemática em MathJax e ilustração renderizável para revisar antes de liberar</div>
       <div class="form-row">
         <div class="form-field">
@@ -656,6 +657,37 @@ mjx-container[display="false"] {
         <button class="btn-aprovar" id="btnGerarItemIA" onclick="gerarItemIA()" style="align-self:end;padding:11px 18px">Gerar item</button>
       </div>
       <div id="iaGeradorStatus" style="margin-top:12px;font-size:12px;color:var(--text-muted)"></div>
+    </div>
+
+    <!-- ── Geração por tema (cobertura completa) ── -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-title">📚 Geração por Tema — Cobertura Completa</div>
+      <div class="panel-sub">Gere itens independentes, com contexto próprio e dados completos para cada tema da AV4. Cada item consulta a base de conhecimento e a internet antes de gerar.</div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="temaTabs">
+        <button class="filtro-btn ativo" onclick="selecionarDiscTema('bio',this)">🧬 Biologia</button>
+        <button class="filtro-btn" onclick="selecionarDiscTema('quim',this)">⚗️ Química</button>
+        <button class="filtro-btn" onclick="selecionarDiscTema('fis',this)">⚡ Física</button>
+        <button class="filtro-btn" onclick="selecionarDiscTema('inter',this)">🔬 Interdisciplinar</button>
+      </div>
+
+      <div id="temaListaWrap" style="display:flex;flex-direction:column;gap:6px"></div>
+
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="temaTipoGlobal" style="padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
+          <option value="C">Tipo C — múltipla escolha</option>
+          <option value="A">Tipo A — certo/errado</option>
+        </select>
+        <select id="temaNivelGlobal" style="padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
+          <option value="intermediario">Intermediário</option>
+          <option value="basico">Básico</option>
+          <option value="avancado">Avançado</option>
+        </select>
+        <button class="btn-aprovar" id="btnGerarTodos" onclick="gerarTodosTemas()" style="padding:10px 20px">
+          ⚡ Gerar todos os temas visíveis
+        </button>
+        <span id="temaGeracaoStatus" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
     </div>
 
     <div id="filaPendentes">
@@ -959,6 +991,7 @@ function irPara(pagina) {
   document.getElementById(`page-${pagina}`)?.classList.add('active');
   document.querySelector(`[onclick="irPara('${pagina}')"]`)?.classList.add('active');
   history.replaceState(null, '', `#${pagina}`);
+  if (pagina === 'banco') renderizarListaTemas?.();
 }
 
 // ── VISÃO GERAL ──
@@ -1907,6 +1940,180 @@ async function atribuirBadgeUnica() {
     btn.textContent = '✨ Atribuir Badge';
   }
 }
+
+// ── GERAÇÃO POR TEMA ─────────────────────────────────────────────────────────
+
+const TEMAS_BANCO = {
+  bio: [
+    { tema: 'Herança ligada ao sexo — hemofilia e daltonismo (cromossomo X)',                              subtema: 'Herança ligada ao X' },
+    { tema: 'Herança ligada ao sexo — herança dominante ligada ao X (padrões hereditários)',               subtema: 'Herança ligada ao X dominante' },
+    { tema: 'Alelos múltiplos — Sistema ABO: genótipos, fenótipos e probabilidades',                       subtema: 'Sistema ABO' },
+    { tema: 'Codominância — eritrócitos MN e expressão simultânea de alelos',                              subtema: 'Codominância' },
+    { tema: 'Pleiotropia — anemia falciforme: gene único com múltiplos efeitos fenotípicos',               subtema: 'Pleiotropia' },
+    { tema: 'Epistasia recessiva dupla — pelagem em labradores e análise de proporções F2',                subtema: 'Epistasia' },
+    { tema: 'Linkage e recombinação — genes ligados, crossing-over e distância em centiMorgans',           subtema: 'Linkage' },
+    { tema: 'Herança quantitativa/poligênica — variação contínua e distribuição de fenótipos',             subtema: 'Herança poligênica' },
+    { tema: 'Fator Rh e doença hemolítica do recém-nascido — incompatibilidade mãe/filho',                 subtema: 'Fator Rh' },
+    { tema: 'Transgenia — OGMs: técnicas de inserção gênica, vetores e aplicações biotecnológicas',        subtema: 'Transgenia' },
+    { tema: 'Probabilidade genética — monoibridismo com dominância completa e incompleta',                 subtema: 'Monoibridismo' },
+    { tema: 'Probabilidade genética — diibridismo e lei da segregação independente (Mendel)',               subtema: 'Diibridismo' },
+    { tema: 'Hemizigose — herança recessiva ligada ao X em machos; cálculo de probabilidade',              subtema: 'Hemizigose' },
+    { tema: 'Anemia falciforme — aspectos moleculares, genéticos e epidemiológicos no Brasil',             subtema: 'Anemia falciforme' },
+  ],
+  quim: [
+    { tema: 'Ânodo e cátodo — identificação e reações em eletrólise aquosa e de sais fundidos',           subtema: 'Eletrólise' },
+    { tema: 'Oxidação e redução — número de oxidação, agente oxidante/redutor e semi-reações',            subtema: 'Redox' },
+    { tema: 'Células galvânicas — pilhas voltaicas, ddp, espontaneidade e potencial de eletrodo',        subtema: 'Pilhas' },
+    { tema: 'Células eletrolíticas — eletrólise industrial, produtos de cátodo e ânodo',                 subtema: 'Eletrólise industrial' },
+    { tema: '1ª e 2ª Leis de Faraday — massa depositada, carga elétrica e equivalente eletroquímico',   subtema: 'Leis de Faraday' },
+    { tema: 'Galvanoplastia e eletrodeposição — cromagem, niquelagem e controle de espessura',           subtema: 'Galvanoplastia' },
+    { tema: 'Baterias de lítio — ciclos de carga/descarga, capacidade (mAh) e energia armazenada',      subtema: 'Baterias de lítio' },
+    { tema: 'Princípio de Le Chatelier — deslocamento de equilíbrio por pressão, temperatura e concentração', subtema: 'Le Chatelier' },
+    { tema: 'Equilíbrio químico — expressão de Kc, Kp e critérios de espontaneidade',                   subtema: 'Equilíbrio Kc' },
+    { tema: 'Soluções tampão — mecanismo, pH e aplicações fisiológicas (sangue)',                        subtema: 'Tampão' },
+    { tema: 'pH de ácido fraco — Ka, grau de ionização e cálculo de concentração de H⁺',                subtema: 'pH e Ka' },
+    { tema: 'Catálise enzimática — energia de ativação, cinética e gráficos de energia',                 subtema: 'Catálise' },
+    { tema: 'Termoquímica — ΔH de formação, combustão, entalpia de ligação e Lei de Hess',              subtema: 'Termoquímica' },
+    { tema: 'Perfil energético — gráfico reação/coordenada, ΔH, Ea e efeito do catalisador',            subtema: 'Perfil energético' },
+  ],
+  fis: [
+    { tema: 'Efeito Joule — Q = I²Rt: calor dissipado em resistores, aquecimento e segurança elétrica', subtema: 'Efeito Joule' },
+    { tema: 'Potência elétrica — P = VI = I²R = V²/R: cálculo e comparação de dispositivos',           subtema: 'Potência elétrica' },
+    { tema: 'Energia elétrica — E = Pt em joules e kWh: consumo, conversão e cálculo de conta',        subtema: 'Energia elétrica' },
+    { tema: 'Carga elétrica — Q = It: corrente, tempo e quantidade de carga transportada',              subtema: 'Carga elétrica' },
+    { tema: 'Associação de geradores em série — f.e.m. resultante, resistência interna e ddp',          subtema: 'Geradores em série' },
+    { tema: 'Conversão kWh ↔ joules — tarifas de energia e comparação de eficiência elétrica',         subtema: 'kWh e tarifas' },
+    { tema: 'Capacidade de baterias em mAh — tempo de descarga, autonomia e corrente de uso',           subtema: 'mAh e baterias' },
+    { tema: 'Circuitos com resistores em série — Req, queda de tensão e corrente constante',            subtema: 'Resistores em série' },
+    { tema: 'Potência dissipada em associações — potência em cada resistor e resistência equivalente',  subtema: 'Potência em circuitos' },
+  ],
+  inter: [
+    { tema: 'Biossensor eletroquímico para diagnóstico de anemia falciforme — física + biologia',       subtema: 'Biossensor' },
+    { tema: 'Eletroforese em gel para separação de fragmentos de DNA — física + biologia + química',    subtema: 'Eletroforese' },
+    { tema: 'Bateria de veículo elétrico e emissões de CO₂ — física + química',                        subtema: 'Veículo elétrico' },
+    { tema: 'Galvanoplastia e genes de resistência a metais em bactérias — química + biologia',         subtema: 'Galvanoplastia + bio' },
+    { tema: 'Marcapasso cardíaco — potência elétrica e ritmo sinusal — física + biologia',              subtema: 'Marcapasso' },
+    { tema: 'Pilha de combustível e metabolismo celular — redox em física + biologia',                  subtema: 'Pilha + metabolismo' },
+  ],
+};
+
+let _discTemaSelecionada = 'bio';
+let _geracaoEmAndamento = false;
+
+function selecionarDiscTema(disc, btn) {
+  _discTemaSelecionada = disc;
+  document.querySelectorAll('#temaTabs .filtro-btn').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  renderizarListaTemas();
+}
+
+function renderizarListaTemas() {
+  const wrap = document.getElementById('temaListaWrap');
+  const temas = TEMAS_BANCO[_discTemaSelecionada] || [];
+  wrap.innerHTML = temas.map((t, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)">
+      <span style="flex:1;font-size:13px;color:var(--text)">${t.tema}</span>
+      <span id="tema-status-${_discTemaSelecionada}-${i}" style="font-size:11px;color:var(--text-muted);min-width:80px;text-align:right"></span>
+      <button class="btn-aprovar" style="padding:7px 12px;font-size:12px;white-space:nowrap"
+        id="tema-btn-${_discTemaSelecionada}-${i}"
+        onclick="gerarTemaSingle('${_discTemaSelecionada}', ${i})">
+        Gerar
+      </button>
+    </div>
+  `).join('');
+}
+
+async function gerarTemaSingle(disc, idx, tipo, nivel, _bypassLock = false) {
+  if (_geracaoEmAndamento && !_bypassLock) return;
+  const t = TEMAS_BANCO[disc]?.[idx];
+  if (!t) return;
+
+  const tipoUsar  = tipo  || document.getElementById('temaTipoGlobal')?.value  || 'C';
+  const nivelUsar = nivel || document.getElementById('temaNivelGlobal')?.value || 'intermediario';
+
+  const btn  = document.getElementById(`tema-btn-${disc}-${idx}`);
+  const stat = document.getElementById(`tema-status-${disc}-${idx}`);
+  if (btn)  { btn.disabled = true; btn.textContent = '⏳'; }
+  if (stat) { stat.style.color = 'var(--ouro)'; stat.textContent = 'Gerando…'; }
+
+  try {
+    const integradas = disc === 'inter' ? ['bio','quim','fis'] : ['bio','quim','fis'].filter(d => d !== disc).slice(0, 1);
+    const resp = await sb.functions.invoke('gemini', {
+      body: {
+        funcao: 'gerar_questao',
+        dados: {
+          disciplina: disc,
+          tema: t.tema,
+          tipo: tipoUsar,
+          nivel: nivelUsar,
+          disciplinas_integradas: integradas,
+          contexto_chunks: [],
+        },
+      },
+    });
+
+    if (resp.error || resp.data?.error) throw new Error(resp.data?.detalhe || resp.error?.message || 'Erro');
+
+    const q = resp.data?.questao;
+    if (!q) throw new Error('Sem questão retornada');
+
+    await sb.from('questoes_banco').insert({
+      origem: 'ia_gerada',
+      disciplina: disc,
+      tema: q.tema || t.tema,
+      subtema: q.subtema || t.subtema || null,
+      tipo: q.tipo || tipoUsar,
+      nivel: q.nivel || nivelUsar,
+      interdisciplinar_com: q.interdisciplinar_com || integradas,
+      enunciado: q.enunciado,
+      texto_base: q.texto_base || null,
+      alternativas: q.alternativas || null,
+      gabarito: q.gabarito,
+      explicacao: q.explicacao || '',
+      steps: q.steps || null,
+      elementos_visuais: q.elementos_visuais || null,
+      status: 'pendente',
+    });
+
+    if (stat) { stat.style.color = 'var(--green)'; stat.textContent = '✓ Gerado'; }
+    setTimeout(() => { if (stat) { stat.textContent = ''; } }, 4000);
+    await carregarFilaPendentes();
+
+  } catch (e) {
+    console.error('Erro gerarTemaSingle:', e);
+    if (stat) { stat.style.color = 'var(--red)'; stat.textContent = '✗ Erro'; }
+    setTimeout(() => { if (stat) { stat.textContent = ''; } }, 5000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Gerar'; }
+  }
+}
+
+async function gerarTodosTemas() {
+  if (_geracaoEmAndamento) return;
+  _geracaoEmAndamento = true;
+  const btn = document.getElementById('btnGerarTodos');
+  const stat = document.getElementById('temaGeracaoStatus');
+  const tipo  = document.getElementById('temaTipoGlobal')?.value  || 'C';
+  const nivel = document.getElementById('temaNivelGlobal')?.value || 'intermediario';
+
+  const temas = TEMAS_BANCO[_discTemaSelecionada] || [];
+  btn.disabled = true;
+  btn.textContent = 'Gerando…';
+
+  for (let i = 0; i < temas.length; i++) {
+    if (stat) stat.textContent = `Gerando ${i + 1}/${temas.length}: ${temas[i].subtema}…`;
+    await gerarTemaSingle(_discTemaSelecionada, i, tipo, nivel, true);
+    // Pausa entre chamadas para não sobrecarregar a API
+    await new Promise(r => setTimeout(r, 1800));
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⚡ Gerar todos os temas visíveis';
+  if (stat) stat.textContent = `✓ ${temas.length} itens gerados`;
+  setTimeout(() => { if (stat) stat.textContent = ''; }, 6000);
+  _geracaoEmAndamento = false;
+}
+
 
 async function excluirBadgeUnica(badgeRowId, imagemUrl) {
   if (!confirm('Remover esta badge do aluno? Essa ação não pode ser desfeita.')) return;
