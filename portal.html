@@ -270,8 +270,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .ranking-pos.p3{background:rgba(205,127,50,0.15);color:#cd7f32}
 .ranking-pos.pn{background:var(--surface2);color:var(--text-muted)}
 .ranking-pos.me{background:rgba(0,77,153,0.2);color:var(--azul-light)}
-.ranking-nome{flex:1;font-size:13px;font-weight:500}
+.ranking-nome-wrap{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.ranking-nome{font-size:13px;font-weight:500}
 .ranking-nome.me{color:var(--azul-light);font-weight:700}
+.badge-unica-pill-mini{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(168,85,247,0.08));border:1px solid rgba(168,85,247,0.35);color:#c084fc;font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;white-space:nowrap}
 .ranking-pts{font-size:13px;font-weight:700;color:var(--ouro)}
 .ranking-sep{text-align:center;font-size:11px;color:var(--text-muted);padding:8px 0}
 
@@ -672,12 +674,29 @@ function atualizarSimulado(progressos, desbloqueado) {
 
 // ── RANKING ──
 async function carregarRanking() {
-  const { data: ranking } = await sb.rpc('get_ranking');
+  const [{ data: ranking }, { data: uniqueBadgesData }] = await Promise.all([
+    sb.rpc('get_ranking'),
+    sb.from('badges_unicas').select('aluno_id, badge_id, nome, emoji, imagem_url')
+  ]);
   if (!ranking) return;
+
+  // Map: aluno_id → [badge objects]
+  const ubMap = {};
+  (uniqueBadgesData || []).forEach(b => {
+    if (!ubMap[b.aluno_id]) ubMap[b.aluno_id] = [];
+    ubMap[b.aluno_id].push(b);
+  });
 
   const minha = ranking.find(r => r.aluno_id === userAtual.id);
   const top3  = ranking.slice(0, 3);
   const list  = document.getElementById('rankingList');
+
+  const renderPills = (alunoId) => (ubMap[alunoId] || []).map(b => {
+    const icon = b.imagem_url
+      ? `<img src="${b.imagem_url}" style="width:11px;height:11px;border-radius:2px;object-fit:cover">`
+      : b.emoji || '✨';
+    return `<span class="badge-unica-pill-mini" title="${b.nome}">${icon} ${b.nome}</span>`;
+  }).join('');
 
   let html = '';
 
@@ -687,10 +706,14 @@ async function carregarRanking() {
     const classe = pos === 1 ? 'p1' : pos === 2 ? 'p2' : 'p3';
     const icone  = pos === 1 ? '🥇' : pos === 2 ? '🥈' : '🥉';
     const euMesmo = r.aluno_id === userAtual.id;
+    const nome = `${r.nome.split(' ')[0]} ${r.nome.split(' ').slice(-1)[0]}${euMesmo ? ' (você)' : ''}`;
     html += `
       <div class="ranking-item">
         <div class="ranking-pos ${classe}">${icone}</div>
-        <div class="ranking-nome ${euMesmo ? 'me' : ''}">${r.nome.split(' ')[0]} ${r.nome.split(' ').slice(-1)[0]}${euMesmo ? ' (você)' : ''}</div>
+        <div class="ranking-nome-wrap">
+          <span class="ranking-nome ${euMesmo ? 'me' : ''}">${nome}</span>
+          ${renderPills(r.aluno_id)}
+        </div>
         <div class="ranking-pts">${Number(r.pontos_total).toLocaleString('pt-BR')}</div>
       </div>`;
   });
@@ -701,7 +724,10 @@ async function carregarRanking() {
     html += `
       <div class="ranking-item">
         <div class="ranking-pos me">${minha.posicao}º</div>
-        <div class="ranking-nome me">${minha.nome.split(' ')[0]} (você)</div>
+        <div class="ranking-nome-wrap">
+          <span class="ranking-nome me">${minha.nome.split(' ')[0]} (você)</span>
+          ${renderPills(minha.aluno_id)}
+        </div>
         <div class="ranking-pts">${Number(minha.pontos_total).toLocaleString('pt-BR')}</div>
       </div>`;
   }
