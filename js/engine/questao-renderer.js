@@ -31,8 +31,11 @@ const QuestaoRenderer = {
     const questoesBanco = await this.carregarQuestoesBanco(disciplina);
     this.estado.questoes.push(...questoesBanco);
 
-    // Carregar respostas já dadas (para retomar)
-    await this.carregarRespostasExistentes();
+    // Carregar respostas já dadas (para retomar) e streak persistido
+    await Promise.all([
+      this.carregarRespostasExistentes(),
+      this.carregarStreakPersistido(),
+    ]);
     this.renderizarNavbar();
     this.renderizarTodasQuestoes();
     this.atualizarProgresso();
@@ -155,6 +158,21 @@ const QuestaoRenderer = {
   },
 
   // ── CARREGAR RESPOSTAS EXISTENTES ────────────────────────
+  async carregarStreakPersistido() {
+    if (!this.estado.userId || typeof sb === 'undefined') return;
+    try {
+      const { data } = await sb
+        .from('pontuacao')
+        .select('streak_atual, streak_maximo')
+        .eq('aluno_id', this.estado.userId)
+        .single();
+      if (data) {
+        this.estado.streakAtual  = data.streak_atual  || 0;
+        this.estado.streakMaximo = data.streak_maximo || 0;
+      }
+    } catch(e) { console.warn('Erro ao carregar streak:', e); }
+  },
+
   async carregarRespostasExistentes() {
     if (!this.estado.userId || typeof sb === 'undefined') return;
     try {
