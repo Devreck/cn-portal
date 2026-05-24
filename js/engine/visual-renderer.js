@@ -422,81 +422,189 @@ const VisualRenderer = {
   },
 
   // ── HEREDOGRAMA ──────────────────────────────────────────
+  // Formato esperado:
+  //   geracoes[i].individuos[j]:
+  //     sexo: 'M'|'F'
+  //     afetado: bool
+  //     portador: bool        ← ponto central âmbar
+  //     label: 'I-1'
+  //     genotipo: 'XᴬX'      ← texto dentro do símbolo (opcional)
+  //     filho_de: N           ← índice da união na geração anterior que gerou este filho
+  //     origem: 'externo'     ← parceiro externo (não descende da geração anterior)
+  //   geracoes[i].unioes[k]:
+  //     { pai: idx, mae: idx }  ← índices de individuos nesta geração
   renderHeredograma(dados) {
-    const {
-      titulo = 'Heredograma',
-      geracoes = [], // [{individuos: [{sexo:'M'|'F', afetado: bool, label, genotipo}], unioes: [{pai, mae}]}]
-    } = dados;
+    const { titulo = 'Heredograma', geracoes = [] } = dados;
 
-    const W = 480, H = 220;
-    const RAIO = 16;
+    if (!geracoes.length)
+      return `<div class="visual-card"><div class="visual-titulo">${titulo}</div>
+              <p style="color:var(--text-muted);font-size:13px;padding:16px">Heredograma não disponível</p></div>`;
 
-    if (!geracoes.length) return `<div class="visual-card"><div class="visual-titulo">${titulo}</div><p style="color:var(--text-muted);font-size:13px;padding:16px">Heredograma não disponível</p></div>`;
+    const R   = 20;   // raio/metade do lado do símbolo
+    const ROW = 100;  // distância vertical entre gerações
+    const PAD_LEFT = 44;
+    const PAD_TOP  = 28;
+    const PAD_BOT  = 46;  // espaço para legenda
+    const COL_MIN  = 88;  // largura mínima por indivíduo
 
-    // Layout simples: geracoes empilhadas verticalmente
-    const alturaGen = H / geracoes.length;
+    const numGens  = geracoes.length;
+    const maxInd   = Math.max(...geracoes.map(g => g.individuos.length));
+    const W = Math.max(400, PAD_LEFT + maxInd * COL_MIN + 30);
+    const H = PAD_TOP + numGens * ROW + PAD_BOT;
 
-    const indivSVG = (ind, x, y) => {
-      const cor = ind.afetado ? '#ef4444' : ind.portador ? '#f59e0b' : '#6b7a99';
-      const fill = ind.afetado ? 'rgba(239,68,68,0.15)' : 'rgba(107,122,153,0.1)';
-      const shape = ind.sexo === 'M'
-        ? `<rect x="${x-RAIO}" y="${y-RAIO}" width="${RAIO*2}" height="${RAIO*2}" fill="${fill}" stroke="${cor}" stroke-width="2" rx="2"/>`
-        : `<circle cx="${x}" cy="${y}" r="${RAIO}" fill="${fill}" stroke="${cor}" stroke-width="2"/>`;
-      const labelEl = ind.label ? `<text x="${x}" y="${y+RAIO+14}" fill="#6b7a99" font-size="9" text-anchor="middle">${this.cleanSvgText(ind.label)}</text>` : '';
-      const genoEl  = ind.genotipo ? `<text x="${x}" y="${y+4}" fill="${cor}" font-size="9" text-anchor="middle">${this.cleanSvgText(ind.genotipo)}</text>` : '';
+    // ── 1. Calcular posições ─────────────────────────────────
+    // Cada geração: distribuir indivíduos uniformemente, mas
+    // separar filhos de externos: filhos ficam no centro, externos ficam ao lado do cônjuge.
+    geracoes.forEach((gen, gi) => {
+      const y = PAD_TOP + R + gi * ROW;
+      const n = gen.individuos.length;
+
+      // Identificar filhos (têm filho_de) e externos (origem:'externo' ou sem filho_de em gi>0)
+      const filhos   = gen.individuos.filter(ind => typeof ind.filho_de === 'number');
+      const externos = gen.individuos.filter(ind => ind.origem === 'externo');
+      const restantes = gen.individuos.filter(ind => typeof ind.filho_de !== 'number' && ind.origem !== 'externo');
+
+      // Para gerações > 0: se nenhum tem filho_de, tratar todos como filhos (retrocompatibilidade)
+      const ehFilho = gi === 0 ? true : (filhos.length > 0 || externos.length > 0);
+
+      // Posição X base: espalhar uniformemente
+      const innerW = W - PAD_LEFT - 30;
+      gen.individuos.forEach((ind, ii) => {
+        ind._x = PAD_LEFT + innerW * (ii + 0.5) / n;
+        ind._y = y;
+      });
+    });
+
+    // ── 2. Funções auxiliares ────────────────────────────────
+    const ln = (x1,y1,x2,y2,stroke='#6b7a99',sw=1.5) =>
+      `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${stroke}" stroke-width="${sw}"/>`;
+
+    const indivSVG = (ind) => {
+      const x = ind._x, y = ind._y;
+      const cor  = ind.afetado ? '#ef4444' : ind.portador ? '#f59e0b' : '#8899bb';
+      const fill = ind.afetado ? 'rgba(239,68,68,0.18)' : 'rgba(136,153,187,0.08)';
+      const sw   = ind.afetado ? 2.5 : 1.8;
+
+      let shape;
+      if (ind.sexo === 'M') {
+        shape = `<rect x="${(x-R).toFixed(1)}" y="${(y-R).toFixed(1)}" width="${R*2}" height="${R*2}" fill="${fill}" stroke="${cor}" stroke-width="${sw}" rx="3"/>`;
+        if (ind.portador)
+          shape += `<rect x="${(x-5).toFixed(1)}" y="${(y-5).toFixed(1)}" width="10" height="10" fill="${cor}" opacity="0.75" rx="1.5"/>`;
+      } else {
+        shape = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${R}" fill="${fill}" stroke="${cor}" stroke-width="${sw}"/>`;
+        if (ind.portador)
+          shape += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="${cor}" opacity="0.75"/>`;
+      }
+
+      const labelEl = ind.label
+        ? `<text x="${x.toFixed(1)}" y="${(y + R + 15).toFixed(1)}" fill="#8899bb" font-size="10" text-anchor="middle" font-family="sans-serif">${this.cleanSvgText(ind.label)}</text>`
+        : '';
+      const genoEl = ind.genotipo
+        ? `<text x="${x.toFixed(1)}" y="${(y + 3.5).toFixed(1)}" fill="${cor}" font-size="9" text-anchor="middle" font-family="sans-serif">${this.cleanSvgText(ind.genotipo)}</text>`
+        : '';
       return shape + labelEl + genoEl;
     };
 
-    let svgContent = '';
+    const ROMANOS = ['I','II','III','IV','V'];
+
+    // ── 3. Montar SVG ────────────────────────────────────────
+    let svg = '';
 
     geracoes.forEach((gen, gi) => {
-      const y = 30 + gi * alturaGen + alturaGen/2;
-      const nInd = gen.individuos.length;
-      gen.individuos.forEach((ind, ii) => {
-        const x = (W / (nInd + 1)) * (ii + 1);
-        ind._x = x; ind._y = y;
-        svgContent += indivSVG(ind, x, y);
-        // Label geração
-        if (ii === 0) svgContent += `<text x="16" y="${y+5}" fill="#6b7a99" font-size="11" font-weight="700">I${gi > 0 ? 'I'.repeat(gi) : ''}</text>`;
-      });
+      // Rótulo da geração
+      const y = PAD_TOP + R + gi * ROW;
+      svg += `<text x="8" y="${(y+4).toFixed(1)}" fill="#6b7a99" font-size="11" font-weight="700" font-family="sans-serif">${ROMANOS[gi] || gi+1}</text>`;
 
-      // Traçar uniões
-      (gen.unioes || []).forEach(uniao => {
-        const pai  = gen.individuos[uniao.pai];
-        const mae  = gen.individuos[uniao.mae];
-        if (!pai || !mae) return;
+      // Desenhar todos os indivíduos
+      gen.individuos.forEach(ind => { svg += indivSVG(ind); });
+
+      // ── Uniões desta geração ─────────────────────────────
+      (gen.unioes || []).forEach((uniao, ui) => {
+        const a = gen.individuos[uniao.pai];
+        const b = gen.individuos[uniao.mae];
+        if (!a || !b) return;
+
+        // Ordenar esquerda → direita
+        const esq  = a._x < b._x ? a : b;
+        const dir  = a._x < b._x ? b : a;
+
         // Linha de casal
-        svgContent += `<line x1="${pai._x + RAIO}" y1="${pai._y}" x2="${mae._x - RAIO}" y2="${mae._y}" stroke="#6b7a99" stroke-width="1.5"/>`;
-        // Linha para filhos
-        if (gi + 1 < geracoes.length) {
-          const midX = (pai._x + mae._x) / 2;
-          const nextY = 30 + (gi+1) * alturaGen + alturaGen/2;
-          const filhos = geracoes[gi+1].individuos;
-          svgContent += `<line x1="${midX}" y1="${pai._y + RAIO + 4}" x2="${midX}" y2="${nextY - RAIO - 4}" stroke="#6b7a99" stroke-width="1"/>`;
-          // Linha horizontal para filhos
-          if (filhos.length > 1) {
-            const f0 = filhos[0], fn = filhos[filhos.length-1];
-            const fx0 = (W / (filhos.length + 1)) * 1;
-            const fxn = (W / (filhos.length + 1)) * filhos.length;
-            svgContent += `<line x1="${fx0}" y1="${nextY - RAIO - 4}" x2="${fxn}" y2="${nextY - RAIO - 4}" stroke="#6b7a99" stroke-width="1"/>`;
+        svg += ln(esq._x + R, esq._y, dir._x - R, dir._y);
+
+        // Ponto de descida: meio do casal
+        const midX = (esq._x + dir._x) / 2;
+
+        // Linha vertical para baixo → conecta com próxima geração
+        if (gi + 1 < numGens) {
+          const nextGen = geracoes[gi + 1];
+          const nextY   = PAD_TOP + R + (gi + 1) * ROW;
+
+          // Filhos desta união: têm filho_de === ui, ou (retrocompat.) todos sem origem externa
+          const filhosUniao = nextGen.individuos.filter(ind => {
+            if (typeof ind.filho_de === 'number') return ind.filho_de === ui;
+            if (ind.origem === 'externo') return false;
+            return true; // retrocompatibilidade
+          });
+
+          if (filhosUniao.length === 0) return;
+
+          const barY = nextY - R - 16;
+
+          // Linha vertical casal → barra
+          svg += ln(midX, esq._y + R + 2, midX, barY);
+
+          if (filhosUniao.length === 1) {
+            // Filho único: linha reta
+            const f = filhosUniao[0];
+            svg += ln(f._x, barY, f._x, f._y - R - 1);
+          } else {
+            // Múltiplos filhos: barra horizontal + gotas
+            const xs = filhosUniao.map(f => f._x);
+            svg += ln(Math.min(...xs), barY, Math.max(...xs), barY);
+            filhosUniao.forEach(f => svg += ln(f._x, barY, f._x, f._y - R - 1));
           }
         }
       });
     });
 
+    // ── 4. Legenda dinâmica ──────────────────────────────────
+    const temPortador = geracoes.some(g => g.individuos.some(i => i.portador));
+    const temAfetado  = geracoes.some(g => g.individuos.some(i => i.afetado));
+
+    let legendaItens = `
+      <span style="display:inline-flex;align-items:center;gap:5px">
+        <svg width="14" height="14" class="no-math"><rect x="1" y="1" width="12" height="12" fill="rgba(136,153,187,0.1)" stroke="#8899bb" stroke-width="1.5" rx="2"/></svg>
+        Homem
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:5px">
+        <svg width="14" height="14" class="no-math"><circle cx="7" cy="7" r="6" fill="rgba(136,153,187,0.1)" stroke="#8899bb" stroke-width="1.5"/></svg>
+        Mulher
+      </span>`;
+
+    if (temAfetado) legendaItens += `
+      <span style="display:inline-flex;align-items:center;gap:5px">
+        <svg width="14" height="14" class="no-math"><rect x="1" y="1" width="12" height="12" fill="rgba(239,68,68,0.18)" stroke="#ef4444" stroke-width="2"/></svg>
+        Afetado
+      </span>`;
+
+    if (temPortador) legendaItens += `
+      <span style="display:inline-flex;align-items:center;gap:5px">
+        <svg width="14" height="14" class="no-math"><circle cx="7" cy="7" r="6" fill="rgba(136,153,187,0.1)" stroke="#f59e0b" stroke-width="1.8"/><circle cx="7" cy="7" r="3" fill="#f59e0b" opacity="0.75"/></svg>
+        Portador(a)
+      </span>`;
+
     return `
       <div class="visual-card">
         <div class="visual-titulo">${titulo}</div>
-        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="visual-svg no-math">
-          ${svgContent}
-        </svg>
-        <div class="visual-legenda">
-          <span><svg width="14" height="14" class="no-math"><rect x="1" y="1" width="12" height="12" fill="rgba(107,122,153,0.1)" stroke="#6b7a99" stroke-width="1.5"/></svg> Homem normal</span>
-          <span><svg width="14" height="14" class="no-math"><circle cx="7" cy="7" r="6" fill="rgba(107,122,153,0.1)" stroke="#6b7a99" stroke-width="1.5"/></svg> Mulher normal</span>
-          <span><svg width="14" height="14" class="no-math"><rect x="1" y="1" width="12" height="12" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="1.5"/></svg> Afetado</span>
+        <div style="overflow-x:auto">
+          <svg viewBox="0 0 ${W} ${H}" width="${W}" xmlns="http://www.w3.org/2000/svg" class="visual-svg no-math" style="min-width:320px;max-width:100%;height:auto">
+            ${svg}
+          </svg>
         </div>
-      </div>
-    `;
+        <div class="visual-legenda" style="flex-wrap:wrap;gap:12px 20px;font-size:11px;color:#8899bb">
+          ${legendaItens}
+        </div>
+      </div>`;
   },
 
   // ── EQUAÇÃO QUÍMICA ──────────────────────────────────────

@@ -198,14 +198,24 @@ REGRAS ABSOLUTAS:
    O campo "explicacao" deve identificar a pegadinha e explicar por que a interpretação oposta falha.
 7. Não reproduza questões, dados, figuras ou alternativas da prova original AV4.
 8. ELEMENTOS VISUAIS — inclua SOMENTE quando o elemento for INDISPENSÁVEL para responder à questão:
-   INCLUA quando: a questão exige leitura direta de valores de um gráfico/tabela de dados, um circuito com componentes nomeados e rotulados que o aluno deve interpretar, um heredograma com indivíduos específicos, uma equação química referenciada diretamente no enunciado.
-   NÃO INCLUA quando: todos os dados já estão completos no texto do enunciado e o visual apenas os repete; ou quando a tabela mostraria passos da resolução (entregando o gabarito).
+   INCLUA quando: a questão exige leitura direta de valores de um gráfico/tabela de dados, um circuito com componentes nomeados e rotulados que o aluno deve interpretar, um heredograma com indivíduos específicos que a questão referencia, uma equação química referenciada diretamente no enunciado.
+   NÃO INCLUA quando: todos os dados já estão completos no texto do enunciado e o visual apenas os repete; ou quando a tabela mostraria passos da resolução (entregando o gabarito); ou quando o heredograma é decorativo e a questão resolve sem ele.
    EM CASO DE DÚVIDA: não inclua.
-   Se incluir, use apenas "elementos_visuais" no nível raiz. Deixe "texto_base" com apenas "paragrafos".
-   Formatos aceitos:
+   ATENÇÃO HEREDOGRAMA — FORMATO OBRIGATÓRIO:
+   Todo indivíduo das gerações II em diante DEVE ter exatamente UMA dessas chaves:
+     "filho_de": N   → índice (0-based) da união na geração anterior que gerou este indivíduo
+     "origem": "externo"  → parceiro externo, não descende da geração anterior
+   NUNCA crie uma união (em "unioes") entre dois indivíduos que têm o mesmo "filho_de" — isso seria casal de irmãos.
+   Geração I: não usar filho_de nem origem.
+   EXEMPLO CORRETO (3 gerações, hemofilia):
+   { "tipo":"heredograma", "titulo":"Heredograma – Hemofilia A", "geracoes":[
+     { "individuos":[{"sexo":"M","afetado":false,"label":"I-1"},{"sexo":"F","afetado":false,"portador":true,"label":"I-2"}], "unioes":[{"pai":0,"mae":1}] },
+     { "individuos":[{"sexo":"M","afetado":true,"label":"II-1","filho_de":0},{"sexo":"F","afetado":false,"portador":false,"label":"II-2","filho_de":0},{"sexo":"M","afetado":false,"label":"II-3","origem":"externo"}], "unioes":[{"pai":2,"mae":1}] },
+     { "individuos":[{"sexo":"M","afetado":false,"label":"III-1","filho_de":0},{"sexo":"F","afetado":false,"portador":true,"label":"III-2","filho_de":0}] }
+   ]}
+   Outros formatos aceitos:
    - tabela: { "tipo":"tabela", "titulo":"...", "cabecalho":["..."], "linhas":[["..."]] }
    - circuito_serie: { "tipo":"circuito_serie", "titulo":"...", "componentes":[{"tipo":"bateria","label":"Fonte","valor":"20 V"},{"tipo":"resistor","label":"R","valor":"100 \\Omega"}] }
-   - heredograma: { "tipo":"heredograma", "titulo":"...", "geracoes":[{"individuos":[{"sexo":"M","afetado":false,"label":"I-1"},{"sexo":"F","afetado":false,"label":"I-2"}],"unioes":[{"pai":0,"mae":1}]},{"individuos":[{"sexo":"M","afetado":true,"label":"II-1"}]}] }
    - equacao_quimica: { "tipo":"equacao_quimica", "equacao":"Cu^{2+}_{(aq)} + 2e^- \\rightarrow Cu_{(s)}", "legenda":"Redução no cátodo" }
    - grafico_energia: { "tipo":"grafico_energia", "reagentes":0, "estado_transicao":80, "produtos":-30, "com_catalisador":35 }
    - grafico_xy: { "tipo":"grafico_xy", "eixo_x":"t (s)", "eixo_y":"Q (C)", "series":[{"label":"Q = It","pontos":[{"x":0,"y":0},{"x":10,"y":50}]}] }
@@ -225,11 +235,19 @@ REGRAS ABSOLUTAS:
     CORRETO: mencionar familiares como CONTEXTO genético ("seu pai é portador", "a avó tinha daltonismo") sem que esse familiar seja o parceiro reprodutivo.
     PROIBIDO: "dois irmãos planejam ter filhos", "um casal de primos".
 
+13. VARIEDADE DE CONTEXTO — nunca repita o mesmo modelo de cenário. Alterne entre:
+    contextos tecnológicos (biossensor, bateria de celular, marcapasso, galvanoplastia, veículo elétrico, eletroforese, painel solar),
+    contextos clínicos (diagnóstico genético, anemia falciforme, doença hemolítica, transfusão sanguínea),
+    contextos industriais (eletrólise industrial, revestimento metálico, produção de cloro),
+    contextos cotidianos (fone de ouvido, carregador, lâmpada LED, câmera de segurança).
+    Nunca inicie duas questões seguidas com "Um engenheiro…" ou "Um médico…". Varie o sujeito: "Uma estudante", "O aparelho", "Durante a reação", "Ao analisar o resultado", etc.
+
 PROTOCOLO DE AUDITORIA INTERNA — execute silenciosamente antes de retornar o JSON:
-A. DADOS: Os dados fornecidos no enunciado são suficientes para chegar à resposta? Falta alguma constante, massa molar, unidade ou restrição de contorno?
-B. PROVA REAL: Resolva a questão de forma independente. O resultado coincide com exatamente UMA alternativa? As unidades estão consistentes do início ao fim?
-C. DISTRATORES: Cada distrator representa um erro real e comum de raciocínio? Algum distrator pode ser considerado parcialmente correto sob interpretação alternativa válida? (Se sim: reescreva o distrator.)
-D. FONTE E NÍVEL: A questão respeita o nível do Ensino Médio e não exige conhecimento de nível superior não fornecido no texto-base?
+A. COMPLETUDE DOS DADOS: Para questões Tipo C com cálculo numérico, liste mentalmente TODAS as grandezas necessárias (tensão, corrente, tempo, massa molar, temperatura, constantes, etc.) e verifique que cada uma está explícita no enunciado ou no texto_base. Se qualquer dado estiver faltando, reescreva o enunciado incluindo-o ANTES de retornar.
+B. COERÊNCIA VISUAL: Se incluiu um heredograma, verifique: (i) nenhum casal é formado por dois indivíduos com o mesmo "filho_de"; (ii) o heredograma é realmente necessário para a questão; (iii) todos os indivíduos de gerações II+ têm "filho_de" ou "origem":"externo". Se algum item falhar, corrija o heredograma.
+C. PROVA REAL: Resolva a questão de forma independente. O resultado coincide com exatamente UMA alternativa? As unidades estão consistentes do início ao fim?
+D. DISTRATORES: Cada distrator representa um erro real e comum de raciocínio? Algum distrator pode ser considerado parcialmente correto sob interpretação alternativa válida? (Se sim: reescreva o distrator.)
+E. FONTE E NÍVEL: A questão respeita o nível do Ensino Médio e não exige conhecimento de nível superior não fornecido no texto-base?
 → Se qualquer etapa falhar: descarte o item e reescreva do zero antes de retornar.
 
 SCHEMA OBRIGATÓRIO:
