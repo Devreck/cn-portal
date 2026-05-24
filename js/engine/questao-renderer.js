@@ -719,7 +719,18 @@ const QuestaoRenderer = {
     if (btn) {
       btn.classList.remove('correta','errada');
       btn.classList.add(correta ? 'correta' : 'errada');
+      // Centraliza o botão respondido na barra (mobile)
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
+  },
+
+  // ── SCROLL DO NAVBAR (setas) ──────────────────────────────
+  scrollNavbar(direction) {
+    const nav = document.getElementById('questoesNavbar');
+    if (!nav) return;
+    const btnWidth = 36; // 32px botão + 4px gap
+    const visiveis = Math.max(1, Math.floor(nav.clientWidth / btnWidth));
+    nav.scrollBy({ left: direction * (btnWidth * visiveis), behavior: 'smooth' });
   },
 
   // ── ATUALIZAR PROGRESSO ──────────────────────────────────

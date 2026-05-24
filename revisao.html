@@ -73,12 +73,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .prog-fill.fis  {background:linear-gradient(90deg,#2563eb,#3b82f6)}
 
 /* ── NAVBAR QUESTÕES ── */
-.navbar-questoes{position:sticky;top:118px;z-index:90;background:rgba(2,6,15,0.95);backdrop-filter:blur(10px);padding:10px 24px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:4px}
-#questoesNavbar{display:flex;flex-wrap:wrap;gap:4px}
-.nav-q{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+.navbar-questoes{position:sticky;top:118px;z-index:90;background:rgba(2,6,15,0.95);backdrop-filter:blur(10px);padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+#questoesNavbar{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1;scroll-behavior:smooth}
+#questoesNavbar::-webkit-scrollbar{display:none}
+.nav-q{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .nav-q:hover{background:var(--surface3);color:var(--text)}
 .nav-q.correta{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#22c55e}
 .nav-q.errada {background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:#ef4444}
+.nav-arrow{width:28px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:20px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;line-height:1;padding:0 0 2px}
+.nav-arrow:hover{background:var(--surface3);color:var(--text)}
 
 /* ── MAIN ── */
 .main{padding-top:170px;padding-bottom:80px}
@@ -274,7 +277,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <!-- Navbar de questões -->
 <div class="navbar-questoes">
+  <button class="nav-arrow" onclick="QuestaoRenderer.scrollNavbar(-1)" aria-label="Anteriores">‹</button>
   <div id="questoesNavbar"></div>
+  <button class="nav-arrow" onclick="QuestaoRenderer.scrollNavbar(1)" aria-label="Próximas">›</button>
 </div>
 
 <!-- Main -->
