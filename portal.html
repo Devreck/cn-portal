@@ -273,7 +273,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .ranking-nome-wrap{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
 .ranking-nome{font-size:13px;font-weight:500}
 .ranking-nome.me{color:var(--azul-light);font-weight:700}
-.badge-unica-pill-mini{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(168,85,247,0.08));border:1px solid rgba(168,85,247,0.35);color:#c084fc;font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;white-space:nowrap}
+.badge-unica-pill-mini{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(168,85,247,0.08));border:1px solid rgba(168,85,247,0.35);color:#c084fc;font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;white-space:nowrap;position:relative;cursor:default}
+.badge-unica-pill-mini[data-tooltip]::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#111d35;border:1px solid rgba(168,85,247,0.35);color:#c084fc;font-size:11px;font-weight:400;padding:7px 11px;border-radius:9px;width:max-content;max-width:220px;white-space:normal;line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+.badge-unica-pill-mini[data-tooltip]:hover::after{opacity:1}
 .ranking-pts{font-size:13px;font-weight:700;color:var(--ouro)}
 .ranking-sep{text-align:center;font-size:11px;color:var(--text-muted);padding:8px 0}
 
@@ -695,7 +697,7 @@ async function carregarRanking() {
     const icon = b.imagem_url
       ? `<img src="${b.imagem_url}" style="width:11px;height:11px;border-radius:2px;object-fit:cover">`
       : b.emoji || '✨';
-    return `<span class="badge-unica-pill-mini" title="${b.nome}">${icon} ${b.nome}</span>`;
+    return `<span class="badge-unica-pill-mini" data-tooltip="${b.descricao || b.nome}">${icon} ${b.nome}</span>`;
   }).join('');
 
   let html = '';

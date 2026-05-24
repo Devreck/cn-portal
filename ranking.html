@@ -58,8 +58,11 @@ h1{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05
   padding:2px 9px;border-radius:100px;
   white-space:nowrap;
   cursor:default;
+  position:relative;
 }
 .badge-unica-pill .pill-emoji{font-size:13px}
+.badge-unica-pill[data-tooltip]::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#111d35;border:1px solid rgba(168,85,247,0.35);color:#c084fc;font-size:11px;font-weight:400;padding:7px 11px;border-radius:9px;width:max-content;max-width:220px;white-space:normal;line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+.badge-unica-pill[data-tooltip]:hover::after{opacity:1}
 
 /* ── MODAL PERFIL ── */
 .modal-overlay{
@@ -117,6 +120,12 @@ h1{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05
 .modal-badge-unica-nome{font-size:13px;font-weight:700;color:#c084fc;display:block}
 .modal-badge-unica-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
 .modal-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+.modal-badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.modal-badge-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);text-align:center;opacity:0.25;filter:grayscale(1);transition:opacity 0.15s}
+.modal-badge-item.ok{opacity:1;filter:none;border-color:rgba(201,168,76,0.25);background:rgba(201,168,76,0.05)}
+.modal-badge-item-emoji{font-size:20px}
+.modal-badge-item-nome{font-size:8px;color:var(--text-muted);line-height:1.2}
+.modal-badge-item.ok .modal-badge-item-nome{color:var(--ouro)}
 
 @media(max-width:860px){
   .header{padding:0 16px}
@@ -165,7 +174,24 @@ let userAtual = null;
 let rankingData = [];
 let uniqueBadgesMap = {};
 
-// Badge catalog loaded from DB at runtime
+const BADGES = [
+  {id:'primeiro_acesso',     emoji:'🚀', nome:'Primeiro Acesso'},
+  {id:'dna_ativo',           emoji:'🧬', nome:'DNA Ativo'},
+  {id:'reacao_em_cadeia',    emoji:'⚗️',  nome:'Reação em Cadeia'},
+  {id:'forca_total',         emoji:'⚡', nome:'Força Total'},
+  {id:'triforce',            emoji:'🔱', nome:'Triforce'},
+  {id:'simulado_desbloq',    emoji:'🔓', nome:'Simulado Desbloqueado'},
+  {id:'sobrevivente',        emoji:'🎯', nome:'Sobrevivente'},
+  {id:'streak_fogo',         emoji:'🔥', nome:'Streak de Fogo'},
+  {id:'perfeccionista',      emoji:'💎', nome:'Perfeccionista'},
+  {id:'mestre_genetica',     emoji:'🧬', nome:'Mestre da Genética'},
+  {id:'expert_eletroquimica',emoji:'⚗️',  nome:'Expert Eletroquímica'},
+  {id:'senhor_joule',        emoji:'⚡', nome:'Senhor do Joule'},
+  {id:'maratonista',         emoji:'⏱️', nome:'Maratonista'},
+  {id:'consistente',         emoji:'📅', nome:'Consistente'},
+  {id:'top3',                emoji:'🥇', nome:'Top 3'},
+  {id:'lenda_marista',       emoji:'👑', nome:'Lenda Marista'},
+];
 
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -208,7 +234,7 @@ async function carregarRankingFull() {
       const icon = b.imagem_url
         ? `<img src="${b.imagem_url}" style="width:14px;height:14px;border-radius:3px;object-fit:cover">`
         : `<span class="pill-emoji">${b.emoji || '✨'}</span>`;
-      return `<span class="badge-unica-pill" title="${b.descricao || ''}">${icon}${b.nome || b.badge_id}</span>`;
+      return `<span class="badge-unica-pill" data-tooltip="${b.descricao || ''}">${icon}${b.nome || b.badge_id}</span>`;
     }).join('');
 
     html += `
@@ -231,9 +257,23 @@ async function carregarRankingFull() {
   });
 }
 
-function abrirPerfil(index) {
+async function abrirPerfil(index) {
+  // Abre o modal imediatamente com loading
+  document.getElementById('modalConteudo').innerHTML =
+    `<div style="text-align:center;padding:48px 0;color:var(--text-muted);font-size:14px">Carregando...</div>`;
+  document.getElementById('modalOverlay').classList.add('aberto');
+  document.body.style.overflow = 'hidden';
+
   const r = rankingData[index];
   if (!r) return;
+
+  // Busca badges conquistadas do aluno
+  const { data: conquistadosData } = await sb
+    .from('badges_conquistados')
+    .select('badge_id')
+    .eq('aluno_id', r.aluno_id);
+
+  const conquistados = new Set((conquistadosData || []).map(b => b.badge_id));
 
   const euMesmo = r.aluno_id === userAtual.id;
   const pos = Number(r.posicao) || (index + 1);
@@ -243,6 +283,22 @@ function abrirPerfil(index) {
   const corretas = Number(r.questoes_corretas) || 0;
   const pct = respondidas > 0 ? Math.round((corretas / respondidas) * 100) : 0;
 
+  // Grid de badges gerais
+  const badgesGridHtml = `
+    <div class="modal-section" style="margin-top:16px">
+      <div class="modal-section-title">🏅 Conquistas (${conquistados.size} de ${BADGES.length})</div>
+      <div class="modal-badges-grid">
+        ${BADGES.map(b => {
+          const ok = conquistados.has(b.id);
+          return `<div class="modal-badge-item ${ok ? 'ok' : ''}" title="${b.nome}">
+            <span class="modal-badge-item-emoji">${b.emoji}</span>
+            <span class="modal-badge-item-nome">${b.nome}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // Badges únicas
   const myUniques = uniqueBadgesMap[r.aluno_id] || [];
   const uniquesBadgesHtml = myUniques.length > 0 ? `
     <hr class="modal-divider">
@@ -313,16 +369,9 @@ function abrirPerfil(index) {
       </div>
     </div>
 
-    <div class="modal-section" style="margin-top:16px">
-      <div class="modal-section-title">Badges conquistadas</div>
-      <div style="font-size:22px;font-weight:800;color:var(--text)">${Number(r.badges_count) || 0} <span style="font-size:13px;font-weight:400;color:var(--text-muted)">de 16</span></div>
-    </div>
-
+    ${badgesGridHtml}
     ${uniquesBadgesHtml}
   `;
-
-  document.getElementById('modalOverlay').classList.add('aberto');
-  document.body.style.overflow = 'hidden';
 }
 
 function fecharModal() {
