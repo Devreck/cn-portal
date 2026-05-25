@@ -292,8 +292,9 @@ main{max-width:760px;margin:0 auto;padding:36px 20px 60px}
 const sb = CN_CONFIG.createSupabaseClient();
 let userAtual = null;
 let cenarioEscolhido = 'Automatico';
-let questaoAtual = null;
+let questaoAtual    = null;
 let questaoSalvaId  = null;   // ID do registro em questoes_banco após o save
+let pendingRating   = null;   // Avaliação feita antes do save completar
 let respondida = false;
 
 // ── TEMAS ──────────────────────────────────────────────────────────────────
@@ -528,6 +529,7 @@ async function gerarDesafio() {
 
     // Salvar no Supabase e habilitar avaliação
     questaoSalvaId = null;
+    pendingRating  = null;
     sb.from('questoes_banco').insert({
       origem: 'aluno_gerada',
       gerada_para: userAtual.id,
@@ -545,11 +547,24 @@ async function gerarDesafio() {
       steps: q.steps || null,
       elementos_visuais: q.elementos_visuais || null,
       status: 'pendente',
-    }, { returning: 'representation' }).select('id').single().then(({ data: saved }) => {
+    }).select('id').single().then(({ data: saved, error }) => {
+      if (error) {
+        console.warn('Erro ao salvar questão:', error.message);
+        const badge = document.getElementById('salvoIndicador');
+        if (badge) { badge.textContent = '⚠ Não salvo'; badge.style.color = 'var(--red)'; badge.style.display = 'inline-flex'; }
+        return;
+      }
       questaoSalvaId = saved?.id || null;
       const badge = document.getElementById('salvoIndicador');
-      if (badge) badge.style.display = 'inline-flex';
-    }).catch(() => {});
+      if (badge) { badge.textContent = '✓ Salvo'; badge.style.color = ''; badge.style.display = 'inline-flex'; }
+      // Aplicar avaliação que foi feita antes do save completar
+      if (questaoSalvaId && pendingRating) {
+        _aplicarAvaliacao(questaoSalvaId, pendingRating);
+        pendingRating = null;
+      }
+    }).catch(err => {
+      console.warn('Erro inesperado ao salvar:', err);
+    });
 
   } catch(e) {
     pararAnimacaoLoading();
@@ -717,13 +732,9 @@ function mostrarFeedback(correta, explicacao) {
   if (stepsArea) stepsArea.style.display = 'block';
 
   document.getElementById('posAcoes').classList.add('show');
-  // Mostrar bloco de avaliação só se a questão foi salva (aguarda até 3s)
-  const mostrarAvaliacao = () => {
-    const bloco = document.getElementById('avaliacaoBloco');
-    if (bloco) bloco.style.display = 'block';
-  };
-  if (questaoSalvaId) mostrarAvaliacao();
-  else setTimeout(mostrarAvaliacao, 3000);
+  // Mostrar bloco de avaliação imediatamente (botões funcionam mesmo antes do save completar)
+  const bloco = document.getElementById('avaliacaoBloco');
+  if (bloco) bloco.style.display = 'block';
 
   if (window.MathJax?.typesetPromise) {
     MathJax.typesetPromise([fb]).catch(()=>{});
@@ -743,36 +754,42 @@ function toggleSteps(btn) {
 }
 
 // ── AVALIAÇÃO DA QUESTÃO ──────────────────────────────────────────────
-async function avaliarQuestao(tipo) {
-  if (!questaoSalvaId) return;
-
-  // Visual: marcar botão selecionado, desmarcar os outros
+function _marcarBotaoAvaliacao(tipo) {
   ['joinha','alerta','errado'].forEach(t => {
-    const btn = document.getElementById(`av${t.charAt(0).toUpperCase() + t.slice(1)}`);
-    if (btn) {
-      btn.classList.remove(`selected-joinha`, `selected-alerta`, `selected-errado`);
-    }
+    const id = `av${t.charAt(0).toUpperCase() + t.slice(1)}`;
+    document.getElementById(id)?.classList.remove(`selected-joinha`, `selected-alerta`, `selected-errado`);
   });
-  const btnSel = document.getElementById(`av${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
-  if (btnSel) btnSel.classList.add(`selected-${tipo}`);
+  document.getElementById(`av${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`)?.classList.add(`selected-${tipo}`);
+}
 
+async function _aplicarAvaliacao(qId, tipo) {
   try {
     await sb.from('questoes_banco')
       .update({ avaliacao_aluno: tipo })
-      .eq('id', questaoSalvaId)
-      .eq('gerada_para', userAtual.id);   // segurança: só própria questão
+      .eq('id', qId)
+      .eq('gerada_para', userAtual.id);
 
-    const conf = document.getElementById('avaliacaoConfirmado');
-    if (conf) conf.classList.add('show');
-    // Desativar botões após envio
+    document.getElementById('avaliacaoConfirmado')?.classList.add('show');
     setTimeout(() => {
       ['avJoinha','avAlerta','avErrado'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.disabled = true;
       });
-    }, 1000);
-  } catch(e) {
-    console.warn('Erro ao salvar avaliação:', e);
+    }, 800);
+  } catch(e) { console.warn('Erro ao salvar avaliação:', e); }
+}
+
+async function avaliarQuestao(tipo) {
+  _marcarBotaoAvaliacao(tipo);
+
+  if (questaoSalvaId) {
+    // Save já completou — aplicar imediatamente
+    await _aplicarAvaliacao(questaoSalvaId, tipo);
+  } else {
+    // Save ainda em andamento — guardar para aplicar quando o ID chegar
+    pendingRating = tipo;
+    // Mostrar confirmação otimista
+    document.getElementById('avaliacaoConfirmado')?.classList.add('show');
   }
 }
 </script>
