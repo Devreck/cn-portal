@@ -1,0 +1,25 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Roda a cada 4 dias: 0h de segunda, sexta e segunda novamente
+    # Supabase pausa após 7 dias — pingar a cada 4 dias garante margem de segurança
+    - cron: '0 6 */4 * *'
+  workflow_dispatch:   # Permite rodar manualmente pelo GitHub Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (mantém banco ativo)
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/perfis?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "Status HTTP: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "⚠️ Supabase retornou $STATUS — verifique o projeto"
+            exit 1
+          fi
+          echo "✅ Banco ativo e respondendo"

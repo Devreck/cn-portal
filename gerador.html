@@ -291,10 +291,12 @@ main{max-width:760px;margin:0 auto;padding:36px 20px 60px}
 <script>
 const sb = CN_CONFIG.createSupabaseClient();
 let userAtual = null;
-let cenarioEscolhido = 'Automatico';
-let questaoAtual    = null;
-let questaoSalvaId  = null;   // ID do registro em questoes_banco após o save
-let pendingRating   = null;   // Avaliação feita antes do save completar
+let cenarioEscolhido  = 'Automatico';
+let questaoAtual      = null;
+let questaoSalvaId    = null;   // ID do registro em questoes_banco após o save
+let pendingRating     = null;   // Avaliação feita antes do save completar
+let _ultimaGeracao    = 0;      // Timestamp da última geração (rate limit)
+const COOLDOWN_MS     = 60_000; // 60 segundos entre gerações
 let respondida = false;
 
 // ── TEMAS ──────────────────────────────────────────────────────────────────
@@ -479,6 +481,18 @@ async function gerarDesafio() {
     setTimeout(() => document.getElementById('selTemaPrincipal').style.borderColor = '', 2000);
     return;
   }
+
+  // Rate limit: 1 geração por minuto
+  const agora = Date.now();
+  const restante = COOLDOWN_MS - (agora - _ultimaGeracao);
+  if (restante > 0) {
+    const seg = Math.ceil(restante / 1000);
+    const btn = document.getElementById('btnGerarTexto');
+    btn.textContent = `⏳ Aguarde ${seg}s`;
+    setTimeout(() => { btn.textContent = '⚡ Gerar Questão Inédita'; }, restante);
+    return;
+  }
+  _ultimaGeracao = agora;
 
   const principal = TEMAS[Number(idxPrincipal)];
   const idxSec = document.getElementById('selTemaSecundario').value;
