@@ -20,11 +20,41 @@ ALTER TABLE public.questoes_banco
 ALTER TABLE public.pontuacao
   ADD COLUMN IF NOT EXISTS pontos_avaliacao INTEGER NOT NULL DEFAULT 0;
 
--- ── 4. Atualizar RLS: alunos podem atualizar avaliacao_aluno nas próprias questões ──
+-- ── 4. Atualizar RLS: INSERT e SELECT para 'aluno_gerada' ──
+
+-- 4a. Permitir INSERT com origem='aluno_gerada'
+DROP POLICY IF EXISTS "aluno_insert_questao_gerada" ON public.questoes_banco;
+CREATE POLICY "aluno_insert_questao_gerada"
+  ON public.questoes_banco FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.perfis p
+      WHERE p.id = auth.uid() AND p.role = 'aluno' AND p.ativo = true
+    )
+    AND status = 'pendente'
+    AND origem IN ('ia_gerada', 'aluno_gerada')
+    AND gerada_para = auth.uid()
+  );
+
+-- 4b. Permitir SELECT de questões 'aluno_gerada' próprias (pendente ou aprovada)
+DROP POLICY IF EXISTS "aluno_select_questoes_aprovadas" ON public.questoes_banco;
+CREATE POLICY "aluno_select_questoes_aprovadas"
+  ON public.questoes_banco FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.perfis p
+      WHERE p.id = auth.uid() AND p.role = 'aluno' AND p.ativo = true
+    )
+    AND (
+      status IN ('aprovada', 'editada')
+      OR (status = 'pendente' AND gerada_para = auth.uid())
+    )
+  );
+
+-- 4c. Permitir UPDATE de avaliacao_aluno nas próprias questões
 DROP POLICY IF EXISTS "aluno_pode_avaliar_propria_questao" ON public.questoes_banco;
 CREATE POLICY "aluno_pode_avaliar_propria_questao"
-  ON public.questoes_banco
-  FOR UPDATE
+  ON public.questoes_banco FOR UPDATE
   TO authenticated
   USING  (gerada_para = auth.uid())
   WITH CHECK (gerada_para = auth.uid());

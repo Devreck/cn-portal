@@ -266,11 +266,15 @@ REGRAS ABSOLUTAS:
    - NÃO escreva contas em texto corrido como "P = V²/R = 400/100".
    - NÃO use Unicode matemático (², Ω, Δ soltos) em fórmulas; use LaTeX.
 4. O contexto deve ser tecnológico e contemporâneo (nunca exemplos genéricos).
-5. Para Tipo C: os steps devem resolver o cálculo passo a passo como um professor.
-   Cada step deve ter explicação textual curta e uma ou mais "linhas_latex" bem formatadas.
+5. DIRETRIZES DO FORMATO:
+   Tipo A (Certo/Errado): O item DEVE estar vinculado a um texto-base, charge, gráfico, equação ou situação-problema prévia. A afirmação final nunca pode estar sozinha ou descontextualizada. Crie uma afirmação onde uma única palavra ou conceito mude a veracidade. Explique na resolução por que a interpretação oposta falha.
+   Tipo C Teórica: Apresente 5 alternativas CONCEITUAIS. Nenhum cálculo numérico deve ser necessário — nem mesmo simples. Cada distrator deve mapear um erro de interpretação comum.
+   Tipo C Com Cálculo: Apresente 5 alternativas numéricas distintas. Sem dízimas não avisadas e sem aproximações silenciosas. Os steps devem resolver o cálculo passo a passo com explicação textual e "linhas_latex" bem formatadas.
    O campo "explicacao" deve incluir a resolução completa E a justificativa do erro específico de cada distrator.
-6. Para Tipo A: OBRIGATÓRIO texto-base ou elemento contextual (texto curto, dado, situação-problema) que precede a afirmação. A pegadinha deve ser sutil — uma única palavra ou negação muda tudo. O campo "explicacao" deve: identificar a palavra/conceito que é a pegadinha; explicar por que a interpretação oposta falha; e citar o elemento do texto-base que sustenta o gabarito.
-   Para Tipo C Teórica: NENHUMA alternativa deve exigir cálculo numérico — nem mesmo simples. Avalia APENAS conceitos, definições, relações causais e raciocínio qualitativo.
+
+   ATENÇÃO AO TIPO DE CÁLCULO: Se os temas selecionados forem EXCLUSIVAMENTE de Biologia (ex: Genética), o "cálculo" exigido deve ser ESTRITAMENTE probabilidade mendeliana, frações genotípicas ou análise de frequências. É PROIBIDO inserir grandezas de Física (volts, ohms, amperes, watts) ou equações químicas sem relação com metabolismo genético nesses casos.
+
+6. FIDELIDADE TEMÁTICA (A REGRA DE OURO): O item gerado DEVE exigir o conhecimento técnico e a aplicação explícita na resolução de AMBOS os temas fornecidos (${tema} e ${tema_secundario || 'tema principal'}). Não ignore o tema secundário. Não o use apenas como enfeite no cenário — o aluno deve mobilizá-lo para responder.
 7. Não reproduza questões, dados, figuras ou alternativas da prova original AV4.
 8. ELEMENTOS VISUAIS — inclua SOMENTE quando o elemento for INDISPENSÁVEL para responder à questão:
    INCLUA quando: a questão exige leitura direta de valores de um gráfico/tabela de dados, um circuito com componentes nomeados e rotulados que o aluno deve interpretar, um heredograma com indivíduos específicos que a questão referencia, uma equação química referenciada diretamente no enunciado.
@@ -297,21 +301,12 @@ REGRAS ABSOLUTAS:
 9. Se o tema for "Circuitos Elétricos", restrinja a circuitos simples com resistores em série:
    R_eq = R_1 + R_2 + ...; V = R·I; P = V·I, P = R·I², P = V²/R.
    Não gere paralelo, malhas complexas, Kirchhoff avançado ou capacitores.
-10. INTERDISCIPLINARIDADE NATURAL — a conexão entre disciplinas deve ser orgânica e indissolúvel.
-    CRITÉRIO DE INTEGRAÇÃO REAL: o aluno deve ser incapaz de responder à questão sem mobilizar SIMULTANEAMENTE as duas disciplinas. Se for possível resolver cada parte de forma independente — mesmo que envoltas num mesmo enunciado — a questão NÃO é interdisciplinar: é simplesmente duas questões coladas.
+10. INTRADISCIPLINAR vs INTERDISCIPLINAR (CRÍTICO):
+    Se ambos os temas forem da MESMA disciplina (ex: Bio+Bio — ABO e Anemia Falciforme): Crie uma questão INTRADISCIPLINAR. O contexto deve focar na interação biológica (probabilidade de um casal ter filho com ambas as características, pleiotropia, heredogramas duplos). É EXPRESSAMENTE PROIBIDO inserir aparelhos de Física (tensão, resistência, circuitos, biossensores) ou equações químicas não relacionadas ao metabolismo genético nesses casos.
 
-    PROIBIDO:
-    - Usar resultado numérico de genética/biologia como dado direto de cálculo físico/químico.
-      Ex.: "a probabilidade é 25% — use esse valor como tensão em V" → absurdo.
-    - Criar dispositivos médico-tecnológicos fictícios (ex.: "microcoagulômetro", "hemossensor portátil XX-7", "coagulômetro de bolso") para forçar a junção de dois problemas independentes.
-    - Apresentar uma questão com dois enunciados disfarçados de um ("calcule X e calcule Y") em que X pertence a uma disciplina e Y a outra sem relação de dependência.
-
-    EXIGÊNCIA: o dispositivo ou fenômeno que conecta as disciplinas deve ser REAL e verificável.
-      ACEITÁVEL: marcapasso (real — combina eletrônica + genética de arritmias hereditárias),
-                 eletroforese em gel (real — separa fragmentos de DNA usando campo elétrico),
-                 biossensor de glicose (real — combina enzima + eletrodo amperométrico),
-                 bateria de veículo elétrico (real — eletroquímica + energia cinética).
-      PROIBIDO: qualquer aparelho inventado ad hoc para justificar um cálculo que de outra forma ficaria solto.
+    Se os temas forem de disciplinas DIFERENTES (ex: Bio+Fis ou Bio+Quim): Crie uma questão INTERDISCIPLINAR usando fenômenos e dispositivos REAIS. O aluno deve mobilizar SIMULTANEAMENTE as duas disciplinas para responder — se for possível resolver cada parte de forma independente, a questão NÃO é interdisciplinar; é duas questões coladas.
+      ACEITÁVEL: marcapasso (eletrônica + genética de arritmias), eletroforese em gel (DNA + campo elétrico), biossensor de glicose (enzima + eletrodo amperométrico), bateria de VE (eletroquímica + energia cinética).
+      PROIBIDO: qualquer aparelho inventado ad hoc; usar resultado de genética (ex: 25%) diretamente como tensão em V.
 11. Preencha os campos "nivel_cognitivo", "habilidade" e "fonte_ids" corretamente.
     nivel_cognitivo segue: Basico (reconhecimento/memorização), Operacional (aplicação de procedimento), Global (análise/síntese interdisciplinar).
 12. CENÁRIOS PROIBIDOS — rejeite qualquer questão que contenha:
@@ -330,11 +325,11 @@ REGRAS ABSOLUTAS:
     TODOS os dispositivos e substâncias mencionados devem ter existência real e verificável na literatura científica.
 
 PROTOCOLO DE AUDITORIA INTERNA — execute silenciosamente antes de retornar o JSON:
-A. COMPLETUDE DOS DADOS: Para questões Tipo C com cálculo numérico, liste mentalmente TODAS as grandezas necessárias (tensão, corrente, tempo, massa molar, temperatura, constantes, etc.) e verifique que cada uma está explícita no enunciado ou no texto_base. Se qualquer dado estiver faltando, reescreva o enunciado incluindo-o ANTES de retornar.
-B. COERÊNCIA VISUAL: Se incluiu um heredograma, verifique: (i) nenhum casal é formado por dois indivíduos com o mesmo "filho_de"; (ii) o heredograma é realmente necessário para a questão; (iii) todos os indivíduos de gerações II+ têm "filho_de" ou "origem":"externo". Se algum item falhar, corrija o heredograma.
-C. PROVA REAL: Resolva a questão de forma independente. O resultado coincide com exatamente UMA alternativa? As unidades estão consistentes do início ao fim?
-D. DISTRATORES: Cada distrator representa um erro real e comum de raciocínio? Algum distrator pode ser considerado parcialmente correto sob interpretação alternativa válida? (Se sim: reescreva o distrator.)
-E. FONTE E NÍVEL: A questão respeita o nível do Ensino Médio e não exige conhecimento de nível superior não fornecido no texto-base?
+A. FIDELIDADE TEMÁTICA: Eu realmente exigi o conhecimento do tema 1 E do tema 2 na resolução? Ou um deles ficou apenas de enfeite no texto? Se um tema foi ignorado → reescreva.
+B. CÁLCULO DISCIPLINAR CORRETO: Se os dois temas são de Biologia, eu evitei colocar grandezas de Física (volts, ohms, amperes) sem necessidade? Se sim → remova a Física e mantenha o cálculo probabilístico/genético.
+C. ELEMENTOS VISUAIS PROMETIDOS: Se eu referenciei "a tabela abaixo", "o gráfico a seguir" ou "a figura" no enunciado, eu realmente construí esse elemento no JSON? Se não → ou construa o elemento ou reescreva o enunciado sem referenciá-lo.
+D. RESPOSTA ÚNICA: A resolução leva a exatamente UMA alternativa correta? As unidades estão consistentes? Cada distrator mapeia um erro real e comum — nenhum pode ser considerado parcialmente correto por interpretação alternativa válida?
+E. NÍVEL E AUTOSSUFICIÊNCIA: A questão respeita o Ensino Médio? Todos os dados necessários estão explícitos no enunciado — sem "conforme o texto" sem fornecer o texto, sem dados implícitos?
 F. TESTE DE INTEGRAÇÃO REAL: Consigo separar este enunciado em dois problemas independentes? Se SIM → a questão não é interdisciplinar, é duas questões disfarçadas — descarte e reescreva com um único problema que exija as duas disciplinas simultaneamente. O contexto (dispositivo, fenômeno, situação) que conecta as disciplinas existe na realidade? Se NÃO existe (dispositivo inventado, aparelho fictício) → descarte e reescreva usando um contexto verificável.
 G. CENÁRIO: O cenário solicitado (ou o escolhido automaticamente) está presente como elemento central do enunciado, e não apenas mencionado de passagem? A questão seria completamente diferente sem esse cenário?
 H. SUBTIPO TEÓRICO: Se o subtipo for "teórica", alguma alternativa exige cálculo? Se SIM → reescreva para remover números e tornar tudo qualitativo.
