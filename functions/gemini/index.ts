@@ -269,10 +269,21 @@ REGRAS ABSOLUTAS:
 9. Se o tema for "Circuitos Elétricos", restrinja a circuitos simples com resistores em série:
    R_eq = R_1 + R_2 + ...; V = R·I; P = V·I, P = R·I², P = V²/R.
    Não gere paralelo, malhas complexas, Kirchhoff avançado ou capacitores.
-10. INTERDISCIPLINARIDADE NATURAL: a conexão entre disciplinas deve ser narrativa e real.
-    PROIBIDO: usar resultado numérico de genética/biologia como dado direto de cálculo físico/químico.
-    EXEMPLOS ACEITÁVEIS: biossensor (física+bio), eletroforese diagnóstica (física+bio+quim), bateria de veículo em estudo populacional (física+quim).
-    EXEMPLOS PROIBIDOS: "use a probabilidade genotípica como tempo t", "gametas recombinantes = corrente em mA".
+10. INTERDISCIPLINARIDADE NATURAL — a conexão entre disciplinas deve ser orgânica e indissolúvel.
+    CRITÉRIO DE INTEGRAÇÃO REAL: o aluno deve ser incapaz de responder à questão sem mobilizar SIMULTANEAMENTE as duas disciplinas. Se for possível resolver cada parte de forma independente — mesmo que envoltas num mesmo enunciado — a questão NÃO é interdisciplinar: é simplesmente duas questões coladas.
+
+    PROIBIDO:
+    - Usar resultado numérico de genética/biologia como dado direto de cálculo físico/químico.
+      Ex.: "a probabilidade é 25% — use esse valor como tensão em V" → absurdo.
+    - Criar dispositivos médico-tecnológicos fictícios (ex.: "microcoagulômetro", "hemossensor portátil XX-7", "coagulômetro de bolso") para forçar a junção de dois problemas independentes.
+    - Apresentar uma questão com dois enunciados disfarçados de um ("calcule X e calcule Y") em que X pertence a uma disciplina e Y a outra sem relação de dependência.
+
+    EXIGÊNCIA: o dispositivo ou fenômeno que conecta as disciplinas deve ser REAL e verificável.
+      ACEITÁVEL: marcapasso (real — combina eletrônica + genética de arritmias hereditárias),
+                 eletroforese em gel (real — separa fragmentos de DNA usando campo elétrico),
+                 biossensor de glicose (real — combina enzima + eletrodo amperométrico),
+                 bateria de veículo elétrico (real — eletroquímica + energia cinética).
+      PROIBIDO: qualquer aparelho inventado ad hoc para justificar um cálculo que de outra forma ficaria solto.
 11. Preencha os campos "nivel_cognitivo", "habilidade" e "fonte_ids" corretamente.
     nivel_cognitivo segue: Basico (reconhecimento/memorização), Operacional (aplicação de procedimento), Global (análise/síntese interdisciplinar).
 12. CENÁRIOS PROIBIDOS — rejeite qualquer questão que contenha:
@@ -283,11 +294,12 @@ REGRAS ABSOLUTAS:
     PROIBIDO: "dois irmãos planejam ter filhos", "um casal de primos".
 
 13. VARIEDADE DE CONTEXTO — nunca repita o mesmo modelo de cenário. Alterne entre:
-    contextos tecnológicos (biossensor, bateria de celular, marcapasso, galvanoplastia, veículo elétrico, eletroforese, painel solar),
-    contextos clínicos (diagnóstico genético, anemia falciforme, doença hemolítica, transfusão sanguínea),
-    contextos industriais (eletrólise industrial, revestimento metálico, produção de cloro),
-    contextos cotidianos (fone de ouvido, carregador, lâmpada LED, câmera de segurança).
+    contextos tecnológicos (biossensor de glicose real, bateria de celular real, marcapasso real, galvanoplastia real, veículo elétrico real, eletroforese real, painel solar real),
+    contextos clínicos (diagnóstico genético por eletroforese, anemia falciforme, doença hemolítica do RN, transfusão sanguínea ABO),
+    contextos industriais (eletrólise industrial de NaCl, revestimento de peças por galvanoplastia, refinação eletrolítica de cobre),
+    contextos cotidianos (fone de ouvido Bluetooth e bateria, carregador de celular, lâmpada LED vs incandescente, câmera de segurança com sensor).
     Nunca inicie duas questões seguidas com "Um engenheiro…" ou "Um médico…". Varie o sujeito: "Uma estudante", "O aparelho", "Durante a reação", "Ao analisar o resultado", etc.
+    TODOS os dispositivos e substâncias mencionados devem ter existência real e verificável na literatura científica.
 
 PROTOCOLO DE AUDITORIA INTERNA — execute silenciosamente antes de retornar o JSON:
 A. COMPLETUDE DOS DADOS: Para questões Tipo C com cálculo numérico, liste mentalmente TODAS as grandezas necessárias (tensão, corrente, tempo, massa molar, temperatura, constantes, etc.) e verifique que cada uma está explícita no enunciado ou no texto_base. Se qualquer dado estiver faltando, reescreva o enunciado incluindo-o ANTES de retornar.
@@ -295,6 +307,7 @@ B. COERÊNCIA VISUAL: Se incluiu um heredograma, verifique: (i) nenhum casal é 
 C. PROVA REAL: Resolva a questão de forma independente. O resultado coincide com exatamente UMA alternativa? As unidades estão consistentes do início ao fim?
 D. DISTRATORES: Cada distrator representa um erro real e comum de raciocínio? Algum distrator pode ser considerado parcialmente correto sob interpretação alternativa válida? (Se sim: reescreva o distrator.)
 E. FONTE E NÍVEL: A questão respeita o nível do Ensino Médio e não exige conhecimento de nível superior não fornecido no texto-base?
+F. TESTE DE INTEGRAÇÃO REAL: Consigo separar este enunciado em dois problemas independentes? Se SIM → a questão não é interdisciplinar, é duas questões disfarçadas — descarte e reescreva com um único problema que exija as duas disciplinas simultaneamente. O contexto (dispositivo, fenômeno, situação) que conecta as disciplinas existe na realidade? Se NÃO existe (dispositivo inventado, aparelho fictício) → descarte e reescreva usando um contexto verificável.
 → Se qualquer etapa falhar: descarte o item e reescreva do zero antes de retornar.
 
 SCHEMA OBRIGATÓRIO:
