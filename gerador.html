@@ -444,6 +444,31 @@ function fecharModalCenario(e) {
   if (e.target === document.getElementById('modalCenario')) cancelarCenario();
 }
 
+// ── RETRY COM BACKOFF (Gemini Edge Function) ──────────────────────────────
+async function invokeGeminiComRetry(payload, tentativas = 3) {
+  let ultimoErro;
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const resp = await sb.functions.invoke('gemini', { body: payload });
+      if (!resp.error && !resp.data?.error) return resp;
+      ultimoErro = new Error(resp.data?.detalhe || resp.error?.message || 'Erro na geração');
+    } catch (e) {
+      ultimoErro = e;
+    }
+    // Não tentar novamente em erro de quota/rate-limit (seria inútil)
+    const msg = (ultimoErro?.message || '').toLowerCase();
+    if (msg.includes('quota') || msg.includes('rate') || msg.includes('429')) break;
+
+    if (i < tentativas - 1) {
+      const espera = 1000 * Math.pow(2, i); // 1s → 2s
+      const etapaEl = document.getElementById('loadingEtapa');
+      if (etapaEl) etapaEl.textContent = `Tentando novamente (${i + 2}/${tentativas})…`;
+      await new Promise(r => setTimeout(r, espera));
+    }
+  }
+  throw ultimoErro;
+}
+
 // ── ETAPAS DE LOADING ────────────────────────────────────────────────────
 const ETAPAS = [
   { msg: 'Consultando base de conhecimento...', pct: 15 },
@@ -525,15 +550,9 @@ async function gerarDesafio() {
       contexto_chunks: [],
     };
 
-    const resp = await sb.functions.invoke('gemini', {
-      body: { funcao: 'gerar_questao', dados },
-    });
+    const resp = await invokeGeminiComRetry({ funcao: 'gerar_questao', dados });
 
     pararAnimacaoLoading();
-
-    if (resp.error || resp.data?.error) {
-      throw new Error(resp.data?.detalhe || resp.error?.message || 'Erro na geração');
-    }
 
     const q = resp.data?.questao;
     if (!q) throw new Error('Questão não retornada');

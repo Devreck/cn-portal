@@ -49,6 +49,17 @@ const QuestaoRenderer = {
   async carregarQuestoesBanco(disciplina) {
     if (!this.estado.userId || typeof sb === 'undefined') return [];
 
+    // ── Cache local: 10 min TTL — reduz queries simultâneas no Free tier ──
+    const CACHE_TTL = 10 * 60 * 1000;
+    const cacheKey  = `qbanco_${disciplina}_${this.estado.userId}`;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const { ts, data } = JSON.parse(raw);
+        if (Date.now() - ts < CACHE_TTL) return data; // cache fresco — sem query
+      }
+    } catch (_) {}
+
     try {
       const campos = 'id, origem, gerada_para, disciplina, tema, subtema, tipo, nivel, interdisciplinar_com, enunciado, texto_base, alternativas, gabarito, explicacao, steps, elementos_visuais, status, created_at';
       const [diretas, interdisciplinares] = await Promise.all([
@@ -74,7 +85,7 @@ const QuestaoRenderer = {
       [...(diretas.data || []), ...(interdisciplinares.data || [])].forEach(q => porId.set(q.id, q));
       const data = Array.from(porId.values()).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-      return (data || []).map(q => ({
+      const resultado = (data || []).map(q => ({
         id: `banco_${q.id}`,
         banco_id: q.id,
         origem: q.origem,
@@ -94,7 +105,20 @@ const QuestaoRenderer = {
         elementos_visuais: q.elementos_visuais || q.texto_base?.elementos_visuais || [],
         status: q.status,
       })).filter(q => q.enunciado && q.gabarito && (q.tipo === 'A' || q.tipo === 'C'));
+
+      // Salvar no cache para próximas visitas nos próximos 10 min
+      try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: resultado })); } catch (_) {}
+
+      return resultado;
     } catch (e) {
+      // Supabase offline? Usar cache expirado como fallback (degradação graciosa)
+      try {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          console.warn('⚠️ Supabase offline — usando cache local de questões');
+          return JSON.parse(raw).data || [];
+        }
+      } catch (_) {}
       console.warn('Erro ao carregar questões do banco:', e);
       return [];
     }

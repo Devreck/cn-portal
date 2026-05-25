@@ -306,26 +306,42 @@ const TEMAS_IA = {
 
 // ── INIT ──
 (async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
+  // Watchdog: se em 12s ainda carregando, mostrar aviso com link de volta
+  const _watchdog = setTimeout(() => {
+    const msg = document.getElementById('loadingMsg');
+    if (msg) msg.innerHTML = 'Demorando mais que o esperado…<br>'
+      + '<a href="portal.html" style="color:var(--azul-light);font-size:12px">← Voltar ao portal</a>';
+  }, 12000);
 
-  const { data: perfil } = await sb
-    .from('perfis')
-    .select('*')
-    .eq('id', session.user.id)
-    .single();
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'index.html'; return; }
 
-  if (!perfil || !perfil.ativo) { window.location.href = 'index.html'; return; }
-  if (!perfil.senha_trocada)    { window.location.href = 'trocar-senha.html'; return; }
-  if (perfil.role === 'professor') { window.location.href = 'painel.html'; return; }
+    const { data: perfil } = await sb
+      .from('perfis')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
 
-  userAtual = { ...session.user, perfil };
+    if (!perfil || !perfil.ativo) { window.location.href = 'index.html'; return; }
+    if (!perfil.senha_trocada)    { window.location.href = 'trocar-senha.html'; return; }
+    if (perfil.role === 'professor') { window.location.href = 'painel.html'; return; }
 
-  // Verificar parâmetro de URL
-  const params = new URLSearchParams(window.location.search);
-  const disc   = params.get('disciplina') || 'bio';
+    userAtual = { ...session.user, perfil };
 
-  await trocarDisciplina(disc);
+    const params = new URLSearchParams(window.location.search);
+    const disc   = params.get('disciplina') || 'bio';
+
+    await trocarDisciplina(disc);
+  } catch (e) {
+    const msg = document.getElementById('loadingMsg');
+    if (msg) msg.innerHTML = '⚠️ Erro ao carregar — verifique sua conexão.<br>'
+      + '<a href="portal.html" style="color:var(--azul-light);font-size:12px">← Voltar ao portal</a>';
+    return;
+  } finally {
+    clearTimeout(_watchdog);
+  }
+
   document.getElementById('loadingScreen').style.display = 'none';
   if (window.location.hash === '#gerarExtra') {
     setTimeout(() => document.getElementById('gerarExtra')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);

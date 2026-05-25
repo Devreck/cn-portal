@@ -161,7 +161,7 @@ body.professor-preview .cronometro{min-width:auto;color:var(--ouro);background:r
 <!-- Loading -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-spinner"></div>
-  <div style="font-size:14px;color:var(--text-muted)">Carregando simulado...</div>
+  <div id="loadingSimMsg" style="font-size:14px;color:var(--text-muted)">Carregando simulado...</div>
 </div>
 
 <!-- Modal bloqueado -->
@@ -247,106 +247,157 @@ let tentativaId  = null;
 let modoProfessor = false;
 let modoProfessorGabarito = false;
 let modoProfessorAluno = false;
+let BACKUP_KEY   = null;     // definido após login: `simulado_backup_${userId}`
+
+// ── BACKUP LOCAL (proteção contra queda do banco) ──────────────────────
+function salvarBackupLocal() {
+  if (!BACKUP_KEY) return;
+  try { localStorage.setItem(BACKUP_KEY, JSON.stringify({ ts: Date.now(), respostas, tentativaId })); } catch (_) {}
+}
+
+function carregarBackupLocal() {
+  if (!BACKUP_KEY) return null;
+  try {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Válido por 4h (duração máxima de um simulado)
+    if (Date.now() - parsed.ts < 4 * 3600 * 1000) return parsed;
+  } catch (_) {}
+  return null;
+}
+
+function mostrarBannerOffline() {
+  if (document.getElementById('bannerOffline')) return;
+  const banner = document.createElement('div');
+  banner.id = 'bannerOffline';
+  banner.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);'
+    + 'background:#0d1526;border:1px solid rgba(245,158,11,0.4);color:#f59e0b;'
+    + 'padding:12px 20px;border-radius:12px;font-size:13px;z-index:500;'
+    + 'text-align:center;max-width:420px;box-shadow:0 8px 24px rgba(0,0,0,0.4)';
+  banner.innerHTML = '⚠️ Conexão instável — respostas salvas localmente. Não feche o navegador.';
+  document.body.appendChild(banner);
+}
 
 const TOTAL_QUESTOES = QUESTOES_SIMULADO.length;
 const paramsUrl = new URLSearchParams(window.location.search);
 
 // ── INIT ──
 (async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
+  // Watchdog: se em 12s ainda carregando, mostrar aviso
+  const _watchdog = setTimeout(() => {
+    const msg = document.getElementById('loadingSimMsg');
+    if (msg) msg.innerHTML = 'Demorando mais que o esperado…<br>'
+      + '<a href="portal.html" style="color:var(--azul-light);font-size:12px">← Voltar ao portal</a>';
+  }, 12000);
 
-  const { data: perfil } = await sb
-    .from('perfis').select('*').eq('id', session.user.id).single();
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'index.html'; return; }
 
-  if (!perfil || !perfil.ativo || !perfil.senha_trocada) {
-    window.location.href = 'index.html'; return;
-  }
+    const { data: perfil } = await sb
+      .from('perfis').select('*').eq('id', session.user.id).single();
 
-  userAtual = { ...session.user, perfil };
-
-  if (perfil.role === 'professor') {
-    modoProfessor = true;
-    modoProfessorAluno = paramsUrl.get('view') === 'aluno';
-    modoProfessorGabarito = !modoProfessorAluno;
-    prepararModoProfessor(modoProfessorAluno ? 'aluno' : 'gabarito');
-    renderizarSimulado();
-    if (modoProfessorGabarito) {
-      revelarGabaritoProfessor();
-    } else {
-      atualizarDisplayCron();
-      document.getElementById('simProgTexto').textContent = `0 / ${TOTAL_QUESTOES} respondidas`;
-      document.getElementById('simProgPontos').textContent = '0 pts';
+    if (!perfil || !perfil.ativo || !perfil.senha_trocada) {
+      window.location.href = 'index.html'; return;
     }
-    document.getElementById('loadingScreen').style.display = 'none';
-    return;
-  }
 
-  // Verificar se simulado está desbloqueado
-  const { data: progs } = await sb
-    .from('progresso_revisao')
-    .select('disciplina, concluida')
-    .eq('aluno_id', session.user.id);
+    userAtual  = { ...session.user, perfil };
+    BACKUP_KEY = `simulado_backup_${userAtual.id}`;
 
-  const bio  = progs?.find(p => p.disciplina === 'bio')?.concluida  || false;
-  const quim = progs?.find(p => p.disciplina === 'quim')?.concluida || false;
-  const fis  = progs?.find(p => p.disciplina === 'fis')?.concluida  || false;
+    if (perfil.role === 'professor') {
+      modoProfessor = true;
+      modoProfessorAluno = paramsUrl.get('view') === 'aluno';
+      modoProfessorGabarito = !modoProfessorAluno;
+      prepararModoProfessor(modoProfessorAluno ? 'aluno' : 'gabarito');
+      renderizarSimulado();
+      if (modoProfessorGabarito) {
+        revelarGabaritoProfessor();
+      } else {
+        atualizarDisplayCron();
+        document.getElementById('simProgTexto').textContent = `0 / ${TOTAL_QUESTOES} respondidas`;
+        document.getElementById('simProgPontos').textContent = '0 pts';
+      }
+      document.getElementById('loadingScreen').style.display = 'none';
+      return;
+    }
 
-  if (!bio || !quim || !fis) {
-    // Mostrar modal de bloqueado
-    const chips = document.getElementById('reqChips');
-    chips.innerHTML = [
-      { disc: 'bio',  nome: '🧬 Biologia',  ok: bio  },
-      { disc: 'quim', nome: '⚗️ Química',   ok: quim },
-      { disc: 'fis',  nome: '⚡ Física',    ok: fis  },
-    ].map(r => `
-      <div class="req-chip-item ${r.ok ? 'ok' : ''}">
-        <span>${r.ok ? '✅' : '○'}</span>
-        <span>${r.nome}</span>
-        <span style="margin-left:auto;font-size:12px">${r.ok ? 'Concluída' : 'Pendente'}</span>
-      </div>
-    `).join('');
-
-    document.getElementById('modalBloqueado').classList.add('show');
-    document.getElementById('loadingScreen').style.display = 'none';
-    return;
-  }
-
-  // Verificar se já existe tentativa em andamento
-  const { data: tentativa } = await sb
-    .from('simulado_tentativas')
-    .select('*')
-    .eq('aluno_id', session.user.id)
-    .eq('concluido', false)
-    .order('iniciado_em', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (tentativa) {
-    tentativaId = tentativa.id;
-    // Calcular tempo restante
-    const elapsed = Math.floor((Date.now() - new Date(tentativa.iniciado_em)) / 1000);
-    segundosRestantes = Math.max(0, 3*3600 - elapsed);
-    // Carregar respostas existentes
-    const { data: rExist } = await sb
-      .from('simulado_respostas')
-      .select('questao_id, correta, pontos_ganhos')
+    // Verificar se simulado está desbloqueado
+    const { data: progs } = await sb
+      .from('progresso_revisao')
+      .select('disciplina, concluida')
       .eq('aluno_id', session.user.id);
-    if (rExist) rExist.forEach(r => {
-      respostas[r.questao_id] = { correta: r.correta, pontos: r.pontos_ganhos };
-    });
-  } else {
-    // Nova tentativa
-    const { data: nova } = await sb
-      .from('simulado_tentativas')
-      .insert({ aluno_id: session.user.id })
-      .select('id').single();
-    if (nova) tentativaId = nova.id;
-  }
 
-  renderizarSimulado();
-  iniciarCronometro();
-  document.getElementById('loadingScreen').style.display = 'none';
+    const bio  = progs?.find(p => p.disciplina === 'bio')?.concluida  || false;
+    const quim = progs?.find(p => p.disciplina === 'quim')?.concluida || false;
+    const fis  = progs?.find(p => p.disciplina === 'fis')?.concluida  || false;
+
+    if (!bio || !quim || !fis) {
+      const chips = document.getElementById('reqChips');
+      chips.innerHTML = [
+        { disc: 'bio',  nome: '🧬 Biologia',  ok: bio  },
+        { disc: 'quim', nome: '⚗️ Química',   ok: quim },
+        { disc: 'fis',  nome: '⚡ Física',    ok: fis  },
+      ].map(r => `
+        <div class="req-chip-item ${r.ok ? 'ok' : ''}">
+          <span>${r.ok ? '✅' : '○'}</span>
+          <span>${r.nome}</span>
+          <span style="margin-left:auto;font-size:12px">${r.ok ? 'Concluída' : 'Pendente'}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('modalBloqueado').classList.add('show');
+      document.getElementById('loadingScreen').style.display = 'none';
+      return;
+    }
+
+    // Verificar se já existe tentativa em andamento
+    const { data: tentativa } = await sb
+      .from('simulado_tentativas')
+      .select('*')
+      .eq('aluno_id', session.user.id)
+      .eq('concluido', false)
+      .order('iniciado_em', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (tentativa) {
+      tentativaId = tentativa.id;
+      const elapsed = Math.floor((Date.now() - new Date(tentativa.iniciado_em)) / 1000);
+      segundosRestantes = Math.max(0, 3*3600 - elapsed);
+      const { data: rExist } = await sb
+        .from('simulado_respostas')
+        .select('questao_id, correta, pontos_ganhos')
+        .eq('aluno_id', session.user.id);
+      if (rExist) rExist.forEach(r => {
+        respostas[r.questao_id] = { correta: r.correta, pontos: r.pontos_ganhos };
+      });
+    } else {
+      const { data: nova } = await sb
+        .from('simulado_tentativas')
+        .insert({ aluno_id: session.user.id })
+        .select('id').single();
+      if (nova) tentativaId = nova.id;
+    }
+
+    // Mesclar com backup local — preenche lacunas de respostas não salvas no Supabase
+    const backup = carregarBackupLocal();
+    if (backup?.respostas) {
+      Object.entries(backup.respostas).forEach(([qId, r]) => {
+        if (!respostas[qId]) respostas[qId] = r; // local apenas onde Supabase não tem
+      });
+    }
+
+    renderizarSimulado();
+    iniciarCronometro();
+    document.getElementById('loadingScreen').style.display = 'none';
+  } catch (e) {
+    const msg = document.getElementById('loadingSimMsg');
+    if (msg) msg.innerHTML = '⚠️ Erro ao carregar — verifique sua conexão.<br>'
+      + '<a href="portal.html" style="color:var(--azul-light);font-size:12px">← Voltar ao portal</a>';
+  } finally {
+    clearTimeout(_watchdog);
+  }
 })();
 
 function prepararModoProfessor(modo) {
@@ -576,6 +627,7 @@ function marcarRespondida(qId) {
 // ── SALVAR RESPOSTA ──
 async function salvarRespostaSim(qId, tipo, correta, pontos, resposta) {
   if (!userAtual || modoProfessor) return;
+  salvarBackupLocal(); // salva localmente ANTES de tentar Supabase
   const q = QUESTOES_SIMULADO.find(q => q.id === qId);
   try {
     await sb.from('simulado_respostas').insert({
@@ -586,7 +638,10 @@ async function salvarRespostaSim(qId, tipo, correta, pontos, resposta) {
       correta,
       pontos_ganhos: pontos,
     });
-  } catch(e) { console.warn('Erro ao salvar resposta simulado:', e); }
+  } catch(e) {
+    console.warn('Erro ao salvar resposta simulado:', e);
+    mostrarBannerOffline(); // avisa o aluno que está em modo offline
+  }
 }
 
 // ── PROGRESSO ──
@@ -655,6 +710,13 @@ async function finalizarSimulado(tempoEsgotado = false) {
 
   // Salvar tentativa concluída
   if (tentativaId && userAtual) {
+    // Guardar resultado localmente como seguro antes de tentar Supabase
+    try {
+      if (BACKUP_KEY) localStorage.setItem(BACKUP_KEY + '_resultado', JSON.stringify({
+        ts: Date.now(), acertos, pontos, total,
+      }));
+    } catch (_) {}
+
     try {
       await sb.from('simulado_tentativas').update({
         concluido: true,
@@ -671,7 +733,15 @@ async function finalizarSimulado(tempoEsgotado = false) {
       // Badge sobrevivente
       await sb.from('badges_conquistados')
         .insert({ aluno_id: userAtual.id, badge_id: 'sobrevivente' });
-    } catch(e) {}
+
+      // Limpar backup local após salvar com sucesso
+      try { if (BACKUP_KEY) localStorage.removeItem(BACKUP_KEY); } catch (_) {}
+    } catch(e) {
+      console.warn('Erro ao salvar resultado no Supabase:', e);
+      // Resultado preservado no localStorage — avisar o aluno
+      document.getElementById('resSub').textContent =
+        '⚠️ Resultado salvo localmente. Fale com o professor para confirmar no sistema.';
+    }
   }
 
   // Mostrar resultado
