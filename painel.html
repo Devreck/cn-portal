@@ -1550,6 +1550,7 @@ async function carregarBancoPendentes() {
           <span class="qp-disc qp-${q.disciplina}">${q.disciplina.toUpperCase()}</span>
           <span class="qp-tipo">Tipo ${q.tipo}</span>
           <span class="qp-nivel">${q.nivel}</span>
+          ${q.origem === 'aluno_gerada' ? '<span style="font-size:10px;font-weight:700;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3);border-radius:100px;padding:2px 8px">👤 ALUNO</span>' : ''}
           <span style="font-size:11px;color:var(--text-muted);margin-left:auto">${new Date(q.created_at).toLocaleDateString('pt-BR')}</span>
         </div>
         ${htmlPreviewQuestaoPainel(q)}

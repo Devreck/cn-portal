@@ -188,16 +188,41 @@ Seja factualmente rigoroso. Máximo 600 palavras em português.`;
 
 // ── FUNÇÃO 1: GERAR QUESTÃO ─────────────────────────────────
 async function gerarQuestao(key: string, dados: any) {
-  const { disciplina, tema, tipo, nivel, disciplinas_integradas, contexto_chunks = [] } = dados;
+  const {
+    disciplina, tema, tipo, nivel,
+    disciplinas_integradas = [],
+    contexto_chunks = [],
+    cenario = 'Automatico',          // novo — "Automatico" ou texto livre do aluno
+    subtipo = null,                  // novo — "teorica" | "calculo" (só para tipo C)
+    tema_secundario = null,          // novo — nome do tema secundário escolhido pelo aluno
+  } = dados;
+
   const [chunksBase, contextoInternet] = await Promise.all([
     buscarChunksConhecimento(disciplina, tema, contexto_chunks),
     buscarContextoInternet(key, disciplina, tema),
   ]);
 
   const schema = tipo === 'C' ? SCHEMA_QUESTAO_C : SCHEMA_QUESTAO_A;
-  const contextoTipo = tipo === 'C'
-    ? 'múltipla escolha com 5 alternativas e cálculo numérico'
-    : 'certo ou errado com pegadinha conceitual sutil';
+
+  // Tipo de questão enriquecido com subtipo
+  const contextoTipo =
+    tipo === 'A'
+      ? 'certo ou errado — a afirmação DEVE estar sustentada por texto-base ou elemento de apoio; pegadinha conceitual sutil onde uma única palavra ou conceito muda a veracidade'
+      : subtipo === 'teorica'
+        ? 'múltipla escolha com 5 alternativas TOTALMENTE TEÓRICAS — zero cálculo numérico; avalia apenas interpretação, análise e raciocínio conceitual'
+        : 'múltipla escolha com 5 alternativas e resolução numérica passo a passo';
+
+  // Cenário / contexto narrativo
+  const cenarioInstrucao = (!cenario || cenario === 'Automatico')
+    ? 'Escolha você mesmo um cenário realista, engajador e contemporâneo que se adapte melhor ao(s) tema(s). Deve ser verificável na literatura científica.'
+    : `A narrativa do enunciado DEVE girar em torno deste cenário fornecido pelo estudante: "${cenario}". Adapte o contexto sem inventar dispositivos ou dados inexistentes.`;
+
+  // Integração interdisciplinar
+  const integracaoInstrucao = tema_secundario
+    ? `INTEGRAÇÃO OBRIGATÓRIA com: "${tema_secundario}" — o aluno não deve conseguir resolver a questão sem mobilizar SIMULTANEAMENTE os dois temas.`
+    : disciplinas_integradas.length > 0
+      ? `Integre naturalmente com ${disciplinas_integradas.join(' e ')} se houver conexão real; caso contrário, foque no tema principal.`
+      : 'Foque no tema principal. Integração com outra disciplina é opcional — só se houver conexão genuína e verificável.';
 
   const prompt = `
 ${CONTEXTO_PROVA}
@@ -205,9 +230,12 @@ ${CONTEXTO_PROVA}
 IDENTIDADE E PADRÃO DE INFALIBILIDADE:
 Você atua como a síntese de três especialistas seniores — Biólogo, Físico e Químico — com domínio absoluto de design instrucional e psicometria. Tolerância zero para imprecisões conceituais, erros de cálculo, aproximações não informadas ou ambiguidades lógicas.
 
-TAREFA: Gere UMA questão de ${contextoTipo} sobre "${tema}" (${disciplina}),
-integrando com ${disciplinas_integradas?.join(' e ') || 'outra disciplina'}.
-Nível: ${nivel}.
+TAREFA: Gere UMA questão do tipo: ${contextoTipo}
+Tema principal: "${tema}" (${disciplina})
+${integracaoInstrucao}
+Nível: ${nivel}
+
+CENÁRIO: ${cenarioInstrucao}
 
 REQUISITO DE AUTOSSUFICIÊNCIA — OBRIGATÓRIO:
 Esta questão deve ser completamente independente e autocontida. O estudante NÃO pode precisar de contexto externo, aulas anteriores ou outras questões para respondê-la. Tudo que é necessário — enunciado, dados numéricos, contexto narrativo, grandezas, unidades — deve estar presente dentro da própria questão.
@@ -241,8 +269,8 @@ REGRAS ABSOLUTAS:
 5. Para Tipo C: os steps devem resolver o cálculo passo a passo como um professor.
    Cada step deve ter explicação textual curta e uma ou mais "linhas_latex" bem formatadas.
    O campo "explicacao" deve incluir a resolução completa E a justificativa do erro específico de cada distrator.
-6. Para Tipo A: a pegadinha deve ser sutil — uma única palavra ou negação muda tudo.
-   O campo "explicacao" deve identificar a pegadinha e explicar por que a interpretação oposta falha.
+6. Para Tipo A: OBRIGATÓRIO texto-base ou elemento contextual (texto curto, dado, situação-problema) que precede a afirmação. A pegadinha deve ser sutil — uma única palavra ou negação muda tudo. O campo "explicacao" deve: identificar a palavra/conceito que é a pegadinha; explicar por que a interpretação oposta falha; e citar o elemento do texto-base que sustenta o gabarito.
+   Para Tipo C Teórica: NENHUMA alternativa deve exigir cálculo numérico — nem mesmo simples. Avalia APENAS conceitos, definições, relações causais e raciocínio qualitativo.
 7. Não reproduza questões, dados, figuras ou alternativas da prova original AV4.
 8. ELEMENTOS VISUAIS — inclua SOMENTE quando o elemento for INDISPENSÁVEL para responder à questão:
    INCLUA quando: a questão exige leitura direta de valores de um gráfico/tabela de dados, um circuito com componentes nomeados e rotulados que o aluno deve interpretar, um heredograma com indivíduos específicos que a questão referencia, uma equação química referenciada diretamente no enunciado.
@@ -308,6 +336,8 @@ C. PROVA REAL: Resolva a questão de forma independente. O resultado coincide co
 D. DISTRATORES: Cada distrator representa um erro real e comum de raciocínio? Algum distrator pode ser considerado parcialmente correto sob interpretação alternativa válida? (Se sim: reescreva o distrator.)
 E. FONTE E NÍVEL: A questão respeita o nível do Ensino Médio e não exige conhecimento de nível superior não fornecido no texto-base?
 F. TESTE DE INTEGRAÇÃO REAL: Consigo separar este enunciado em dois problemas independentes? Se SIM → a questão não é interdisciplinar, é duas questões disfarçadas — descarte e reescreva com um único problema que exija as duas disciplinas simultaneamente. O contexto (dispositivo, fenômeno, situação) que conecta as disciplinas existe na realidade? Se NÃO existe (dispositivo inventado, aparelho fictício) → descarte e reescreva usando um contexto verificável.
+G. CENÁRIO: O cenário solicitado (ou o escolhido automaticamente) está presente como elemento central do enunciado, e não apenas mencionado de passagem? A questão seria completamente diferente sem esse cenário?
+H. SUBTIPO TEÓRICO: Se o subtipo for "teórica", alguma alternativa exige cálculo? Se SIM → reescreva para remover números e tornar tudo qualitativo.
 → Se qualquer etapa falhar: descarte o item e reescreva do zero antes de retornar.
 
 SCHEMA OBRIGATÓRIO:

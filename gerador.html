@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Desafios — CN Marista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$','$'],['\\(','\\)']],
+    displayMath: [['$$','$$'],['\\[','\\]']],
+  },
+  svg: { fontCache: 'global' },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script src="js/engine/visual-renderer.js"></script>
+<style>
+:root{
+  --bg:#02060f;--surface:#080e1a;--surface2:#0d1526;--surface3:#111d35;
+  --border:rgba(255,255,255,0.07);--text:#e8edf5;--text-muted:#6b7a99;
+  --green:#22c55e;--amber:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+  --red:#ef4444;--ouro:#c9a84c;--ouro-light:#e8c96a;
+  --azul:#003366;--azul-mid:#004d99;--azul-light:#1a6abf;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── LOADING SCREEN ── */
+#pageLoading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.page-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--ouro);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── HEADER ── */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--text)}
+.header-logo span{color:var(--ouro)}
+.header-right{display:flex;align-items:center;gap:12px}
+.btn-voltar{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;transition:all 0.15s;text-decoration:none}
+.btn-voltar:hover{background:var(--surface2);color:var(--text)}
+.header-user{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)}
+.header-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--azul-mid),var(--ouro));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+
+/* ── MAIN ── */
+main{max-width:760px;margin:0 auto;padding:36px 20px 60px}
+
+/* ── HERO ── */
+.hero{margin-bottom:32px}
+.hero-label{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:100px;padding:4px 14px;font-size:11px;font-weight:700;color:var(--ouro);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.hero-title{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-0.5px;line-height:1.15;margin-bottom:10px}
+.hero-sub{font-size:15px;color:var(--text-muted);line-height:1.6;max-width:560px}
+
+/* ── FORM CARD ── */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px}
+.form-section{margin-bottom:22px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.form-select,.form-input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7a99' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:calc(100% - 14px) center}
+.form-select:focus,.form-input:focus{border-color:rgba(201,168,76,0.4);box-shadow:0 0 0 3px rgba(201,168,76,0.08)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-tip{display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:10px 12px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:8px;font-size:12px;color:var(--text-muted);line-height:1.5}
+.cenario-preview{margin-top:8px;padding:10px 14px;background:rgba(26,106,191,0.08);border:1px solid rgba(26,106,191,0.2);border-radius:8px;font-size:13px;color:var(--azul-light);display:none}
+.cenario-preview.show{display:block}
+
+/* ── BTN GERAR ── */
+.btn-gerar{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-gerar:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+.btn-gerar:disabled{opacity:0.55;cursor:not-allowed;transform:none}
+
+/* ── LOADING OVERLAY ── */
+#loadingGeracao{display:none;margin-top:28px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center}
+.loading-spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--ouro);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px}
+.loading-etapa{font-size:13px;color:var(--text-muted);margin-top:6px;min-height:20px;transition:opacity 0.3s}
+.loading-bar{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:16px;overflow:hidden}
+.loading-bar-fill{height:4px;background:linear-gradient(90deg,var(--azul-mid),var(--ouro));border-radius:2px;width:0%;transition:width 0.6s ease}
+
+/* ── RESULTADO ── */
+#resultado{display:none;margin-top:28px}
+.resultado-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.resultado-header{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.tag-bio{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.2)}
+.tag-quim{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.2)}
+.tag-fis{background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.2)}
+.tag-inter{background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)}
+.tag-nivel{background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)}
+.resultado-body{padding:24px 22px}
+.texto-base{background:rgba(255,255,255,0.03);border-left:3px solid var(--ouro);border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px;font-size:14px;line-height:1.75;color:var(--text-muted)}
+.enunciado{font-size:16px;line-height:1.7;margin-bottom:22px}
+.alts{display:flex;flex-direction:column;gap:8px}
+.alt-btn{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:14px;line-height:1.5;text-align:left;cursor:pointer;transition:all 0.15s;width:100%;color:var(--text);font-family:'DM Sans',sans-serif}
+.alt-btn:hover:not(:disabled){border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.05)}
+.alt-btn:disabled{cursor:default}
+.alt-btn.correta{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.08);color:#86efac}
+.alt-btn.errada{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);color:#fca5a5;opacity:0.7}
+.alt-letra{width:26px;height:26px;border-radius:7px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.alt-btn.correta .alt-letra{background:rgba(34,197,94,0.2);color:#22c55e}
+.alt-btn.errada .alt-letra{background:rgba(239,68,68,0.15);color:#ef4444}
+/* Tipo A */
+.ce-row{display:flex;gap:10px;margin-bottom:8px}
+.ce-btn{flex:1;padding:13px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.15s;color:var(--text)}
+.ce-btn:hover:not(:disabled){border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.05)}
+.ce-btn.correta{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.08);color:#22c55e}
+.ce-btn.errada{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);color:#ef4444;opacity:0.7}
+/* Feedback */
+.feedback{display:none;margin-top:18px;padding:14px 18px;border-radius:12px;font-size:14px;line-height:1.65}
+.feedback.show{display:block}
+.feedback.acerto{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2)}
+.feedback.erro{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2)}
+.feedback-icon{font-size:20px;margin-bottom:6px}
+/* Steps */
+.steps-toggle{display:flex;align-items:center;gap:8px;margin-top:16px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);font-size:13px;font-weight:600;cursor:pointer;color:var(--text-muted);transition:all 0.15s;width:100%;text-align:left}
+.steps-toggle:hover{color:var(--text)}
+.steps-list{display:none;margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.step-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.step-titulo{font-size:12px;font-weight:700;color:var(--ouro);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.step-hint{font-size:12px;color:var(--text-muted);margin-bottom:8px}
+.step-exp{font-size:13px;line-height:1.6;margin-bottom:8px}
+.step-latex{background:var(--surface3);border-radius:8px;padding:10px 14px;font-size:13px;text-align:center;margin:4px 0}
+.step-destaque{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:10px 14px;text-align:center;font-size:14px;margin-top:6px}
+/* Ações pós resposta */
+.pos-acoes{display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap}
+.pos-acoes.show{display:flex}
+.btn-nova{padding:10px 20px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.btn-nova:hover{background:var(--surface3);color:var(--ouro);border-color:rgba(201,168,76,0.3)}
+.salvo-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);padding:6px 12px;border-radius:100px;border:1px solid var(--border)}
+
+/* ── MODAL CENÁRIO ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(2,6,15,0.85);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;padding:28px}
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px}
+.modal-textarea{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;min-height:100px;outline:none;line-height:1.6}
+.modal-textarea:focus{border-color:rgba(201,168,76,0.4)}
+.modal-exemplos{margin:10px 0 20px;display:flex;flex-wrap:wrap;gap:6px}
+.exemplo-pill{padding:4px 10px;border-radius:100px;border:1px solid var(--border);font-size:11px;color:var(--text-muted);cursor:pointer;transition:all 0.1s}
+.exemplo-pill:hover{border-color:rgba(201,168,76,0.3);color:var(--ouro);background:rgba(201,168,76,0.05)}
+.modal-acoes{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.btn-confirmar{padding:10px 22px;border-radius:9px;border:none;background:var(--azul-mid);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.15s}
+.btn-confirmar:hover{background:var(--azul-light)}
+.btn-cancelar{padding:10px 18px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;transition:all 0.15s}
+.btn-cancelar:hover{background:var(--surface2);color:var(--text)}
+
+/* ── VISUAL ELEMENTS ── */
+.visual-wrap{margin:16px 0;overflow-x:auto}
+
+/* ── RESPONSIVO ── */
+@media(max-width:520px){
+  .form-row{grid-template-columns:1fr}
+  .hero-title{font-size:24px}
+  main{padding:20px 14px 50px}
+}
+</style>
+</head>
+<body>
+
+<div id="pageLoading">
+  <div class="page-spinner"></div>
+  <span style="font-size:13px;color:var(--text-muted)">Carregando...</span>
+</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-logo">CN<span>.</span>Marista</div>
+  <div class="header-right">
+    <a href="portal.html" class="btn-voltar">← Portal</a>
+    <div class="header-user">
+      <div class="header-avatar" id="headerAvatar">?</div>
+      <span id="headerNome" style="display:none"></span>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">✨ Gerador de Desafios</div>
+    <h1 class="hero-title">Monte sua questão inédita</h1>
+    <p class="hero-sub">Escolha os temas e gere uma questão no padrão da sua avaliação para testar seus conhecimentos. Cada geração é única.</p>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+
+    <!-- Tema Principal -->
+    <div class="form-section">
+      <label class="form-label" for="selTemaPrincipal">Tema Principal *</label>
+      <select class="form-select" id="selTemaPrincipal" onchange="onTemaPrincipalChange()">
+        <option value="">Selecione um tema...</option>
+      </select>
+    </div>
+
+    <!-- Tema Secundário + Cenário -->
+    <div class="form-row">
+      <div class="form-section">
+        <label class="form-label" for="selTemaSecundario">Conectar com (opcional)</label>
+        <select class="form-select" id="selTemaSecundario">
+          <option value="">Sem conexão interdisciplinar</option>
+        </select>
+        <div class="form-tip">
+          💡 Misturar assuntos muito diferentes pode resultar em situações "forçadas". Escolha combinações que façam sentido no mundo real!
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label" for="selCenario">Contexto da Questão *</label>
+        <select class="form-select" id="selCenario" onchange="onCenarioChange()">
+          <option value="auto">Automático — a IA escolhe o melhor cenário</option>
+          <option value="manual">Preencher manualmente...</option>
+        </select>
+        <div class="cenario-preview" id="cenarioPreview"></div>
+      </div>
+    </div>
+
+    <!-- Dificuldade + Tipo -->
+    <div class="form-row">
+      <div class="form-section">
+        <label class="form-label" for="selDificuldade">Dificuldade *</label>
+        <select class="form-select" id="selDificuldade">
+          <option value="basico">Fácil</option>
+          <option value="intermediario" selected>Intermediário</option>
+          <option value="avancado">Difícil</option>
+        </select>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label" for="selTipo">Tipo de Questão *</label>
+        <select class="form-select" id="selTipo">
+          <option value="A">Tipo A — Certo ou Errado</option>
+          <option value="C_teorica">Tipo C — Múltipla Escolha (Teórica)</option>
+          <option value="C_calculo" selected>Tipo C — Múltipla Escolha (Com Cálculo)</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-gerar" id="btnGerar" onclick="gerarDesafio()">
+      <span id="btnGerarTexto">⚡ Gerar Questão Inédita</span>
+    </button>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingGeracao">
+    <div class="loading-spinner"></div>
+    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">Gerando sua questão...</div>
+    <div class="loading-etapa" id="loadingEtapa">Consultando base de conhecimento</div>
+    <div class="loading-bar"><div class="loading-bar-fill" id="loadingBarFill"></div></div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="resultado">
+    <div class="resultado-card" id="resultadoCard">
+      <div class="resultado-header" id="resultadoHeader"></div>
+      <div class="resultado-body" id="resultadoBody"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── MODAL CENÁRIO ── -->
+<div class="modal-overlay" id="modalCenario" onclick="fecharModalCenario(event)">
+  <div class="modal-box">
+    <div class="modal-title">🎬 Descreva o cenário</div>
+    <div class="modal-sub">Conte em qual contexto você quer que a questão aconteça. A IA vai criar o enunciado em torno desse universo.</div>
+    <textarea class="modal-textarea" id="cenarioTexto" placeholder="Ex: Um carro elétrico subindo uma serra, Uma missão na ISS, O superaquecimento de um celular..."></textarea>
+    <div class="modal-exemplos" id="exemplosPills"></div>
+    <div class="modal-acoes">
+      <button class="btn-cancelar" onclick="cancelarCenario()">Cancelar</button>
+      <button class="btn-confirmar" onclick="confirmarCenario()">Confirmar cenário</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const sb = CN_CONFIG.createSupabaseClient();
+let userAtual = null;
+let cenarioEscolhido = 'Automatico';
+let questaoAtual = null;
+let respondida = false;
+
+// ── TEMAS ──────────────────────────────────────────────────────────────────
+const TEMAS = [
+  // Biologia
+  { disc:'bio', grupo:'🧬 Biologia', label:'Herança Ligada ao Sexo',      tema:'Herança ligada ao sexo — hemofilia e daltonismo (cromossomo X)' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Sistema ABO',                  tema:'Alelos múltiplos — Sistema ABO: genótipos, fenótipos e probabilidades' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Codominância',                 tema:'Codominância — expressão simultânea de alelos' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Pleiotropia',                  tema:'Pleiotropia — um gene, vários fenótipos' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Epistasia Recessiva Dupla',    tema:'Epistasia recessiva dupla e interação gênica' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Linkage e Recombinação',       tema:'Linkage e recombinação genética (centiMorgans)' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Herança Poligênica',           tema:'Herança quantitativa e poligênica' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Fator Rh e Doença Hemolítica', tema:'Fator Rh e doença hemolítica do recém-nascido' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Transgenia e Biotecnologia',   tema:'Transgenia, OGM e biotecnologia aplicada' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Probabilidade Genética',       tema:'Probabilidade genética — monoibridismo e diibridismo' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Anemia Falciforme',            tema:'Anemia falciforme — herança, genótipos e manifestações' },
+
+  // Química
+  { disc:'quim', grupo:'⚗️ Química', label:'Células Galvânicas e Eletrolíticas', tema:'Células galvânicas e eletrolíticas — oxidação, redução, ânodo e cátodo' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Leis de Faraday',                    tema:'Leis de Faraday — eletrólise quantitativa e deposição' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Galvanoplastia',                     tema:'Galvanoplastia — revestimento metálico eletrolítico' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Baterias de Lítio',                  tema:'Baterias de lítio — funcionamento, carga e descarga' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Equilíbrio Químico e Kc',            tema:'Equilíbrio químico — constante Kc e cálculo de concentrações' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Princípio de Le Chatelier',          tema:'Princípio de Le Chatelier — pressão, temperatura e concentração' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Soluções Tampão e pH',               tema:'Soluções tampão e cálculo de pH com Ka' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Catálise Enzimática',                tema:'Catálise enzimática — energia de ativação e inibição' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Termoquímica (ΔH)',                  tema:'Termoquímica — entalpia, gráficos de perfil energético e Hess' },
+
+  // Física
+  { disc:'fis', grupo:'⚡ Física', label:'Efeito Joule',              tema:'Efeito Joule — potência elétrica e dissipação de calor (P = RI²)' },
+  { disc:'fis', grupo:'⚡ Física', label:'Potência e Energia Elétrica', tema:'Potência elétrica, energia elétrica e consumo (kWh)' },
+  { disc:'fis', grupo:'⚡ Física', label:'Carga Elétrica e Corrente',   tema:'Carga elétrica (Q = It) e corrente contínua' },
+  { disc:'fis', grupo:'⚡ Física', label:'Circuitos em Série',          tema:'Circuitos elétricos com resistores em série — lei de Ohm' },
+  { disc:'fis', grupo:'⚡ Física', label:'Capacidade de Bateria',       tema:'Capacidade de bateria em mAh, carga total e autonomia' },
+  { disc:'fis', grupo:'⚡ Física', label:'Geradores em Série',          tema:'Associação de geradores em série — ddp total e corrente' },
+];
+
+const EXEMPLOS_CENARIO = [
+  'Um carro elétrico subindo uma serra',
+  'O superaquecimento de um celular durante jogo',
+  'Uma missão na Estação Espacial Internacional',
+  'Diagnóstico genético em laboratório hospitalar',
+  'Produção de joias por galvanoplastia',
+  'Monitoramento de bateria de drone agrícola',
+  'Tratamento de água com eletrólise',
+];
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+(async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  userAtual = session.user;
+
+  const { data: perfil } = await sb.from('perfis').select('nome, role, ativo').eq('id', userAtual.id).single();
+  if (!perfil?.ativo || perfil?.role === 'professor') { window.location.href = perfil?.role === 'professor' ? 'painel.html' : 'index.html'; return; }
+
+  document.getElementById('headerAvatar').textContent = perfil.nome.charAt(0).toUpperCase();
+
+  popularDropdowns();
+  popularExemplos();
+  document.getElementById('pageLoading').style.display = 'none';
+})();
+
+function popularDropdowns() {
+  const selPrincipal = document.getElementById('selTemaPrincipal');
+  const grupos = {};
+  TEMAS.forEach(t => { if (!grupos[t.grupo]) grupos[t.grupo] = []; grupos[t.grupo].push(t); });
+
+  Object.entries(grupos).forEach(([grupo, temas]) => {
+    const og = document.createElement('optgroup');
+    og.label = grupo;
+    temas.forEach((t, i) => {
+      const opt = document.createElement('option');
+      opt.value = TEMAS.indexOf(t);
+      opt.textContent = t.label;
+      og.appendChild(opt);
+    });
+    selPrincipal.appendChild(og);
+  });
+}
+
+function popularExemplos() {
+  const wrap = document.getElementById('exemplosPills');
+  wrap.innerHTML = EXEMPLOS_CENARIO.map(ex => `<span class="exemplo-pill" onclick="usarExemplo('${ex}')">${ex}</span>`).join('');
+}
+
+function onTemaPrincipalChange() {
+  const idx = document.getElementById('selTemaPrincipal').value;
+  const sel = document.getElementById('selTemaSecundario');
+  sel.innerHTML = '<option value="">Sem conexão interdisciplinar</option>';
+  if (idx === '') return;
+
+  const principal = TEMAS[Number(idx)];
+  const outros = TEMAS.filter((t, i) => i !== Number(idx));
+  const grupos = {};
+  outros.forEach(t => { if (!grupos[t.grupo]) grupos[t.grupo] = []; grupos[t.grupo].push(t); });
+
+  Object.entries(grupos).forEach(([grupo, temas]) => {
+    const og = document.createElement('optgroup');
+    og.label = grupo;
+    temas.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = TEMAS.indexOf(t);
+      opt.textContent = t.label;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+}
+
+// ── CENÁRIO MODAL ──────────────────────────────────────────────────────────
+function onCenarioChange() {
+  const val = document.getElementById('selCenario').value;
+  if (val === 'manual') {
+    document.getElementById('cenarioTexto').value = '';
+    document.getElementById('modalCenario').classList.add('show');
+  } else {
+    cenarioEscolhido = 'Automatico';
+    document.getElementById('cenarioPreview').classList.remove('show');
+  }
+}
+
+function usarExemplo(ex) {
+  document.getElementById('cenarioTexto').value = ex;
+}
+
+function confirmarCenario() {
+  const texto = document.getElementById('cenarioTexto').value.trim();
+  if (!texto) { document.getElementById('cenarioTexto').focus(); return; }
+  cenarioEscolhido = texto;
+  const preview = document.getElementById('cenarioPreview');
+  preview.textContent = '🎬 ' + texto;
+  preview.classList.add('show');
+  document.getElementById('modalCenario').classList.remove('show');
+}
+
+function cancelarCenario() {
+  document.getElementById('selCenario').value = 'auto';
+  cenarioEscolhido = 'Automatico';
+  document.getElementById('cenarioPreview').classList.remove('show');
+  document.getElementById('modalCenario').classList.remove('show');
+}
+
+function fecharModalCenario(e) {
+  if (e.target === document.getElementById('modalCenario')) cancelarCenario();
+}
+
+// ── ETAPAS DE LOADING ────────────────────────────────────────────────────
+const ETAPAS = [
+  { msg: 'Consultando base de conhecimento...', pct: 15 },
+  { msg: 'Verificando fontes científicas...', pct: 35 },
+  { msg: 'Elaborando enunciado e alternativas...', pct: 60 },
+  { msg: 'Resolvendo e validando a questão...', pct: 80 },
+  { msg: 'Verificando precisão científica...', pct: 95 },
+];
+let etapaTimer = null;
+
+function iniciarAnimacaoLoading() {
+  let i = 0;
+  const etapaEl = document.getElementById('loadingEtapa');
+  const barEl = document.getElementById('loadingBarFill');
+  function tick() {
+    if (i >= ETAPAS.length) return;
+    etapaEl.textContent = ETAPAS[i].msg;
+    barEl.style.width = ETAPAS[i].pct + '%';
+    i++;
+    etapaTimer = setTimeout(tick, 2200);
+  }
+  tick();
+}
+
+function pararAnimacaoLoading() {
+  clearTimeout(etapaTimer);
+  document.getElementById('loadingBarFill').style.width = '100%';
+}
+
+// ── GERAR DESAFIO ────────────────────────────────────────────────────────
+async function gerarDesafio() {
+  const idxPrincipal = document.getElementById('selTemaPrincipal').value;
+  if (!idxPrincipal) {
+    document.getElementById('selTemaPrincipal').style.borderColor = 'rgba(239,68,68,0.5)';
+    setTimeout(() => document.getElementById('selTemaPrincipal').style.borderColor = '', 2000);
+    return;
+  }
+
+  const principal = TEMAS[Number(idxPrincipal)];
+  const idxSec = document.getElementById('selTemaSecundario').value;
+  const secundario = idxSec ? TEMAS[Number(idxSec)] : null;
+
+  const tipoVal = document.getElementById('selTipo').value;
+  const tipo = tipoVal === 'A' ? 'A' : 'C';
+  const subtipo = tipoVal === 'C_teorica' ? 'teorica' : tipoVal === 'C_calculo' ? 'calculo' : null;
+  const nivel = document.getElementById('selDificuldade').value;
+  const cenario = cenarioEscolhido || 'Automatico';
+
+  // UI: loading
+  document.getElementById('btnGerar').disabled = true;
+  document.getElementById('btnGerarTexto').textContent = 'Gerando...';
+  document.getElementById('loadingGeracao').style.display = 'block';
+  document.getElementById('resultado').style.display = 'none';
+  respondida = false;
+  iniciarAnimacaoLoading();
+
+  try {
+    const dados = {
+      disciplina: principal.disc,
+      tema: principal.tema,
+      tipo,
+      subtipo,
+      nivel,
+      cenario,
+      tema_secundario: secundario ? secundario.tema : null,
+      disciplinas_integradas: secundario ? [secundario.disc] : [],
+      contexto_chunks: [],
+    };
+
+    const resp = await sb.functions.invoke('gemini', {
+      body: { funcao: 'gerar_questao', dados },
+    });
+
+    pararAnimacaoLoading();
+
+    if (resp.error || resp.data?.error) {
+      throw new Error(resp.data?.detalhe || resp.error?.message || 'Erro na geração');
+    }
+
+    const q = resp.data?.questao;
+    if (!q) throw new Error('Questão não retornada');
+
+    questaoAtual = q;
+    renderizarQuestao(q);
+
+    // Salvar silenciosamente no Supabase
+    sb.from('questoes_banco').insert({
+      origem: 'aluno_gerada',
+      disciplina: q.disciplina || principal.disc,
+      tema: q.tema || principal.tema,
+      subtema: q.subtema || null,
+      tipo: q.tipo || tipo,
+      nivel: q.nivel || nivel,
+      interdisciplinar_com: q.interdisciplinar_com || (secundario ? [secundario.disc] : []),
+      enunciado: q.enunciado,
+      texto_base: q.texto_base || null,
+      alternativas: q.alternativas || null,
+      gabarito: q.gabarito,
+      explicacao: q.explicacao || '',
+      steps: q.steps || null,
+      elementos_visuais: q.elementos_visuais || null,
+      status: 'pendente',
+    }).then(() => {
+      const badge = document.getElementById('salvoIndicador');
+      if (badge) badge.style.display = 'inline-flex';
+    }).catch(() => {});
+
+  } catch(e) {
+    pararAnimacaoLoading();
+    document.getElementById('loadingGeracao').innerHTML = `
+      <div style="color:var(--red);font-size:14px">⚠️ Erro ao gerar questão: ${e.message}<br><span style="font-size:12px;color:var(--text-muted)">Tente novamente em alguns segundos.</span></div>`;
+  } finally {
+    document.getElementById('btnGerar').disabled = false;
+    document.getElementById('btnGerarTexto').textContent = '⚡ Gerar Questão Inédita';
+    document.getElementById('loadingGeracao').style.display = 'none';
+  }
+}
+
+// ── RENDER QUESTÃO ───────────────────────────────────────────────────────
+function renderizarQuestao(q) {
+  const discClass = { bio:'tag-bio', quim:'tag-quim', fis:'tag-fis', inter:'tag-inter' }[q.disciplina] || 'tag-nivel';
+  const discLabel = { bio:'🧬 Biologia', quim:'⚗️ Química', fis:'⚡ Física', inter:'🔬 Inter' }[q.disciplina] || q.disciplina;
+  const nivelLabel = { basico:'Fácil', intermediario:'Intermediário', avancado:'Difícil' }[q.nivel] || q.nivel;
+  const tipoLabel = q.tipo === 'A' ? 'Tipo A' : 'Tipo C';
+
+  document.getElementById('resultadoHeader').innerHTML = `
+    <span class="tag ${discClass}">${discLabel}</span>
+    <span class="tag tag-nivel">${tipoLabel}</span>
+    <span class="tag tag-nivel">${nivelLabel}</span>
+    <span id="salvoIndicador" style="display:none;margin-left:auto" class="salvo-badge">✓ Salvo</span>`;
+
+  let bodyHtml = '';
+
+  // Texto base
+  if (q.texto_base?.paragrafos?.length) {
+    bodyHtml += `<div class="texto-base">${q.texto_base.paragrafos.map(p => `<p style="margin-bottom:6px">${p}</p>`).join('')}</div>`;
+  }
+
+  // Elementos visuais
+  if (q.elementos_visuais?.length) {
+    bodyHtml += `<div id="visualWrap" class="visual-wrap"></div>`;
+  }
+
+  // Enunciado
+  bodyHtml += `<div class="enunciado">${q.enunciado}</div>`;
+
+  // Alternativas
+  if (q.tipo === 'C' && q.alternativas) {
+    bodyHtml += '<div class="alts">';
+    ['A','B','C','D','E'].forEach(l => {
+      if (q.alternativas[l] != null) {
+        bodyHtml += `<button class="alt-btn" id="alt-${l}" onclick="responderC('${l}')">`
+          + `<span class="alt-letra">${l}</span><span>${q.alternativas[l]}</span></button>`;
+      }
+    });
+    bodyHtml += '</div>';
+  } else if (q.tipo === 'A') {
+    bodyHtml += `<div class="ce-row">
+      <button class="ce-btn" id="ce-CERTO" onclick="responderA('CERTO')">✅ CERTO</button>
+      <button class="ce-btn" id="ce-ERRADO" onclick="responderA('ERRADO')">❌ ERRADO</button>
+    </div>`;
+  }
+
+  // Feedback (oculto até responder)
+  bodyHtml += `<div class="feedback" id="feedback"></div>`;
+
+  // Steps (ocultos até responder)
+  if (q.steps?.length) {
+    bodyHtml += `<div id="stepsArea" style="display:none">
+      <button class="steps-toggle" onclick="toggleSteps(this)">📐 Ver resolução passo a passo ▾</button>
+      <div class="steps-list" id="stepsList" style="display:none">${q.steps.map(s => `
+        <div class="step-item">
+          <div class="step-titulo">${s.titulo || ''}</div>
+          ${s.hint ? `<div class="step-hint">${s.hint}</div>` : ''}
+          <div class="step-exp">${s.explicacao || ''}</div>
+          ${(s.linhas_latex||[]).map(l => `<div class="step-latex">\\[${l}\\]</div>`).join('')}
+          ${s.destaque_latex ? `<div class="step-destaque">\\[${s.destaque_latex}\\]</div>` : ''}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Ações pós resposta
+  bodyHtml += `<div class="pos-acoes" id="posAcoes">
+    <button class="btn-nova" onclick="gerarDesafio()">🔄 Gerar outra</button>
+    <button class="btn-nova" onclick="window.scrollTo({top:0,behavior:'smooth'})">⚙️ Alterar parâmetros</button>
+  </div>`;
+
+  document.getElementById('resultadoBody').innerHTML = bodyHtml;
+  document.getElementById('resultado').style.display = 'block';
+  document.getElementById('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  // Renderizar visuais
+  if (q.elementos_visuais?.length) {
+    const wrap = document.getElementById('visualWrap');
+    q.elementos_visuais.forEach(el => {
+      try {
+        const div = document.createElement('div');
+        wrap.appendChild(div);
+        if (el.tipo === 'heredograma') VisualRenderer.renderHeredograma(el, div);
+        else if (el.tipo === 'circuito_serie') VisualRenderer.renderCircuitoSerie(el, div);
+        else if (el.tipo === 'equacao_quimica') VisualRenderer.renderEquacaoQuimica(el, div);
+        else if (el.tipo === 'grafico_energia') VisualRenderer.renderGraficoEnergia(el, div);
+        else if (el.tipo === 'grafico_xy') VisualRenderer.renderGraficoXY(el, div);
+        else if (el.tipo === 'tabela') VisualRenderer.renderTabela(el, div);
+      } catch(e) { console.warn('Erro ao renderizar visual:', e); }
+    });
+  }
+
+  // MathJax
+  if (window.MathJax?.typesetPromise) {
+    MathJax.typesetPromise([document.getElementById('resultadoBody')]).catch(e => console.warn(e));
+  }
+}
+
+function responderC(letra) {
+  if (respondida) return;
+  respondida = true;
+  const q = questaoAtual;
+  const gab = q._gabExibicao || q.gabarito;
+  const correta = letra === gab;
+
+  ['A','B','C','D','E'].forEach(l => {
+    const btn = document.getElementById(`alt-${l}`);
+    if (!btn) return;
+    btn.disabled = true;
+    if (l === gab) btn.classList.add('correta');
+    else if (l === letra && !correta) btn.classList.add('errada');
+  });
+
+  mostrarFeedback(correta, q.explicacao);
+}
+
+function responderA(resposta) {
+  if (respondida) return;
+  respondida = true;
+  const q = questaoAtual;
+  const correta = resposta === q.gabarito;
+
+  ['CERTO','ERRADO'].forEach(op => {
+    const btn = document.getElementById(`ce-${op}`);
+    if (!btn) return;
+    btn.disabled = true;
+    if (op === q.gabarito) btn.classList.add('correta');
+    else if (op === resposta && !correta) btn.classList.add('errada');
+  });
+
+  mostrarFeedback(correta, questaoAtual.explicacao);
+}
+
+function mostrarFeedback(correta, explicacao) {
+  const fb = document.getElementById('feedback');
+  fb.className = `feedback show ${correta ? 'acerto' : 'erro'}`;
+  fb.innerHTML = `<div class="feedback-icon">${correta ? '🎉' : '💡'}</div>
+    <strong>${correta ? 'Correto!' : 'Não foi dessa vez.'}</strong><br>
+    <span style="font-size:13px;color:var(--text-muted);margin-top:6px;display:block">${explicacao || ''}</span>`;
+
+  const stepsArea = document.getElementById('stepsArea');
+  if (stepsArea) stepsArea.style.display = 'block';
+
+  document.getElementById('posAcoes').classList.add('show');
+
+  if (window.MathJax?.typesetPromise) {
+    MathJax.typesetPromise([fb]).catch(()=>{});
+  }
+
+  fb.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function toggleSteps(btn) {
+  const list = document.getElementById('stepsList');
+  const open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'flex';
+  btn.textContent = open ? '📐 Ver resolução passo a passo ▾' : '📐 Ocultar resolução ▴';
+  if (!open && window.MathJax?.typesetPromise) {
+    MathJax.typesetPromise([list]).catch(()=>{});
+  }
+}
+</script>
+</body>
+</html>
