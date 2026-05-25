@@ -14,11 +14,8 @@ jobs:
       - name: Ping Supabase (mantém banco ativo)
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/get_public_login_stats" \
-            -X POST \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{}')
+            "https://uupwqztczuryouhpiblx.supabase.co/auth/v1/settings" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
           echo "Status HTTP: $STATUS"
           if [ "$STATUS" != "200" ]; then
             echo "⚠️ Supabase retornou $STATUS — verifique o projeto"
