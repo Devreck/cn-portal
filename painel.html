@@ -820,11 +820,22 @@ mjx-container[display="false"] {
 
 </main>
 
+<!-- ── MODAL PERFIL ALUNO ── -->
+<div id="modalPerfilOverlay" onclick="fecharModalPerfil(event)" style="display:none;position:fixed;inset:0;background:rgba(2,6,15,0.88);z-index:600;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto">
+  <div id="modalPerfilCard" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;position:relative;padding:28px">
+    <button onclick="document.getElementById('modalPerfilOverlay').style.display='none'" style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    <div id="modalPerfilConteudo">
+      <div style="text-align:center;color:var(--text-muted);padding:40px">Carregando...</div>
+    </div>
+  </div>
+</div>
+
 <script>
 const sb = CN_CONFIG.createSupabaseClient();
 
 let userAtual = null;
 let dadosAlunos = [];
+let dadosSessoes = []; // sessões globais para filtrarTurma e perfil
 let dadosQuestoes = [];
 let chartPaginas = null;
 let filtroTurmaAtual = 'todas';
@@ -992,6 +1003,7 @@ function irPara(pagina) {
   document.querySelector(`[onclick="irPara('${pagina}')"]`)?.classList.add('active');
   history.replaceState(null, '', `#${pagina}`);
   if (pagina === 'banco') renderizarListaTemas?.();
+  if (pagina === 'badges-unicas') popularSelectAlunos?.();
 }
 
 // ── VISÃO GERAL ──
@@ -1092,7 +1104,9 @@ async function carregarAlunos() {
       .order('inicio', { ascending: false });
 
     dadosAlunos = alunos || [];
-    renderizarTabelaAlunos(dadosAlunos, sessoes || []);
+    dadosSessoes = sessoes || [];
+    renderizarTabelaAlunos(dadosAlunos, dadosSessoes);
+    popularSelectAlunos(); // garante que o dropdown da badge está populado
   } catch(e) { console.warn('Erro alunos:', e); }
 }
 
@@ -1129,7 +1143,7 @@ function renderizarTabelaAlunos(alunos, sessoes, turmaFiltro = 'todas') {
     ` : '<span style="font-size:11px;color:var(--text-muted)">—</span>';
 
     return `
-      <tr>
+      <tr style="cursor:pointer" onclick="abrirPerfilAluno('${a.id}')">
         <td>
           <div style="font-size:13px;font-weight:500">${a.nome.split(' ').slice(0,2).join(' ')}</div>
           <div style="font-size:11px;color:var(--text-muted)">${a.matricula}</div>
@@ -1151,8 +1165,7 @@ function filtrarTurma(turma, btn) {
   filtroTurmaAtual = turma;
   document.querySelectorAll('#filtrosTurma .filtro-btn').forEach(b => b.classList.remove('ativo'));
   btn.classList.add('ativo');
-  const { data: sessoes } = { data: [] }; // simplificado
-  renderizarTabelaAlunos(dadosAlunos, [], turma);
+  renderizarTabelaAlunos(dadosAlunos, dadosSessoes, turma);
 }
 
 // ── ADICIONAR ALUNO ──
@@ -1836,17 +1849,161 @@ async function carregarBadgesUnicasPainel() {
   } catch(e) { console.warn('Erro badges únicas:', e); }
 }
 
+// ── PERFIL DO ALUNO (modal) ──────────────────────────────────────────────────
+function fecharModalPerfil(e) {
+  if (!e || e.target === document.getElementById('modalPerfilOverlay')) {
+    document.getElementById('modalPerfilOverlay').style.display = 'none';
+  }
+}
+
+async function abrirPerfilAluno(alunoId) {
+  const overlay = document.getElementById('modalPerfilOverlay');
+  const conteudo = document.getElementById('modalPerfilConteudo');
+  overlay.style.display = 'flex';
+  conteudo.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">Carregando...</div>';
+
+  const a = dadosAlunos.find(x => x.id === alunoId);
+  if (!a) { conteudo.innerHTML = '<div style="color:var(--red);padding:20px">Aluno não encontrado.</div>'; return; }
+
+  const pts = a.pontuacao?.[0] || {};
+  const prog = a.progresso_revisao || [];
+  const bio  = prog.find(p => p.disciplina === 'bio')  || {};
+  const quim = prog.find(p => p.disciplina === 'quim') || {};
+  const fis  = prog.find(p => p.disciplina === 'fis')  || {};
+
+  const sessAluno = dadosSessoes.filter(s => s.aluno_id === alunoId);
+  const tempoTotal = sessAluno.reduce((s, sess) => s + (sess.duracao_segundos || 0), 0);
+  const tempoStr = tempoTotal > 3600
+    ? `${Math.floor(tempoTotal/3600)}h${Math.round((tempoTotal%3600)/60)}m`
+    : `${Math.round(tempoTotal/60)}m`;
+  const ultimaSessao = sessAluno[0]?.inicio;
+  const ultimaStr = ultimaSessao ? new Date(ultimaSessao).toLocaleDateString('pt-BR') : 'Nunca';
+
+  // Buscar badges em paralelo
+  const [{ data: badgesConq }, { data: badgesUnicas }] = await Promise.all([
+    sb.from('badges_conquistados').select('badge_id').eq('aluno_id', alunoId),
+    sb.from('badges_unicas').select('badge_id, nome, emoji, descricao').eq('aluno_id', alunoId),
+  ]);
+  const conquistados = new Set((badgesConq || []).map(b => b.badge_id));
+
+  const BADGES_LISTA = [
+    {id:'primeiro_acesso',emoji:'🚀',nome:'Primeiro Acesso'},
+    {id:'dna_ativo',emoji:'🧬',nome:'DNA Ativo'},
+    {id:'reacao_em_cadeia',emoji:'⚗️',nome:'Reação em Cadeia'},
+    {id:'forca_total',emoji:'⚡',nome:'Força Total'},
+    {id:'triforce',emoji:'🔱',nome:'Triforce'},
+    {id:'simulado_desbloq',emoji:'🔓',nome:'Simulado'},
+    {id:'sobrevivente',emoji:'🎯',nome:'Sobrevivente'},
+    {id:'streak_fogo',emoji:'🔥',nome:'Streak Fogo'},
+    {id:'perfeccionista',emoji:'💎',nome:'Perfeccionista'},
+    {id:'mestre_genetica',emoji:'🧬',nome:'Mestre Bio'},
+    {id:'expert_eletroquimica',emoji:'⚗️',nome:'Expert Quím'},
+    {id:'senhor_joule',emoji:'⚡',nome:'Sr. Joule'},
+    {id:'maratonista',emoji:'⏱️',nome:'Maratonista'},
+    {id:'consistente',emoji:'📅',nome:'Consistente'},
+    {id:'top3',emoji:'🥇',nome:'Top 3'},
+    {id:'lenda_marista',emoji:'👑',nome:'Lenda'},
+  ];
+
+  const stat = (val, label, cor = '') => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;${cor ? `color:${cor}` : ''}">${val}</div>
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">${label}</div>
+    </div>`;
+
+  const prog_mini = (p, cor) => `
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">${p.percentual || 0}%${p.concluida ? ' ✓' : ''}</div>
+      <div style="height:5px;background:var(--surface3);border-radius:3px">
+        <div style="height:5px;border-radius:3px;background:${cor};width:${p.percentual||0}%"></div>
+      </div>
+    </div>`;
+
+  const respondidas = Object.values(pts).filter ? 0 : 0; // calculado abaixo
+  const totalResp = (bio.percentual ? bio : {percentual:0, concluida:false}) && pts.questoes_respondidas_bio; // from pontuacao if exists
+
+  const uniquesBadgesHtml = (badgesUnicas || []).length > 0 ? `
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px">✨ Badges Únicas</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${(badgesUnicas || []).map(b => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:9px">
+            <span style="font-size:20px">${b.emoji || '✨'}</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#c084fc">${b.nome}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${b.descricao || ''}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  conteudo.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800">${a.nome}</div>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+        <span style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;color:var(--text-muted);padding:2px 10px">${a.turma || '—'}</span>
+        <span style="font-size:12px;color:var(--text-muted)">${a.matricula}</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      ${stat((pts.pontos_bio||0).toLocaleString('pt-BR'), '🧬 Bio', '#22c55e')}
+      ${stat((pts.pontos_quim||0).toLocaleString('pt-BR'), '⚗️ Quím', '#f59e0b')}
+      ${stat((pts.pontos_fis||0).toLocaleString('pt-BR'), '⚡ Fís', '#3b82f6')}
+      ${stat((pts.pontos_total||0).toLocaleString('pt-BR'), 'Total', 'var(--ouro)')}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Progresso</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:11px;color:#22c55e">Bio ${prog_mini(bio,'#22c55e')}</div>
+          <div style="font-size:11px;color:#f59e0b">Quím ${prog_mini(quim,'#f59e0b')}</div>
+          <div style="font-size:11px;color:#3b82f6">Fís ${prog_mini(fis,'#3b82f6')}</div>
+        </div>
+      </div>
+      ${stat(tempoTotal > 0 ? tempoStr : '—', 'Tempo total')}
+      ${stat(ultimaStr, 'Último acesso')}
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px">🏅 Conquistas (${conquistados.size}/${BADGES_LISTA.length})</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        ${BADGES_LISTA.map(b => {
+          const ok = conquistados.has(b.id);
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);${ok ? 'opacity:1;border-color:rgba(201,168,76,0.25);background:rgba(201,168,76,0.05)' : 'opacity:0.3;filter:grayscale(1)'}">
+            <span style="font-size:16px">${b.emoji}</span>
+            <span style="font-size:8px;text-align:center;color:${ok ? 'var(--ouro)' : 'var(--text-muted)'};line-height:1.2">${b.nome}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    ${uniquesBadgesHtml}
+
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn-aprovar" style="font-size:12px;padding:8px 16px" onclick="irPara('badges-unicas');document.getElementById('badgeAlunoSelect').value='${alunoId}';document.getElementById('modalPerfilOverlay').style.display='none'">
+        ✨ Atribuir Badge Única a este aluno
+      </button>
+    </div>
+  `;
+}
+
+// ── POPULAR SELECT ────────────────────────────────────────────────────────────
 function popularSelectAlunos() {
   const sel = document.getElementById('badgeAlunoSelect');
-  if (!sel || sel.options.length > 1) return; // já populado
-  const sorted = [...dadosAlunos].sort((a, b) =>
-    (a.turma || '').localeCompare(b.turma || '') || a.nome.localeCompare(b.nome));
-  sorted.forEach(a => {
-    const opt = document.createElement('option');
-    opt.value = a.id;
-    opt.textContent = `${a.nome} — ${a.turma || '?'}`;
-    sel.appendChild(opt);
-  });
+  if (!sel) return;
+  // Sempre reconstrói (pode ser chamado antes de dadosAlunos estar pronto)
+  while (sel.options.length > 1) sel.remove(1);
+  if (!dadosAlunos.length) return;
+  [...dadosAlunos]
+    .sort((a, b) => (a.turma || '').localeCompare(b.turma || '') || a.nome.localeCompare(b.nome))
+    .forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.nome} — ${a.turma || '?'}`;
+      sel.appendChild(opt);
+    });
 }
 
 function atualizarPreviewBadge() {
