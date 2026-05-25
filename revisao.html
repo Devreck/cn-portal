@@ -168,14 +168,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .ia-erro{color:#fca5a5;font-size:13px;padding:12px}
 
 /* ── GERAR QUESTÃO EXTRA ── */
-.gerar-extra{text-align:center;margin:24px 0;padding:20px;border:1px dashed rgba(168,85,247,0.25);border-radius:16px;background:rgba(168,85,247,0.05)}
-.gerar-extra p{font-size:13px;color:var(--text-muted);margin-bottom:12px}
-.btn-gerar{padding:12px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
-.btn-gerar:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(168,85,247,0.3)}
+.gerar-extra{text-align:center;margin:24px 0;padding:24px;border:1px dashed rgba(168,85,247,0.25);border-radius:16px;background:rgba(168,85,247,0.05)}
+.gerar-extra p{font-size:13px;color:var(--text-muted);margin-bottom:16px}
 .btn-gerar-top{position:fixed;right:24px;bottom:24px;z-index:90;padding:12px 16px;border-radius:12px;border:1px solid rgba(168,85,247,0.35);background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 10px 28px rgba(168,85,247,0.25)}
-.gerar-form{display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:10px;align-items:end;text-align:left;max-width:760px;margin:0 auto}
-.gerar-field label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px}
-.gerar-field select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px}
 
 /* ── LOADING ── */
 .loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:16px}
@@ -288,34 +283,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="container" id="mainContainer">
     <div id="questoesContainer" class="disciplina-bio"></div>
 
-    <!-- Gerar questão extra com IA -->
+    <!-- Gerar item com IA -->
     <div class="gerar-extra" id="gerarExtra">
-      <p>🤖 Gere um item inédito com base de conhecimento, MathJax profissional e ilustrações quando o tema permitir.</p>
-      <div class="gerar-form">
-        <div class="gerar-field">
-          <label>Tema</label>
-          <select id="iaTemaAluno"></select>
-        </div>
-        <div class="gerar-field">
-          <label>Dificuldade</label>
-          <select id="iaNivelAluno">
-            <option value="intermediario">Intermediário</option>
-            <option value="basico">Básico</option>
-            <option value="avancado">Avançado</option>
-          </select>
-        </div>
-        <div class="gerar-field">
-          <label>Tipo</label>
-          <select id="iaTipoAluno">
-            <option value="C">Tipo C</option>
-            <option value="A">Tipo A</option>
-          </select>
-        </div>
-        <button class="btn-gerar" onclick="gerarExtra()">✨ Gerar questão</button>
-      </div>
+      <p>⚡ Crie um item inédito e personalizado no padrão da AV4 — escolha tema, cenário, tipo e dificuldade.</p>
+      <a href="gerador.html" class="btn-gerar-top" style="position:static;display:inline-flex;align-items:center;gap:8px;box-shadow:none">✨ Gerar item</a>
     </div>
-
-    <div id="questoesExtras"></div>
   </div>
 </main>
 

@@ -123,11 +123,22 @@ main{max-width:760px;margin:0 auto;padding:36px 20px 60px}
 .step-latex{background:var(--surface3);border-radius:8px;padding:10px 14px;font-size:13px;text-align:center;margin:4px 0}
 .step-destaque{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:10px 14px;text-align:center;font-size:14px;margin-top:6px}
 /* Ações pós resposta */
-.pos-acoes{display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap}
+.pos-acoes{display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);flex-direction:column;gap:14px}
 .pos-acoes.show{display:flex}
+.pos-acoes-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .btn-nova{padding:10px 20px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
 .btn-nova:hover{background:var(--surface3);color:var(--ouro);border-color:rgba(201,168,76,0.3)}
 .salvo-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);padding:6px 12px;border-radius:100px;border:1px solid var(--border)}
+/* Avaliação da questão */
+.avaliacao-label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px}
+.avaliacao-btns{display:flex;gap:8px;flex-wrap:wrap}
+.av-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.av-btn:hover{background:var(--surface3);color:var(--text)}
+.av-btn.selected-joinha{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.1);color:#22c55e}
+.av-btn.selected-alerta{border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.1);color:#f59e0b}
+.av-btn.selected-errado{border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.1);color:#ef4444}
+.avaliacao-confirmado{font-size:12px;color:var(--text-muted);margin-top:6px;display:none}
+.avaliacao-confirmado.show{display:block}
 
 /* ── MODAL CENÁRIO ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(2,6,15,0.85);z-index:500;align-items:center;justify-content:center;padding:20px}
@@ -282,6 +293,7 @@ const sb = CN_CONFIG.createSupabaseClient();
 let userAtual = null;
 let cenarioEscolhido = 'Automatico';
 let questaoAtual = null;
+let questaoSalvaId  = null;   // ID do registro em questoes_banco após o save
 let respondida = false;
 
 // ── TEMAS ──────────────────────────────────────────────────────────────────
@@ -514,9 +526,11 @@ async function gerarDesafio() {
     questaoAtual = q;
     renderizarQuestao(q);
 
-    // Salvar silenciosamente no Supabase
+    // Salvar no Supabase e habilitar avaliação
+    questaoSalvaId = null;
     sb.from('questoes_banco').insert({
       origem: 'aluno_gerada',
+      gerada_para: userAtual.id,
       disciplina: q.disciplina || principal.disc,
       tema: q.tema || principal.tema,
       subtema: q.subtema || null,
@@ -531,7 +545,8 @@ async function gerarDesafio() {
       steps: q.steps || null,
       elementos_visuais: q.elementos_visuais || null,
       status: 'pendente',
-    }).then(() => {
+    }, { returning: 'representation' }).select('id').single().then(({ data: saved }) => {
+      questaoSalvaId = saved?.id || null;
       const badge = document.getElementById('salvoIndicador');
       if (badge) badge.style.display = 'inline-flex';
     }).catch(() => {});
@@ -558,7 +573,7 @@ function renderizarQuestao(q) {
     <span class="tag ${discClass}">${discLabel}</span>
     <span class="tag tag-nivel">${tipoLabel}</span>
     <span class="tag tag-nivel">${nivelLabel}</span>
-    <span id="salvoIndicador" style="display:none;margin-left:auto" class="salvo-badge">✓ Salvo</span>`;
+`;
 
   let bodyHtml = '';
 
@@ -611,10 +626,22 @@ function renderizarQuestao(q) {
     </div>`;
   }
 
-  // Ações pós resposta
+  // Ações pós resposta + avaliação
   bodyHtml += `<div class="pos-acoes" id="posAcoes">
-    <button class="btn-nova" onclick="gerarDesafio()">🔄 Gerar outra</button>
-    <button class="btn-nova" onclick="window.scrollTo({top:0,behavior:'smooth'})">⚙️ Alterar parâmetros</button>
+    <div class="pos-acoes-row">
+      <button class="btn-nova" onclick="gerarDesafio()">🔄 Gerar outra</button>
+      <button class="btn-nova" onclick="window.scrollTo({top:0,behavior:'smooth'})">⚙️ Alterar parâmetros</button>
+      <span class="salvo-badge" id="salvoIndicador" style="display:none">✓ Salvo</span>
+    </div>
+    <div id="avaliacaoBloco" style="display:none">
+      <div class="avaliacao-label" style="margin-bottom:8px">Como você avalia esta questão?</div>
+      <div class="avaliacao-btns">
+        <button class="av-btn" id="avJoinha" onclick="avaliarQuestao('joinha')">👍 Boa e calibrada</button>
+        <button class="av-btn" id="avAlerta" onclick="avaliarQuestao('alerta')">⚠️ Confusa mas resolúvel</button>
+        <button class="av-btn" id="avErrado" onclick="avaliarQuestao('errado')">❌ Mal formulada</button>
+      </div>
+      <div class="avaliacao-confirmado" id="avaliacaoConfirmado">✓ Avaliação registrada — obrigado!</div>
+    </div>
   </div>`;
 
   document.getElementById('resultadoBody').innerHTML = bodyHtml;
@@ -690,6 +717,13 @@ function mostrarFeedback(correta, explicacao) {
   if (stepsArea) stepsArea.style.display = 'block';
 
   document.getElementById('posAcoes').classList.add('show');
+  // Mostrar bloco de avaliação só se a questão foi salva (aguarda até 3s)
+  const mostrarAvaliacao = () => {
+    const bloco = document.getElementById('avaliacaoBloco');
+    if (bloco) bloco.style.display = 'block';
+  };
+  if (questaoSalvaId) mostrarAvaliacao();
+  else setTimeout(mostrarAvaliacao, 3000);
 
   if (window.MathJax?.typesetPromise) {
     MathJax.typesetPromise([fb]).catch(()=>{});
@@ -705,6 +739,40 @@ function toggleSteps(btn) {
   btn.textContent = open ? '📐 Ver resolução passo a passo ▾' : '📐 Ocultar resolução ▴';
   if (!open && window.MathJax?.typesetPromise) {
     MathJax.typesetPromise([list]).catch(()=>{});
+  }
+}
+
+// ── AVALIAÇÃO DA QUESTÃO ──────────────────────────────────────────────
+async function avaliarQuestao(tipo) {
+  if (!questaoSalvaId) return;
+
+  // Visual: marcar botão selecionado, desmarcar os outros
+  ['joinha','alerta','errado'].forEach(t => {
+    const btn = document.getElementById(`av${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    if (btn) {
+      btn.classList.remove(`selected-joinha`, `selected-alerta`, `selected-errado`);
+    }
+  });
+  const btnSel = document.getElementById(`av${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+  if (btnSel) btnSel.classList.add(`selected-${tipo}`);
+
+  try {
+    await sb.from('questoes_banco')
+      .update({ avaliacao_aluno: tipo })
+      .eq('id', questaoSalvaId)
+      .eq('gerada_para', userAtual.id);   // segurança: só própria questão
+
+    const conf = document.getElementById('avaliacaoConfirmado');
+    if (conf) conf.classList.add('show');
+    // Desativar botões após envio
+    setTimeout(() => {
+      ['avJoinha','avAlerta','avErrado'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = true;
+      });
+    }, 1000);
+  } catch(e) {
+    console.warn('Erro ao salvar avaliação:', e);
   }
 }
 </script>

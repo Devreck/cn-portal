@@ -127,6 +127,20 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 /* ── BANCO DE QUESTÕES ── */
 .questao-pendente{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px;transition:border-color 0.2s}
 .questao-pendente:hover{border-color:rgba(255,255,255,0.1)}
+.questao-pendente.prioridade-errado{border-color:rgba(239,68,68,0.35);background:rgba(239,68,68,0.04)}
+/* Badge de avaliação do aluno */
+.av-aluno-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:100px}
+.av-aluno-badge.joinha{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25)}
+.av-aluno-badge.alerta {background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25)}
+.av-aluno-badge.errado {background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25)}
+/* Concorda/Discorda */
+.qp-concordancia{margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.qp-concordancia-label{font-size:12px;color:var(--text-muted);flex:1}
+.btn-concorda  {padding:7px 14px;border-radius:8px;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#22c55e;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.btn-concorda:hover{background:rgba(34,197,94,0.15)}
+.btn-discorda  {padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.btn-discorda:hover{background:rgba(239,68,68,0.15)}
+.concordancia-feita{font-size:12px;color:var(--text-muted);font-style:italic}
 .qp-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .qp-disc{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
 .qp-bio  {background:rgba(34,197,94,0.1);color:var(--green)}
@@ -1531,7 +1545,7 @@ async function carregarBancoPendentes() {
   try {
     const { data } = await sb
       .from('questoes_banco')
-      .select('*')
+      .select('*, perfis:gerada_para(nome)')
       .eq('status', 'pendente')
       .order('created_at', { ascending: false });
 
@@ -1542,25 +1556,56 @@ async function carregarBancoPendentes() {
       return;
     }
 
-    document.getElementById('badgePendentes').textContent = data.length;
+    // Prioridade: errado → alerta → joinha → sem avaliação
+    const prioOrdem = { errado: 0, alerta: 1, joinha: 2, null: 3, undefined: 3 };
+    const sorted = [...data].sort((a, b) =>
+      (prioOrdem[a.avaliacao_aluno] ?? 3) - (prioOrdem[b.avaliacao_aluno] ?? 3)
+    );
 
-    container.innerHTML = data.map(q => `
-      <div class="questao-pendente" id="qp-${q.id}">
+    document.getElementById('badgePendentes').textContent = sorted.length;
+
+    const avLabel = { joinha:'👍 Boa e calibrada', alerta:'⚠️ Confusa mas resolúvel', errado:'❌ Mal formulada' };
+    const avClass = { joinha:'joinha', alerta:'alerta', errado:'errado' };
+
+    container.innerHTML = sorted.map(q => {
+      const nomePerfil = q.perfis?.nome || '';
+      const avalBadge = q.avaliacao_aluno
+        ? `<span class="av-aluno-badge ${avClass[q.avaliacao_aluno]}">${avLabel[q.avaliacao_aluno]}</span>`
+        : '';
+      const isPrioridadeErrado = q.avaliacao_aluno === 'errado';
+
+      // Painel de concordância (só mostra se aluno já avaliou e professor ainda não se manifestou)
+      const concordanciaHtml = (q.avaliacao_aluno && q.professor_concorda === null || q.professor_concorda === undefined)
+        ? `<div class="qp-concordancia">
+             <span class="qp-concordancia-label">O aluno avaliou esta questão. Você concorda?</span>
+             <button class="btn-concorda" onclick="registrarConcordancia('${q.id}','${q.gerada_para}',true)">✓ Concordo</button>
+             <button class="btn-discorda"  onclick="registrarConcordancia('${q.id}','${q.gerada_para}',false)">✗ Discordo</button>
+           </div>`
+        : q.professor_concorda !== null && q.professor_concorda !== undefined
+          ? `<div class="qp-concordancia"><span class="concordancia-feita">${q.professor_concorda ? '✓ Você concordou com a avaliação do aluno.' : '✗ Você discordou da avaliação do aluno.'}</span></div>`
+          : '';
+
+      return `
+      <div class="questao-pendente${isPrioridadeErrado ? ' prioridade-errado' : ''}" id="qp-${q.id}">
         <div class="qp-header">
           <span class="qp-disc qp-${q.disciplina}">${q.disciplina.toUpperCase()}</span>
           <span class="qp-tipo">Tipo ${q.tipo}</span>
           <span class="qp-nivel">${q.nivel}</span>
-          ${q.origem === 'aluno_gerada' ? '<span style="font-size:10px;font-weight:700;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3);border-radius:100px;padding:2px 8px">👤 ALUNO</span>' : ''}
+          ${q.origem === 'aluno_gerada'
+            ? `<span style="font-size:10px;font-weight:700;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3);border-radius:100px;padding:2px 8px">👤 ${nomePerfil || 'ALUNO'}</span>`
+            : ''}
+          ${avalBadge}
           <span style="font-size:11px;color:var(--text-muted);margin-left:auto">${new Date(q.created_at).toLocaleDateString('pt-BR')}</span>
         </div>
         ${htmlPreviewQuestaoPainel(q)}
-        <div class="qp-acoes">
+        ${concordanciaHtml}
+        <div class="qp-acoes" style="margin-top:12px">
           <button class="btn-aprovar" onclick="moderarQuestao('${q.id}','aprovada')">✅ Aprovar</button>
           <button class="btn-rejeitar" onclick="moderarQuestao('${q.id}','rejeitada')">❌ Rejeitar</button>
           <button class="btn-editar" onclick="alert('Editor em breve!')">✏️ Editar</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
     await renderizarMathPainel(container);
   } catch(e) { console.warn('Erro banco pendentes:', e); }
 }
@@ -1580,6 +1625,58 @@ async function moderarQuestao(qId, status) {
         '<div style="text-align:center;color:var(--text-muted);padding:40px;font-size:14px">✅ Nenhuma questão pendente.</div>';
     }
   } catch(e) { alert('Erro: ' + e.message); }
+}
+
+// ── CONCORDÂNCIA COM AVALIAÇÃO DO ALUNO ──────────────────────────────────────
+const BADGES_AVALIADOR = [
+  { id: 'avaliador_1', pontos: 100, nome: 'Avaliador Nível 1', emoji: '🔍', descricao: 'Aptidão para avaliação de questões' },
+  { id: 'avaliador_2', pontos: 200, nome: 'Avaliador Nível 2', emoji: '🧐', descricao: 'Avaliador Experiente de Itens' },
+  { id: 'avaliador_3', pontos: 300, nome: 'Avaliador Nível 3', emoji: '🏅', descricao: 'Brabíssimo em Avaliar Itens!' },
+];
+
+async function registrarConcordancia(questaoId, alunoId, concorda) {
+  if (!alunoId) return;
+  try {
+    // 1. Registrar concordância do professor na questão
+    await sb.from('questoes_banco')
+      .update({ professor_concorda: concorda })
+      .eq('id', questaoId);
+
+    // Atualizar UI da concordância
+    const card = document.getElementById(`qp-${questaoId}`);
+    if (card) {
+      const panelConc = card.querySelector('.qp-concordancia');
+      if (panelConc) {
+        panelConc.innerHTML = `<span class="concordancia-feita">${concorda ? '✓ Você concordou com a avaliação do aluno.' : '✗ Você discordou da avaliação do aluno.'}</span>`;
+      }
+    }
+
+    // 2. Se concordou → +10 pontos_avaliacao para o aluno
+    if (!concorda) return;
+
+    const { data: pts } = await sb
+      .from('pontuacao')
+      .select('pontos_avaliacao')
+      .eq('aluno_id', alunoId)
+      .single();
+
+    const atual = pts?.pontos_avaliacao ?? 0;
+    const novo  = atual + 10;
+
+    await sb.from('pontuacao')
+      .update({ pontos_avaliacao: novo })
+      .eq('aluno_id', alunoId);
+
+    // 3. Verificar e conceder badges de avaliador
+    for (const badge of BADGES_AVALIADOR) {
+      if (atual < badge.pontos && novo >= badge.pontos) {
+        await sb.from('badges_conquistados')
+          .insert({ aluno_id: alunoId, badge_id: badge.id })
+          .then(() => {}).catch(() => {});
+      }
+    }
+
+  } catch(e) { console.warn('Erro concordância:', e); }
 }
 
 // ── BANCO — APROVADO ──
