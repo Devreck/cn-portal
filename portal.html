@@ -408,7 +408,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <a href="revisao.html">📚 Revisão</a>
         <a href="simulado.html" id="menuSimulado">🎯 Simulado</a>
         <a href="ranking.html">🏆 Ranking</a>
-        <a href="gerador.html">⚡ Desafios</a>
+        <a href="gerador.html">⚡ Gerar item</a>
         <div class="sep"></div>
         <a href="#" onclick="fazerLogout()">↩️ Sair</a>
       </div>
@@ -475,23 +475,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <a href="simulado.html" class="btn-simulado inativo" id="btnSimulado">🔒 Bloqueado</a>
     </div>
 
-    <!-- Gerador de Desafios -->
-    <a href="gerador.html" class="gerador-card" style="text-decoration:none;color:inherit">
-      <div class="gerador-card-glow"></div>
-      <div class="gerador-card-icon">⚡</div>
-      <div class="gerador-card-body">
-        <div class="gerador-card-title">Gerador de Desafios</div>
-        <div class="gerador-card-sub">Escolha o tema, o cenário e o tipo — a IA cria uma questão exclusiva só para você, no nível exato da AV4.</div>
-        <div class="gerador-card-pills">
-          <span class="gerador-pill">Biologia</span>
-          <span class="gerador-pill quim">Química</span>
-          <span class="gerador-pill fis">Física</span>
-          <span class="gerador-pill" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);color:#fbbf24">Cenário livre</span>
-        </div>
-      </div>
-      <span class="btn-gerador">Gerar questão →</span>
-    </a>
-
     <!-- Tutor IA -->
     <section class="ia-tools-card">
       <div class="ia-tools-top">
@@ -500,7 +483,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div class="ia-tools-sub">Diagnóstico, resumo personalizado, dúvidas e geração de itens da AV4</div>
         </div>
         <div class="ia-actions">
-          <a class="ia-action-btn primary" href="revisao.html#gerarExtra" style="text-decoration:none">Gerar item</a>
+          <a class="ia-action-btn primary" href="gerador.html" style="text-decoration:none">Gerar item</a>
           <button class="ia-action-btn primary" onclick="gerarDiagnosticoIA()">Diagnóstico</button>
           <button class="ia-action-btn" onclick="gerarResumoIA()">Resumo</button>
         </div>
