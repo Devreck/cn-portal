@@ -55,7 +55,7 @@
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
     --azul-mid:#2563EB; --azul-light:#3B82F6; --ouro:#F59E0B;
-    --bg:#0B0F1A; --surface:#111827; --surface2:#1E2536; --surface3:#252F42;
+    --bg:#060912; --surface:#0D1526; --surface2:#1E2536; --surface3:#252F42;
     --border:rgba(255,255,255,0.07); --text:#F1F5F9; --text-muted:#94A3B8;
     --green:#22C55E; --green-bg:rgba(34,197,94,0.08);
     --amber:#F59E0B; --amber-bg:rgba(245,158,11,0.08);
@@ -69,7 +69,7 @@
 /* ══ DARK MODE — toggle ══ */
 html[data-theme="dark"] {
   --azul-mid:#2563EB; --azul-light:#3B82F6; --ouro:#F59E0B;
-  --bg:#0B0F1A; --surface:#111827; --surface2:#1E2536; --surface3:#252F42;
+  --bg:#060912; --surface:#0D1526; --surface2:#1E2536; --surface3:#252F42;
   --border:rgba(255,255,255,0.07); --text:#F1F5F9; --text-muted:#94A3B8;
   --green:#22C55E; --green-bg:rgba(34,197,94,0.08);
   --amber:#F59E0B; --amber-bg:rgba(245,158,11,0.08);
@@ -84,7 +84,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* ── HEADER ── */
 .header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(244,247,251,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 1px 4px rgba(15,23,42,0.06);height:64px;display:flex;align-items:center;padding:0 24px;gap:16px}
-@media (prefers-color-scheme: dark){html:not([data-theme="light"]) .header{background:rgba(11,15,26,0.92);box-shadow:none}} html[data-theme="dark"] .header{background:rgba(11,15,26,0.92);box-shadow:none}
+@media (prefers-color-scheme: dark){html:not([data-theme="light"]) .header{background:rgba(5,8,20,0.82);box-shadow:0 1px 0 rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.07)}} html[data-theme="dark"] .header{background:rgba(5,8,20,0.82);box-shadow:0 1px 0 rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.07)}
 .header-back{display:flex;align-items:center;gap:8px;color:var(--text-muted);text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px;transition:all 0.2s}
 .header-back:hover{background:var(--surface2);color:var(--text)}
 .header-disc-tabs{display:flex;gap:4px;flex:1;justify-content:center}
@@ -287,8 +287,16 @@ html[data-theme="dark"] .icon-sun{display:block}
 html[data-theme="dark"] .icon-moon{display:none}
 </style>
 <script src="js/theme.js"></script>
+<link rel="stylesheet" href="css/ds.css">
 </head>
 <body>
+<!-- DS Background -->
+<div class="ds-blobs" aria-hidden="true">
+  <div class="ds-blob ds-blob-1"></div>
+  <div class="ds-blob ds-blob-2"></div>
+  <div class="ds-blob ds-blob-3"></div>
+</div>
+<div class="ds-grid" aria-hidden="true"></div>
 
 <!-- Loading -->
 <div class="loading-screen" id="loadingScreen">
@@ -299,7 +307,7 @@ html[data-theme="dark"] .icon-moon{display:none}
 <!-- Header -->
 <header class="header">
   <a href="portal.html" class="header-back">← Dashboard</a>
-  <div class="header-disc-tabs">
+  <div class="header-disc-tabs ds-nav-pill">
     <button class="disc-tab bio"  id="tab-bio"  onclick="trocarDisciplina('bio')">Biologia</button>
     <button class="disc-tab quim" id="tab-quim" onclick="trocarDisciplina('quim')">Química</button>
     <button class="disc-tab fis"  id="tab-fis"  onclick="trocarDisciplina('fis')">Física</button>

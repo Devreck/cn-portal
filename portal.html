@@ -64,8 +64,8 @@
     --azul-light: #3B82F6;
     --ouro:       #F59E0B;
     --ouro-light: #FBBF24;
-    --bg:         #0B0F1A;
-    --surface:    #111827;
+    --bg:         #060912;
+    --surface:    #0D1526;
     --surface2:   #1E2536;
     --surface3:   #252F42;
     --border:     rgba(255,255,255,0.07);
@@ -92,8 +92,8 @@ html[data-theme="dark"] {
   --azul-light: #3B82F6;
   --ouro:       #F59E0B;
   --ouro-light: #FBBF24;
-  --bg:         #0B0F1A;
-  --surface:    #111827;
+  --bg:         #060912;
+  --surface:    #0D1526;
   --surface2:   #1E2536;
   --surface3:   #252F42;
   --border:     rgba(255,255,255,0.07);
@@ -116,6 +116,8 @@ html[data-theme="dark"] {
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background 0.3s,color 0.3s}
+.main{position:relative;z-index:1}
+.header{z-index:100}
 
 /* ── HEADER ── */
 .header{
@@ -129,8 +131,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   height:64px;
   display:flex;align-items:center;justify-content:space-between;
 }
-@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .header{background:rgba(11,15,26,0.92);box-shadow:none} }
-html[data-theme="dark"] .header{background:rgba(11,15,26,0.92);box-shadow:none}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .header{background:rgba(5,8,20,0.82);box-shadow:0 1px 0 rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.07)} }
+html[data-theme="dark"] .header{background:rgba(5,8,20,0.82);box-shadow:0 1px 0 rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.07)}
 .header-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .header-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 12px rgba(37,99,235,0.25)}
 .header-logo-text{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px;color:var(--text)}
@@ -517,8 +519,16 @@ html[data-theme="dark"] .icon-moon{display:none}
 }
 </style>
 <script src="js/theme.js"></script>
+<link rel="stylesheet" href="css/ds.css">
 </head>
 <body>
+<!-- DS Background -->
+<div class="ds-blobs" aria-hidden="true">
+  <div class="ds-blob ds-blob-1"></div>
+  <div class="ds-blob ds-blob-2"></div>
+  <div class="ds-blob ds-blob-3"></div>
+</div>
+<div class="ds-grid" aria-hidden="true"></div>
 
 <!-- Loading -->
 <div class="loading-screen" id="loadingScreen">
@@ -556,11 +566,11 @@ html[data-theme="dark"] .icon-moon{display:none}
   <div class="container">
 
     <!-- Hero boas-vindas -->
-    <div class="hero-welcome">
+    <div class="hero-welcome ds-card-glass">
       <div class="hero-grid">
         <div>
-          <div class="hero-badge" id="heroBadge">Turma —</div>
-          <h1 class="hero-name" id="heroName">Olá!</h1>
+          <div class="hero-badge ds-section-label" id="heroBadge">Turma —</div>
+          <h1 class="hero-name ds-text-glow" id="heroName">Olá!</h1>
           <p class="hero-sub" id="heroSub">Carregando seu progresso...</p>
           <div class="xp-section">
             <div class="xp-header">
@@ -599,7 +609,7 @@ html[data-theme="dark"] .icon-moon{display:none}
     </div>
 
     <!-- Simulado -->
-    <div class="simulado-card" id="simuladoCard">
+    <div class="simulado-card ds-card-glass" id="simuladoCard">
       <div class="simulado-info">
         <div class="simulado-title">Simulado Final</div>
         <p class="simulado-desc">60 questões inéditas no formato da AV4, com textos-base interdisciplinares e cronometrado. Disponível após concluir as 3 revisões.</p>
@@ -611,7 +621,7 @@ html[data-theme="dark"] .icon-moon{display:none}
     </div>
 
     <!-- Tutor IA -->
-    <section class="ia-tools-card">
+    <section class="ia-tools-card ds-card-glass">
       <div class="ia-tools-top">
         <div>
           <div class="ia-tools-title">Tutor IA</div>
@@ -634,7 +644,7 @@ html[data-theme="dark"] .icon-moon{display:none}
     <div class="bottom-grid">
 
       <!-- Ranking mini -->
-      <div class="ranking-card">
+      <div class="ranking-card ds-card-glass">
         <div class="card-title">Ranking</div>
         <div class="card-sub">Sua posição na turma</div>
         <div id="rankingList">
@@ -644,7 +654,7 @@ html[data-theme="dark"] .icon-moon{display:none}
       </div>
 
       <!-- Badges -->
-      <div class="badges-card">
+      <div class="badges-card ds-card-glass">
         <div class="card-title">🏅 Conquistas</div>
         <div class="card-sub" id="badgesSub">0 badges conquistadas</div>
         <div class="badges-grid" id="badgesGrid">
@@ -655,7 +665,7 @@ html[data-theme="dark"] .icon-moon{display:none}
     </div>
 
     <!-- Badges Únicas (visível apenas se o aluno tiver) -->
-    <div class="badges-unicas-card" id="badgesUnicasCard" style="display:none">
+    <div class="badges-unicas-card ds-card-glass" id="badgesUnicasCard" style="display:none">
       <div class="card-title">✨ Badges Únicas</div>
       <div class="card-sub">Conquistas especiais atribuídas por tarefas ocultas</div>
       <div class="badges-unicas-row" id="badgesUnicasRow">
@@ -664,7 +674,7 @@ html[data-theme="dark"] .icon-moon{display:none}
     </div>
 
     <!-- Conquistas Especiais / Ocultas (só aparecem quando conquistadas) -->
-    <div class="badges-unicas-card" id="badgesOcultasCard" style="display:none">
+    <div class="badges-unicas-card ds-card-glass" id="badgesOcultasCard" style="display:none">
       <div class="card-title">Conquistas Especiais</div>
       <div class="card-sub">Missões secretas — só aparecem quando conquistadas</div>
       <div class="badges-grid" id="badgesOcultasGrid" style="margin-top:12px">
@@ -817,7 +827,7 @@ async function carregarProgresso() {
     else if (respondidas > 0) { statusTexto = 'Em andamento'; statusClasse = 'em-andamento'; }
 
     grid.innerHTML += `
-      <a href="revisao.html?disciplina=${key}" class="disc-card ${disc.classe}" style="text-decoration:none;color:inherit">
+      <a href="revisao.html?disciplina=${key}" class="disc-card ds-card-glass ${disc.classe}" style="text-decoration:none;color:inherit">
         <div class="disc-header">
           <div class="disc-icon">${DISC_ICONS[key]}</div>
           <span class="disc-status ${statusClasse}">${statusTexto}</span>

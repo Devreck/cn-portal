@@ -50,8 +50,8 @@
 /* ── Modo Escuro via OS ── */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
-    --bg:#0B0F1A;
-    --surface:#111827;
+    --bg:#060912;
+    --surface:#0D1526;
     --surface2:#1A2234;
     --surface3:#1F2D42;
     --border:rgba(255,255,255,0.08);
@@ -83,8 +83,8 @@
 }
 /* ── Modo Escuro manual ── */
 html[data-theme="dark"] {
-  --bg:#0B0F1A;
-  --surface:#111827;
+  --bg:#060912;
+  --surface:#0D1526;
   --surface2:#1A2234;
   --surface3:#1F2D42;
   --border:rgba(255,255,255,0.08);
@@ -128,9 +128,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   transition:background 0.2s,border-color 0.2s;
 }
 @media (prefers-color-scheme: dark){
-  html:not([data-theme="light"]) .header{background:rgba(11,15,26,0.85)}
+  html:not([data-theme="light"]) .header{background:rgba(5,8,20,0.82);border-color:rgba(255,255,255,0.07)}
 }
-html[data-theme="dark"] .header{background:rgba(11,15,26,0.85)}
+html[data-theme="dark"] .header{background:rgba(5,8,20,0.82);border-color:rgba(255,255,255,0.07)}
 
 .logo{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px}
 .logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1D4ED8,#2563EB);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -158,7 +158,7 @@ html[data-theme="dark"] .icon-sun{display:block}
 html[data-theme="dark"] .icon-moon{display:none}
 
 /* ── Layout principal ── */
-.main{max-width:800px;margin:0 auto;padding:40px 20px 80px}
+.main{max-width:800px;margin:0 auto;padding:40px 20px 80px;position:relative;z-index:1}
 
 /* ── Hero ── */
 .hero{padding:8px 0 32px;text-align:center}
@@ -412,8 +412,16 @@ html[data-theme="dark"] .modal-badge-unica-nome{color:#A78BFA}
   .ranking-list-header{display:none}
 }
 </style>
+<link rel="stylesheet" href="css/ds.css">
 </head>
 <body>
+<!-- DS Background -->
+<div class="ds-blobs" aria-hidden="true">
+  <div class="ds-blob ds-blob-1"></div>
+  <div class="ds-blob ds-blob-2"></div>
+  <div class="ds-blob ds-blob-3"></div>
+</div>
+<div class="ds-grid" aria-hidden="true"></div>
 
 <header class="header">
   <a href="portal.html" class="logo">
@@ -423,7 +431,7 @@ html[data-theme="dark"] .modal-badge-unica-nome{color:#A78BFA}
     CN <span>Portal</span>
   </a>
   <div class="header-right">
-    <nav class="nav">
+    <nav class="nav ds-nav-pill">
       <a href="portal.html">Dashboard</a>
       <a href="revisao.html">Revisão</a>
       <a href="simulado.html">Simulado</a>
@@ -443,11 +451,11 @@ html[data-theme="dark"] .modal-badge-unica-nome{color:#A78BFA}
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
       Ranking Geral
     </div>
-    <h1>Top Alunos</h1>
+    <h1 class="ds-text-glow">Top Alunos</h1>
     <p class="lead">Os estudantes com maior pontuação nas questões de revisão e nos simulados.</p>
   </section>
 
-  <div class="ranking-card">
+  <div class="ranking-card ds-card-glass">
     <div class="ranking-list-header">
       <div class="col-pos"><span>Pos.</span></div>
       <div class="col-nome"><span>Aluno</span></div>

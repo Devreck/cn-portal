@@ -34,8 +34,8 @@
       --azul-light: #3B82F6;
       --ouro:       #F59E0B;
       --ouro-light: #FBBF24;
-      --bg:         #0B0F1A;
-      --surface:    #111827;
+      --bg:         #060912;
+      --surface:    #0D1526;
       --surface2:   #1E2536;
       --border:     rgba(255,255,255,0.07);
       --text:       #F1F5F9;
@@ -51,8 +51,8 @@
     --azul-light: #3B82F6;
     --ouro:       #F59E0B;
     --ouro-light: #FBBF24;
-    --bg:         #0B0F1A;
-    --surface:    #111827;
+    --bg:         #060912;
+    --surface:    #0D1526;
     --surface2:   #1E2536;
     --border:     rgba(255,255,255,0.07);
     --text:       #F1F5F9;
@@ -509,8 +509,16 @@
   html[data-theme="dark"] .icon-moon{display:none}
 </style>
 <script src="js/theme.js"></script>
+<link rel="stylesheet" href="css/ds.css">
 </head>
 <body>
+<!-- DS Background -->
+<div class="ds-blobs" aria-hidden="true">
+  <div class="ds-blob ds-blob-1"></div>
+  <div class="ds-blob ds-blob-2"></div>
+  <div class="ds-blob ds-blob-3"></div>
+</div>
+<div class="ds-grid" aria-hidden="true"></div>
 
 <!-- ── LADO ESQUERDO ── -->
 <div class="left-panel">
@@ -527,7 +535,7 @@
 
   <div class="hero-area">
     <div class="hero-badge">AV4 · 1º Semestre 2026 · 3ª Série</div>
-    <h1 class="hero-title">
+    <h1 class="hero-title ds-text-glow">
       Ciências da<br>
       <span class="line-gold">Natureza</span><br>
       <span class="line-dim">em profundidade.</span>

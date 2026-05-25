@@ -1,0 +1,435 @@
+/**
+ * CN Portal — Design System
+ * Inspirado em: open-source-llm-10 (Langfuse pattern library)
+ * Padrões: blobs animados, glassmorphism, nav pill, badges mono, scroll reveal
+ *
+ * Inclua APÓS o <link> de fontes, ANTES dos estilos da página.
+ * Requer: js/theme.js carregado no <head> para dark-mode sem FOUC.
+ */
+
+/* ══════════════════════════════════════════════════════════
+   BLOB ANIMATIONS — fundo atmosférico (dark mode)
+══════════════════════════════════════════════════════════ */
+@keyframes ds-drift {
+  0%   { transform: translate(0, 0)    scale(1); }
+  50%  { transform: translate(15px, 25px) scale(1.04); }
+  100% { transform: translate(30px, 50px) scale(1); }
+}
+@keyframes ds-drift-r {
+  0%   { transform: translate(0, 0)     scale(1); }
+  50%  { transform: translate(-20px, 15px) scale(0.97); }
+  100% { transform: translate(-30px, -40px) scale(1); }
+}
+
+.ds-blobs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  /* só visível no dark mode */
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.ds-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+}
+/* Blob 1 — indigo/azul */
+.ds-blob-1 {
+  background: #3730A3;
+  width: 560px; height: 560px;
+  top: -12%; left: -10%;
+  opacity: 0.5;
+  animation: ds-drift 14s infinite alternate ease-in-out;
+}
+/* Blob 2 — rosa/violeta */
+.ds-blob-2 {
+  background: #9D174D;
+  width: 440px; height: 440px;
+  bottom: -12%; right: -6%;
+  opacity: 0.45;
+  animation: ds-drift-r 16s infinite alternate ease-in-out;
+  animation-delay: -6s;
+}
+/* Blob 3 — sky/ciano tênue */
+.ds-blob-3 {
+  background: #0369A1;
+  width: 340px; height: 340px;
+  top: 45%; left: 38%;
+  opacity: 0.22;
+  animation: ds-drift 20s infinite alternate ease-in-out;
+  animation-delay: -3s;
+}
+
+/* Ativar blobs no dark mode (OS) */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-blobs { opacity: 1; }
+}
+/* Ativar blobs no dark manual */
+html[data-theme="dark"] .ds-blobs { opacity: 1; }
+
+/* ══════════════════════════════════════════════════════════
+   GRID TEXTURE — grade sutil (dark mode)
+══════════════════════════════════════════════════════════ */
+.ds-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 80px 80px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-grid { opacity: 1; }
+}
+html[data-theme="dark"] .ds-grid { opacity: 1; }
+
+/* ══════════════════════════════════════════════════════════
+   GLASS PANEL — container principal (dark mode)
+══════════════════════════════════════════════════════════ */
+.ds-glass {
+  background: linear-gradient(
+    165deg,
+    rgba(255,255,255,0.07) 0%,
+    rgba(255,255,255,0.03) 45%,
+    rgba(255,255,255,0.01) 100%
+  );
+  backdrop-filter: blur(48px);
+  -webkit-backdrop-filter: blur(48px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.18);
+  border-left: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.25),
+    0 24px 64px -12px rgba(0,0,0,0.55),
+    inset 0 0 48px rgba(255,255,255,0.015);
+}
+
+/* ══════════════════════════════════════════════════════════
+   CARD GLASS — superfície de card (dark mode override)
+══════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-card-glass {
+    background: rgba(255,255,255,0.035) !important;
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  html:not([data-theme="light"]) .ds-card-glass:hover {
+    background: rgba(255,255,255,0.065) !important;
+  }
+}
+html[data-theme="dark"] .ds-card-glass {
+  background: rgba(255,255,255,0.035) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+html[data-theme="dark"] .ds-card-glass:hover {
+  background: rgba(255,255,255,0.065) !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   NAV PILL — container de navegação pill
+══════════════════════════════════════════════════════════ */
+.ds-nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(15,23,42,0.06);
+  padding: 4px;
+  border-radius: 100px;
+  border: 1px solid rgba(15,23,42,0.08);
+}
+.ds-nav-pill a,
+.ds-nav-pill button {
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted, #64748B);
+  transition: background 0.18s, color 0.18s;
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ds-nav-pill a:hover,
+.ds-nav-pill button:hover {
+  background: rgba(15,23,42,0.06);
+  color: var(--text, #0F172A);
+}
+.ds-nav-pill a.active,
+.ds-nav-pill button.active {
+  background: var(--surface, #fff);
+  color: var(--azul-mid, #1D4ED8);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* Dark override */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-nav-pill {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.09);
+  }
+  html:not([data-theme="light"]) .ds-nav-pill a:hover,
+  html:not([data-theme="light"]) .ds-nav-pill button:hover {
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+  }
+  html:not([data-theme="light"]) .ds-nav-pill a.active,
+  html:not([data-theme="light"]) .ds-nav-pill button.active {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    box-shadow: none;
+  }
+}
+html[data-theme="dark"] .ds-nav-pill {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.09);
+}
+html[data-theme="dark"] .ds-nav-pill a:hover,
+html[data-theme="dark"] .ds-nav-pill button:hover {
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+}
+html[data-theme="dark"] .ds-nav-pill a.active,
+html[data-theme="dark"] .ds-nav-pill button.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BADGES MONO — estilo do design system
+══════════════════════════════════════════════════════════ */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: rgba(15,23,42,0.05);
+  border: 1px solid rgba(15,23,42,0.09);
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-badge {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.09);
+  }
+}
+html[data-theme="dark"] .ds-badge {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.09);
+}
+
+/* Variantes de cor */
+.ds-badge-indigo { color: #4F46E5; }
+.ds-badge-emerald { color: #059669; }
+.ds-badge-amber   { color: #D97706; }
+.ds-badge-pink    { color: #BE185D; }
+.ds-badge-sky     { color: #0284C7; }
+.ds-badge-purple  { color: #7C3AED; }
+.ds-badge-cyan    { color: #0891B2; }
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-badge-indigo { color: #A5B4FC; }
+  html:not([data-theme="light"]) .ds-badge-emerald { color: #6EE7B7; }
+  html:not([data-theme="light"]) .ds-badge-amber   { color: #FCD34D; }
+  html:not([data-theme="light"]) .ds-badge-pink    { color: #F9A8D4; }
+  html:not([data-theme="light"]) .ds-badge-sky     { color: #7DD3FC; }
+  html:not([data-theme="light"]) .ds-badge-purple  { color: #D8B4FE; }
+  html:not([data-theme="light"]) .ds-badge-cyan    { color: #67E8F9; }
+}
+html[data-theme="dark"] .ds-badge-indigo { color: #A5B4FC; }
+html[data-theme="dark"] .ds-badge-emerald { color: #6EE7B7; }
+html[data-theme="dark"] .ds-badge-amber   { color: #FCD34D; }
+html[data-theme="dark"] .ds-badge-pink    { color: #F9A8D4; }
+html[data-theme="dark"] .ds-badge-sky     { color: #7DD3FC; }
+html[data-theme="dark"] .ds-badge-purple  { color: #D8B4FE; }
+html[data-theme="dark"] .ds-badge-cyan    { color: #67E8F9; }
+
+/* ══════════════════════════════════════════════════════════
+   SECTION LABEL — eyebrow numerado no topo de seções
+══════════════════════════════════════════════════════════ */
+.ds-section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 100px;
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: rgba(15,23,42,0.05);
+  border: 1px solid rgba(15,23,42,0.09);
+  color: var(--text-muted, #64748B);
+  margin-bottom: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-section-label {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.09);
+  }
+}
+html[data-theme="dark"] .ds-section-label {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.09);
+}
+
+/* ══════════════════════════════════════════════════════════
+   TEXT GLOW — brilho sutil em headings (dark)
+══════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-text-glow {
+    text-shadow: 0 0 48px rgba(255,255,255,0.2);
+  }
+}
+html[data-theme="dark"] .ds-text-glow {
+  text-shadow: 0 0 48px rgba(255,255,255,0.2);
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATUS DOT — pulsing status indicator
+══════════════════════════════════════════════════════════ */
+@keyframes ds-pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
+  50%       { opacity: 0.5; box-shadow: 0 0 14px currentColor; }
+}
+.ds-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  animation: ds-pulse-glow 2.2s ease-in-out infinite;
+}
+.ds-status-dot.green  { background: #22C55E; color: #22C55E; }
+.ds-status-dot.amber  { background: #F59E0B; color: #F59E0B; }
+.ds-status-dot.indigo { background: #6366F1; color: #6366F1; }
+
+/* ══════════════════════════════════════════════════════════
+   SCROLL REVEAL — .ds-reveal.visible
+══════════════════════════════════════════════════════════ */
+.ds-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ds-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.ds-reveal.delay-1 { transition-delay: 0.08s; }
+.ds-reveal.delay-2 { transition-delay: 0.16s; }
+.ds-reveal.delay-3 { transition-delay: 0.24s; }
+.ds-reveal.delay-4 { transition-delay: 0.32s; }
+
+/* ══════════════════════════════════════════════════════════
+   ICON BUTTON — hover lift (estilo do design system)
+══════════════════════════════════════════════════════════ */
+.ds-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.09);
+  background: rgba(15,23,42,0.04);
+  color: var(--text-muted, #64748B);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ds-icon-btn:hover {
+  background: rgba(15,23,42,0.08);
+  border-color: rgba(15,23,42,0.14);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px -4px rgba(0,0,0,0.12);
+  color: var(--text, #0F172A);
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .ds-icon-btn {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.07);
+  }
+  html:not([data-theme="light"]) .ds-icon-btn:hover {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(255,255,255,0.16);
+    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.5);
+    color: #fff;
+  }
+}
+html[data-theme="dark"] .ds-icon-btn {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.07);
+}
+html[data-theme="dark"] .ds-icon-btn:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.16);
+  box-shadow: 0 10px 30px -5px rgba(0,0,0,0.5);
+  color: #fff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GLOW ACCENT CORNER — canto de cards com brilho colorido
+══════════════════════════════════════════════════════════ */
+.ds-glow-corner {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(55px);
+  opacity: 0;
+  transition: opacity 0.45s;
+}
+.ds-card-wrap:hover .ds-glow-corner { opacity: 1; }
+
+/* Variantes de cor de glow */
+.ds-glow-indigo { background: rgba(99, 102, 241, 0.25); }
+.ds-glow-emerald { background: rgba(52, 211, 153, 0.22); }
+.ds-glow-amber  { background: rgba(245, 158, 11, 0.22); }
+.ds-glow-pink   { background: rgba(236, 72, 153, 0.22); }
+.ds-glow-sky    { background: rgba(56, 189, 248, 0.22); }
+.ds-glow-purple { background: rgba(168, 85, 247, 0.22); }
+
+/* ══════════════════════════════════════════════════════════
+   CODE BAR — hover gradient overlay
+══════════════════════════════════════════════════════════ */
+.ds-code-bar {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.ds-code-bar-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+}
+.ds-code-bar:hover .ds-code-bar-overlay { opacity: 1; }
+
+/* ══════════════════════════════════════════════════════════
+   UTILITY — z-index stacking layer para conteúdo acima dos blobs
+══════════════════════════════════════════════════════════ */
+.ds-content { position: relative; z-index: 1; }
+
+/* ══════════════════════════════════════════════════════════
+   STAT VALUE — large number display
+══════════════════════════════════════════════════════════ */
+.ds-stat-value {
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+}

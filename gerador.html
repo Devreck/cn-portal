@@ -167,8 +167,16 @@ main{max-width:760px;margin:0 auto;padding:36px 20px 60px}
   main{padding:20px 14px 50px}
 }
 </style>
+<link rel="stylesheet" href="css/ds.css">
 </head>
 <body>
+<!-- DS Background -->
+<div class="ds-blobs" aria-hidden="true">
+  <div class="ds-blob ds-blob-1"></div>
+  <div class="ds-blob ds-blob-2"></div>
+  <div class="ds-blob ds-blob-3"></div>
+</div>
+<div class="ds-grid" aria-hidden="true"></div>
 
 <div id="pageLoading">
   <div class="page-spinner"></div>
@@ -198,7 +206,7 @@ main{max-width:760px;margin:0 auto;padding:36px 20px 60px}
   </div>
 
   <!-- FORM -->
-  <div class="form-card">
+  <div class="form-card ds-card-glass">
 
     <!-- Tema Principal -->
     <div class="form-section">
@@ -266,7 +274,7 @@ main{max-width:760px;margin:0 auto;padding:36px 20px 60px}
 
   <!-- RESULTADO -->
   <div id="resultado">
-    <div class="resultado-card" id="resultadoCard">
+    <div class="resultado-card ds-card-glass" id="resultadoCard">
       <div class="resultado-header" id="resultadoHeader"></div>
       <div class="resultado-body" id="resultadoBody"></div>
     </div>

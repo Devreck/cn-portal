@@ -300,8 +300,16 @@ mjx-container[display="false"] {
 .modal-step-body mjx-container[display="true"]{display:block !important;margin:8px auto !important;text-align:center !important}
 
 </style>
+<link rel="stylesheet" href="css/ds.css">
 </head>
 <body>
+<!-- DS Background -->
+<div class="ds-blobs" aria-hidden="true">
+  <div class="ds-blob ds-blob-1"></div>
+  <div class="ds-blob ds-blob-2"></div>
+  <div class="ds-blob ds-blob-3"></div>
+</div>
+<div class="ds-grid" aria-hidden="true"></div>
 
 <!-- Loading -->
 <div class="loading-screen" id="loadingScreen">
@@ -377,22 +385,22 @@ mjx-container[display="false"] {
     <div class="page-sub">Resumo do desempenho da turma em tempo real</div>
 
     <div class="stats-grid">
-      <div class="stat-card azul">
+      <div class="stat-card azul ds-card-glass">
         <span class="stat-num" id="totalAlunos">—</span>
         <span class="stat-label">Total de Alunos</span>
         <div class="stat-sub" id="alunosAtivos">— ativos na última semana</div>
       </div>
-      <div class="stat-card verde">
+      <div class="stat-card verde ds-card-glass">
         <span class="stat-num" id="mediaPontos">—</span>
         <span class="stat-label">Média de Pontuação</span>
         <div class="stat-sub">pontos por aluno</div>
       </div>
-      <div class="stat-card ouro">
+      <div class="stat-card ouro ds-card-glass">
         <span class="stat-num" id="pctConclusao">—%</span>
         <span class="stat-label">Revisões Concluídas</span>
         <div class="stat-sub" id="subConclusao">das 3 disciplinas</div>
       </div>
-      <div class="stat-card roxo">
+      <div class="stat-card roxo ds-card-glass">
         <span class="stat-num" id="simuladosConcluidos">—</span>
         <span class="stat-label">Simulados Entregues</span>
         <div class="stat-sub" id="subSimulados">alunos finalizaram</div>
@@ -401,14 +409,14 @@ mjx-container[display="false"] {
 
     <div class="two-col">
       <!-- Progresso por disciplina -->
-      <div class="panel">
+      <div class="panel ds-card-glass">
         <div class="panel-title">📚 Conclusão por Disciplina</div>
         <div class="panel-sub">% de alunos que concluíram cada revisão</div>
         <div id="discProgress"></div>
       </div>
 
       <!-- Top 10 alunos -->
-      <div class="panel">
+      <div class="panel ds-card-glass">
         <div class="panel-title">🏆 Top 10 — Ranking</div>
         <div class="panel-sub">Alunos com maior pontuação</div>
         <div id="top10List"></div>
@@ -416,7 +424,7 @@ mjx-container[display="false"] {
     </div>
 
     <!-- Questões mais erradas -->
-    <div class="panel">
+    <div class="panel ds-card-glass">
       <div class="panel-title">⚠️ Questões com Maior Taxa de Erro</div>
       <div class="panel-sub">Itens que a turma mais erra — foco para revisão em aula</div>
       <div id="questoesMaisErradas"></div>
@@ -461,7 +469,7 @@ mjx-container[display="false"] {
       <button class="filtro-btn" onclick="filtrarTurma('23C', this)">Turma 23C</button>
     </div>
 
-    <div class="panel">
+    <div class="panel ds-card-glass">
       <div class="table-wrap">
         <table>
           <thead>
@@ -495,7 +503,7 @@ mjx-container[display="false"] {
       <button class="filtro-btn" onclick="filtrarHeatmap('fis', this)">⚡ Física</button>
     </div>
 
-    <div class="panel" style="margin-bottom:20px">
+    <div class="panel ds-card-glass" style="margin-bottom:20px">
       <div class="panel-title">Mapa de Calor — Taxa de Acerto por Questão</div>
       <div class="panel-sub">Verde = fácil; Amarelo = média; Vermelho = difícil para a turma</div>
       <div class="heatmap-grid" id="heatmapGrid"></div>
@@ -507,7 +515,7 @@ mjx-container[display="false"] {
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel ds-card-glass">
       <div class="panel-title">🔴 10 Questões com Menor Taxa de Acerto</div>
       <div class="panel-sub">Priorize estas questões na revisão em aula</div>
       <div class="table-wrap">
@@ -534,27 +542,27 @@ mjx-container[display="false"] {
     <div class="page-sub">Acessos, tempo de estudo e atividade por seção</div>
 
     <div class="three-col">
-      <div class="stat-card azul">
+      <div class="stat-card azul ds-card-glass">
         <span class="stat-num" id="totalSessoes">—</span>
         <span class="stat-label">Total de Sessões</span>
       </div>
-      <div class="stat-card verde">
+      <div class="stat-card verde ds-card-glass">
         <span class="stat-num" id="tempoMedio">—</span>
         <span class="stat-label">Tempo Médio por Sessão</span>
       </div>
-      <div class="stat-card ouro">
+      <div class="stat-card ouro ds-card-glass">
         <span class="stat-num" id="alunosUltSemana">—</span>
         <span class="stat-label">Ativos na Última Semana</span>
       </div>
     </div>
 
     <div class="two-col">
-      <div class="panel">
+      <div class="panel ds-card-glass">
         <div class="panel-title">📅 Acessos por Página</div>
         <div class="panel-sub">Distribuição de sessões por seção do portal</div>
         <canvas id="chartPaginas" height="200"></canvas>
       </div>
-      <div class="panel">
+      <div class="panel ds-card-glass">
         <div class="panel-title">⏱️ Tempo por Aluno (Top 10)</div>
         <div class="panel-sub">Alunos que mais tempo passaram estudando</div>
         <div id="tempoAlunos"></div>
@@ -568,7 +576,7 @@ mjx-container[display="false"] {
     <div class="page-sub">Pré-visualize o simulado atual e solicite novas versões para produção</div>
 
     <div class="two-col">
-      <div class="panel">
+      <div class="panel ds-card-glass">
         <div class="panel-title">👁️ Simulado Atual</div>
         <div class="panel-sub">Abra o simulado em modo professor ou exatamente como o estudante vê. Nenhuma tentativa é criada.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -577,7 +585,7 @@ mjx-container[display="false"] {
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel ds-card-glass">
         <div class="panel-title">✨ Solicitar Novo Simulado</div>
         <div class="panel-sub">Registre uma solicitação para gerar uma nova versão com foco, quantidade e observações.</div>
         <div class="form-row">
@@ -612,7 +620,7 @@ mjx-container[display="false"] {
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel ds-card-glass">
       <div class="panel-title">📋 Solicitações Registradas</div>
       <div class="panel-sub">Histórico das solicitações de novos simulados</div>
       <div class="table-wrap">
@@ -640,7 +648,7 @@ mjx-container[display="false"] {
     <div class="page-sub">Questões geradas pela IA aguardando sua aprovação</div>
 
     <!-- ── Geração manual (tema livre) ── -->
-    <div class="panel" style="margin-bottom:20px">
+    <div class="panel ds-card-glass" style="margin-bottom:20px">
       <div class="panel-title">✨ Gerar Item — Tema Livre</div>
       <div class="panel-sub">Crie um item com matemática em MathJax e ilustração renderizável para revisar antes de liberar</div>
       <div class="form-row">
@@ -684,7 +692,7 @@ mjx-container[display="false"] {
     </div>
 
     <!-- ── Geração por tema (cobertura completa) ── -->
-    <div class="panel" style="margin-bottom:20px">
+    <div class="panel ds-card-glass" style="margin-bottom:20px">
       <div class="panel-title">📚 Geração por Tema — Cobertura Completa</div>
       <div class="panel-sub">Gere itens independentes, com contexto próprio e dados completos para cada tema da AV4. Cada item consulta a base de conhecimento e a internet antes de gerar.</div>
 
@@ -733,7 +741,7 @@ mjx-container[display="false"] {
       <button class="filtro-btn" onclick="filtrarBanco('fis', this)">⚡ Fís</button>
     </div>
 
-    <div class="panel">
+    <div class="panel ds-card-glass">
       <div class="table-wrap">
         <table>
           <thead>
@@ -765,7 +773,7 @@ mjx-container[display="false"] {
       <button class="btn-export" onclick="exportarCSV('questoes')">📈 Taxa de Acerto por Questão</button>
     </div>
 
-    <div class="panel">
+    <div class="panel ds-card-glass">
       <div class="panel-title">ℹ️ Sobre os dados exportados</div>
       <div class="panel-sub">Cada arquivo CSV pode ser aberto diretamente no Excel ou Google Sheets</div>
       <div style="font-size:13px;color:var(--text-muted);line-height:1.8">
@@ -837,7 +845,7 @@ mjx-container[display="false"] {
     </div>
 
     <!-- Lista de badges já atribuídas -->
-    <div class="panel">
+    <div class="panel ds-card-glass">
       <div class="panel-title">Badges atribuídas</div>
       <div class="panel-sub">Todas as conquistas únicas ativas na plataforma</div>
       <div id="badgesUnicasList">
