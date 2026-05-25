@@ -56,9 +56,9 @@
   --shadow-lg:  0 12px 32px rgba(15,23,42,0.1), 0 4px 12px rgba(15,23,42,0.06);
 }
 
-/* ══ DARK MODE (automático pelo SO) ══ */
+/* ══ DARK MODE — via OS (sem preferência salva) ou toggle manual ══ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  html:not([data-theme="light"]) {
     --azul:       #003A6E;
     --azul-mid:   #2563EB;
     --azul-light: #3B82F6;
@@ -85,6 +85,33 @@
     --shadow-lg:  0 12px 32px rgba(0,0,0,0.4);
   }
 }
+/* ══ DARK MODE — forçado pelo toggle ══ */
+html[data-theme="dark"] {
+  --azul:       #003A6E;
+  --azul-mid:   #2563EB;
+  --azul-light: #3B82F6;
+  --ouro:       #F59E0B;
+  --ouro-light: #FBBF24;
+  --bg:         #0B0F1A;
+  --surface:    #111827;
+  --surface2:   #1E2536;
+  --surface3:   #252F42;
+  --border:     rgba(255,255,255,0.07);
+  --text:       #F1F5F9;
+  --text-muted: #94A3B8;
+  --green:      #22C55E;
+  --green-bg:   rgba(34,197,94,0.08);
+  --amber:      #F59E0B;
+  --amber-bg:   rgba(245,158,11,0.08);
+  --blue:       #3B82F6;
+  --blue-bg:    rgba(59,130,246,0.08);
+  --purple:     #A855F7;
+  --red:        #EF4444;
+  --red-bg:     rgba(239,68,68,0.08);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg:  0 12px 32px rgba(0,0,0,0.4);
+}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -102,9 +129,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   height:64px;
   display:flex;align-items:center;justify-content:space-between;
 }
-@media (prefers-color-scheme: dark) {
-  .header{background:rgba(11,15,26,0.92);box-shadow:none}
-}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .header{background:rgba(11,15,26,0.92);box-shadow:none} }
+html[data-theme="dark"] .header{background:rgba(11,15,26,0.92);box-shadow:none}
 .header-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .header-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 12px rgba(37,99,235,0.25)}
 .header-logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--text)}
@@ -352,11 +378,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   padding:3px 8px;border-radius:100px;
   background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:#7C3AED;
 }
-@media (prefers-color-scheme: dark) {
-  .gerador-pill{background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.25);color:#C084FC}
-  .gerador-pill.quim{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);color:#4ADE80}
-  .gerador-pill.fis{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.2);color:#60A5FA}
-}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .gerador-pill{background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.25);color:#C084FC} html:not([data-theme="light"]) .gerador-pill.quim{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);color:#4ADE80} html:not([data-theme="light"]) .gerador-pill.fis{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.2);color:#60A5FA} }
+html[data-theme="dark"] .gerador-pill{background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.25);color:#C084FC}
+html[data-theme="dark"] .gerador-pill.quim{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);color:#4ADE80}
+html[data-theme="dark"] .gerador-pill.fis{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.2);color:#60A5FA}
 .gerador-pill.quim{background:rgba(22,163,74,0.08);border-color:rgba(22,163,74,0.2);color:#16A34A}
 .gerador-pill.fis{background:rgba(37,99,235,0.08);border-color:rgba(37,99,235,0.2);color:#2563EB}
 .btn-gerador{
@@ -397,9 +422,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .ranking-nome{font-size:13px;font-weight:500}
 .ranking-nome.me{color:var(--azul-light);font-weight:700}
 .badge-unica-pill-mini{display:inline-flex;align-items:center;gap:3px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:#7C3AED;font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;white-space:nowrap;position:relative;cursor:default}
-@media (prefers-color-scheme: dark) {
-  .badge-unica-pill-mini{background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.3);color:#C084FC}
-}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .badge-unica-pill-mini{background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.3);color:#C084FC} }
+html[data-theme="dark"] .badge-unica-pill-mini{background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.3);color:#C084FC}
 .badge-unica-pill-mini[data-tooltip]::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:400;padding:7px 11px;border-radius:9px;width:max-content;max-width:220px;white-space:normal;line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:200;box-shadow:var(--shadow-lg)}
 .badge-unica-pill-mini[data-tooltip]:hover::after{opacity:1}
 .ranking-pts{font-size:13px;font-weight:700;color:var(--ouro)}
@@ -424,27 +448,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   border-radius:18px;padding:24px;margin-bottom:24px;
   box-shadow:var(--shadow-sm);
 }
-@media (prefers-color-scheme: dark) {
-  .badges-unicas-card{background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03));border-color:rgba(168,85,247,0.3)}
-}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .badges-unicas-card{background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03));border-color:rgba(168,85,247,0.3)} }
+html[data-theme="dark"] .badges-unicas-card{background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03));border-color:rgba(168,85,247,0.3)}
 .badges-unicas-card .card-title{color:#7C3AED}
-@media (prefers-color-scheme: dark) {
-  .badges-unicas-card .card-title{color:#C084FC}
-}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .badges-unicas-card .card-title{color:#C084FC} }
+html[data-theme="dark"] .badges-unicas-card .card-title{color:#C084FC}
 .badges-unicas-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}
 .badge-unica-item{
   display:flex;align-items:center;gap:12px;
   background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.15);
   border-radius:14px;padding:14px 18px;
 }
-@media (prefers-color-scheme: dark) {
-  .badge-unica-item{background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.3)}
-}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .badge-unica-item{background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.3)} }
+html[data-theme="dark"] .badge-unica-item{background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.3)}
 .badge-unica-emoji{font-size:30px}
 .badge-unica-nome{font-size:14px;font-weight:700;color:#7C3AED}
-@media (prefers-color-scheme: dark) {
-  .badge-unica-nome{color:#C084FC}
-}
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .badge-unica-nome{color:#C084FC} }
+html[data-theme="dark"] .badge-unica-nome{color:#C084FC}
 .badge-unica-desc{font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:2px}
 
 /* ── TOAST NOTIFICAÇÃO ── */
@@ -460,6 +480,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-size:14px;color:var(--text-muted)}
 
+/* ── TOGGLE TEMA ── */
+.theme-toggle-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s,border-color 0.15s;flex-shrink:0}
+.theme-toggle-btn:hover{background:var(--surface3);border-color:rgba(37,99,235,0.2)}
+
 /* ── RESPONSIVO ── */
 @media(max-width:900px){
   .main-grid{grid-template-columns:1fr}
@@ -472,6 +496,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .header{padding:0 16px}
 }
 </style>
+<script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -489,6 +514,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </a>
   <div class="header-right">
     <div class="header-xp" id="headerXP">⭐ 0 pts</div>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Modo escuro">🌙</button>
     <div class="header-menu">
       <div class="header-avatar" id="headerAvatar" onclick="toggleMenu()">?</div>
       <div class="header-dropdown" id="headerDropdown">

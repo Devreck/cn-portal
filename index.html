@@ -26,9 +26,9 @@
     --red:        #DC2626;
   }
 
-  /* ══ DARK MODE (automático pelo SO) ══ */
+  /* ══ DARK MODE — OS ══ */
   @media (prefers-color-scheme: dark) {
-    :root {
+    html:not([data-theme="light"]) {
       --azul:       #003A6E;
       --azul-mid:   #2563EB;
       --azul-light: #3B82F6;
@@ -43,6 +43,22 @@
       --green:      #22C55E;
       --red:        #EF4444;
     }
+  }
+  /* ══ DARK MODE — toggle ══ */
+  html[data-theme="dark"] {
+    --azul:       #003A6E;
+    --azul-mid:   #2563EB;
+    --azul-light: #3B82F6;
+    --ouro:       #F59E0B;
+    --ouro-light: #FBBF24;
+    --bg:         #0B0F1A;
+    --surface:    #111827;
+    --surface2:   #1E2536;
+    --border:     rgba(255,255,255,0.07);
+    --text:       #F1F5F9;
+    --text-muted: #94A3B8;
+    --green:      #22C55E;
+    --red:        #EF4444;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -482,7 +498,23 @@
     from { opacity: 0; transform: translateX(30px); }
     to   { opacity: 1; transform: translateX(0); }
   }
+  .theme-toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    z-index: 20;
+  }
+  .theme-toggle-btn:hover { background: var(--surface3); }
 </style>
+<script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -533,6 +565,7 @@
 
 <!-- ── LADO DIREITO — FORMULÁRIO ── -->
 <div class="right-panel">
+  <button class="theme-toggle-btn" onclick="toggleTheme()" title="Modo escuro">🌙</button>
   <div class="form-eyebrow">Acesso ao Portal</div>
   <h2 class="form-title">Boas-vindas 👋</h2>
   <p class="form-subtitle">Entre com suas credenciais Marista para acessar o portal de estudos.</p>
