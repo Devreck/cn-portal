@@ -477,6 +477,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
+    <!-- Conquistas Especiais / Ocultas (só aparecem quando conquistadas) -->
+    <div class="badges-unicas-card" id="badgesOcultasCard" style="display:none">
+      <div class="card-title">🔮 Conquistas Especiais</div>
+      <div class="card-sub">Missões secretas — só aparecem quando conquistadas</div>
+      <div class="badges-grid" id="badgesOcultasGrid" style="margin-top:12px">
+        <!-- Gerado por JS -->
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -512,6 +521,12 @@ const BADGES = [
   {id:'consistente',         emoji:'📅', nome:'Consistente',            como:'Acesse o portal em 3 dias diferentes.'},
   {id:'top3',                emoji:'🥇', nome:'Top 3',                  como:'Entre no top 3 do ranking geral.'},
   {id:'lenda_marista',       emoji:'👑', nome:'Lenda Marista',          como:'Conquiste todos os outros badges.'},
+];
+
+// Badges ocultas: só aparecem quando conquistadas, nunca exibidas como bloqueadas.
+// Adicione entradas aqui quando definidas pelo professor.
+const BADGES_OCULTAS = [
+  // {id:'exemplo_oculta', emoji:'🌟', nome:'Exemplo Oculto', como:'Descrição da conquista.'},
 ];
 
 let userAtual = null;
@@ -771,7 +786,23 @@ async function carregarBadges() {
   const total = badgesConquistados.size;
   document.getElementById('badgesSub').textContent = `${total} badge${total !== 1 ? 's' : ''} conquistada${total !== 1 ? 's' : ''}`;
 
-  // Badge lenda marista
+  // Conquistas especiais / ocultas
+  const ocultasConquistadas = BADGES_OCULTAS.filter(b => badgesConquistados.has(b.id));
+  const ocultasCard = document.getElementById('badgesOcultasCard');
+  const ocultasGrid = document.getElementById('badgesOcultasGrid');
+  if (ocultasConquistadas.length > 0) {
+    ocultasGrid.innerHTML = ocultasConquistadas.map(badge => `
+      <div class="badge-item conquistado" title="${badge.como || ''}">
+        <span class="badge-emoji">${badge.emoji}</span>
+        <span class="badge-nome">${badge.nome}</span>
+        <span class="badge-como">${badge.como || ''}</span>
+      </div>`).join('');
+    ocultasCard.style.display = 'block';
+  } else {
+    ocultasCard.style.display = 'none';
+  }
+
+  // Badge lenda marista (apenas contagem de badges normais, não ocultas)
   if (total >= 15) await garantirBadge('lenda_marista');
 }
 

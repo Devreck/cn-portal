@@ -683,14 +683,21 @@ const QuestaoRenderer = {
 
       // 3. Atualizar pontuação
       const campo = `pontos_${this.estado.disciplina}`;
-      const { data: pts } = await sb
-        .from('pontuacao')
-        .select('pontos_total, streak_maximo')
-        .eq('aluno_id', this.estado.userId)
-        .single();
+      const [{ data: pts }, { data: allProgs }] = await Promise.all([
+        sb.from('pontuacao')
+          .select('pontos_total, streak_maximo')
+          .eq('aluno_id', this.estado.userId)
+          .single(),
+        // Buscar TODAS as disciplinas para calcular totais reais (evita sobrescrever com dados só da disciplina atual)
+        sb.from('progresso_revisao')
+          .select('total_questoes, acertos')
+          .eq('aluno_id', this.estado.userId),
+      ]);
 
-      const novoTotal   = (pts?.pontos_total || 0) + pontos;
-      const novoStreak  = Math.max(pts?.streak_maximo || 0, this.estado.streakMaximo);
+      const novoTotal      = (pts?.pontos_total || 0) + pontos;
+      const novoStreak     = Math.max(pts?.streak_maximo || 0, this.estado.streakMaximo);
+      const totalRespondidas = (allProgs || []).reduce((s, p) => s + (p.total_questoes || 0), 0);
+      const totalAcertos     = (allProgs || []).reduce((s, p) => s + (p.acertos       || 0), 0);
 
       await sb.from('pontuacao')
         .update({
@@ -698,8 +705,8 @@ const QuestaoRenderer = {
           pontos_total: novoTotal,
           streak_atual: this.estado.streakAtual,
           streak_maximo: novoStreak,
-          questoes_respondidas: respondidas,
-          questoes_corretas: acertos,
+          questoes_respondidas: totalRespondidas,
+          questoes_corretas: totalAcertos,
         })
         .eq('aluno_id', this.estado.userId);
 

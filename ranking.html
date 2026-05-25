@@ -193,6 +193,12 @@ const BADGES = [
   {id:'lenda_marista',       emoji:'👑', nome:'Lenda Marista'},
 ];
 
+// Badges ocultas: só aparecem quando conquistadas, nunca mostradas como bloqueadas.
+// Adicione entradas aqui quando definidas pelo professor.
+const BADGES_OCULTAS = [
+  // {id:'exemplo_oculta', emoji:'🌟', nome:'Exemplo Oculto'},
+];
+
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
@@ -221,6 +227,14 @@ async function carregarRankingFull() {
   });
 
   rankingData = rankingResult.data;
+
+  // Conceder badge top3 ao usuário atual se ele estiver no top 3
+  const myRank = rankingData.find(r => r.aluno_id === userAtual.id);
+  if (myRank && Number(myRank.posicao) <= 3) {
+    sb.from('badges_conquistados')
+      .insert({ aluno_id: userAtual.id, badge_id: 'top3' })
+      .then(() => {}).catch(() => {}); // ignora duplicata silenciosamente
+  }
 
   let html = '';
   rankingData.forEach((r, index) => {
@@ -321,6 +335,21 @@ async function abrirPerfil(index) {
       </div>
     </div>` : '';
 
+  // Badges ocultas (só aparecem quando conquistadas)
+  const oculatasConquistadas = BADGES_OCULTAS.filter(b => conquistados.has(b.id));
+  const ocultasHtml = oculatasConquistadas.length > 0 ? `
+    <hr class="modal-divider">
+    <div class="modal-section">
+      <div class="modal-section-title">🔮 Conquistas Especiais</div>
+      <div class="modal-badges-grid" style="grid-template-columns:repeat(3,1fr)">
+        ${oculatasConquistadas.map(b => `
+          <div class="modal-badge-item ok">
+            <span class="modal-badge-item-emoji">${b.emoji}</span>
+            <span class="modal-badge-item-nome">${b.nome}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
   document.getElementById('modalConteudo').innerHTML = `
     <div class="modal-header">
       <div class="modal-nome">${r.nome}${euMesmo ? ' <span style="font-size:13px;color:var(--azul-light)">(você)</span>' : ''}</div>
@@ -371,6 +400,7 @@ async function abrirPerfil(index) {
 
     ${badgesGridHtml}
     ${uniquesBadgesHtml}
+    ${ocultasHtml}
   `;
 }
 
