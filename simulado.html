@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CN Portal — Simulado</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
@@ -56,23 +56,23 @@ html[data-theme="dark"] {
   --shadow-sm:0 1px 3px rgba(0,0,0,0.3);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* ── HEADER ── */
 .header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(244,247,251,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 1px 4px rgba(15,23,42,0.06);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:16px}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .header{background:rgba(11,15,26,0.92);box-shadow:none}} html[data-theme="dark"] .header{background:rgba(11,15,26,0.92);box-shadow:none}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px}
+.header-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px}
 .header-logo span{color:var(--azul-mid)}
 .sim-badge{background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:var(--purple);font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .sim-badge{background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.3)}} html[data-theme="dark"] .sim-badge{background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.3)}
 .header-right{display:flex;align-items:center;gap:12px}
-.cronometro{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ouro);background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.2);padding:8px 16px;border-radius:10px;min-width:80px;text-align:center}
+.cronometro{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--ouro);background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.2);padding:8px 16px;border-radius:10px;min-width:80px;text-align:center}
 .cronometro.urgente{color:var(--red);background:rgba(220,38,38,0.08);border-color:rgba(220,38,38,0.25);animation:blink 1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.6}}
-.btn-finalizar{padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#7C3AED,#9333EA);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 14px rgba(124,58,237,0.25)}
+.btn-finalizar{padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#7C3AED,#9333EA);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 14px rgba(124,58,237,0.25)}
 .btn-finalizar:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(124,58,237,0.35)}
-.btn-professor{padding:10px 16px;border-radius:10px;border:1px solid rgba(217,119,6,0.2);background:rgba(217,119,6,0.07);color:var(--ouro);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-decoration:none;display:none}
+.btn-professor{padding:10px 16px;border-radius:10px;border:1px solid rgba(217,119,6,0.2);background:rgba(217,119,6,0.07);color:var(--ouro);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;text-decoration:none;display:none}
 body.professor-preview .btn-professor{display:inline-flex}
 body.professor-preview .cronometro{min-width:auto}
 
@@ -101,7 +101,7 @@ body.professor-preview .cronometro{min-width:auto}
 .texto-base-card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
 .texto-base-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--purple),var(--azul-light))}
 .texto-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.texto-num{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--purple)}
+.texto-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:800;color:var(--purple)}
 .texto-disc{display:flex;gap:6px}
 .disc-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px}
 .disc-chip.bio  {background:rgba(22,163,74,0.1);color:var(--green)}
@@ -113,7 +113,7 @@ body.professor-preview .cronometro{min-width:auto}
 .sim-questao{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:14px;transition:box-shadow 0.2s;box-shadow:var(--shadow-sm)}
 .sim-questao-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .sim-q-meta{display:flex;align-items:center;gap:8px}
-.sim-q-num{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--ouro)}
+.sim-q-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:800;color:var(--ouro)}
 .sim-q-tipo{font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px}
 .tipo-c-sim{background:rgba(37,99,235,0.1);color:var(--blue)}
 .tipo-a-sim{background:rgba(217,119,6,0.1);color:var(--amber)}
@@ -122,7 +122,7 @@ body.professor-preview .cronometro{min-width:auto}
 
 /* ── ALTERNATIVAS SIMULADO ── */
 .sim-alts{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
-.sim-alt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.15s;text-align:left;font-size:13px;line-height:1.5;font-family:'DM Sans',sans-serif}
+.sim-alt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.15s;text-align:left;font-size:13px;line-height:1.5;font-family:'Inter',sans-serif}
 .sim-alt:hover:not(:disabled){border-color:rgba(124,58,237,0.25);background:rgba(124,58,237,0.05)}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .sim-alt:hover:not(:disabled){border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.05)}} html[data-theme="dark"] .sim-alt:hover:not(:disabled){border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.05)}
 .sim-alt:disabled{cursor:not-allowed}
@@ -134,7 +134,7 @@ body.professor-preview .cronometro{min-width:auto}
 
 /* ── BOTÕES CE SIMULADO ── */
 .sim-ce-btns{display:flex;gap:10px}
-.sim-ce-btn{flex:1;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.sim-ce-btn{flex:1;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s}
 .sim-ce-btn:hover:not(:disabled){border-color:rgba(124,58,237,0.25);background:rgba(124,58,237,0.05)}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .sim-ce-btn:hover:not(:disabled){border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.06)}} html[data-theme="dark"] .sim-ce-btn:hover:not(:disabled){border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.06)}
 .sim-ce-btn.selecionada{border-color:rgba(124,58,237,0.35);background:rgba(124,58,237,0.07);color:var(--purple)}
@@ -156,17 +156,17 @@ body.professor-preview .cronometro{min-width:auto}
 .resultado-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:48px;max-width:600px;width:100%;text-align:center;position:relative;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,0.12)}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .resultado-card{box-shadow:0 24px 60px rgba(0,0,0,0.5)}} html[data-theme="dark"] .resultado-card{box-shadow:0 24px 60px rgba(0,0,0,0.5)}
 .resultado-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--purple),var(--ouro),var(--blue))}
-.resultado-emoji{font-size:64px;margin-bottom:16px}
-.resultado-titulo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.resultado-emoji{font-size:52px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:16px;line-height:1;letter-spacing:-2px}
+.resultado-titulo{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
 .resultado-sub{font-size:14px;color:var(--text-muted);margin-bottom:32px}
 .resultado-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
 .r-stat{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px}
-.r-stat-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--ouro);display:block;margin-bottom:4px}
+.r-stat-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;color:var(--ouro);display:block;margin-bottom:4px}
 .r-stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px}
 .resultado-btns{display:flex;gap:12px;justify-content:center}
-.btn-ver-gabarito{padding:14px 28px;border-radius:12px;border:1px solid rgba(124,58,237,0.25);background:rgba(124,58,237,0.07);color:var(--purple);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-ver-gabarito{padding:14px 28px;border-radius:12px;border:1px solid rgba(124,58,237,0.25);background:rgba(124,58,237,0.07);color:var(--purple);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .btn-ver-gabarito{border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.08)}} html[data-theme="dark"] .btn-ver-gabarito{border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.08)}
-.btn-dashboard{padding:14px 28px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;box-shadow:0 4px 16px rgba(29,78,216,0.25)}
+.btn-dashboard{padding:14px 28px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;box-shadow:0 4px 16px rgba(29,78,216,0.25)}
 
 /* ── MODAL BLOQUEADO ── */
 .modal-bloqueado{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center}
@@ -174,7 +174,7 @@ body.professor-preview .cronometro{min-width:auto}
 .modal-bloqueado.show{display:flex}
 .modal-bloqueado-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px;max-width:460px;text-align:center;box-shadow:0 24px 60px rgba(15,23,42,0.12)}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .modal-bloqueado-card{box-shadow:0 24px 60px rgba(0,0,0,0.5)}} html[data-theme="dark"] .modal-bloqueado-card{box-shadow:0 24px 60px rgba(0,0,0,0.5)}
-.modal-bloqueado-card h2{font-family:'Syne',sans-serif;font-size:22px;margin-bottom:12px}
+.modal-bloqueado-card h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;margin-bottom:12px}
 .modal-bloqueado-card p{font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:24px}
 .req-chips{display:flex;flex-direction:column;gap:8px;margin-bottom:28px}
 .req-chip-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);font-size:13px}
@@ -190,9 +190,22 @@ body.professor-preview .cronometro{min-width:auto}
   .container{padding:16px}
   .resultado-stats{grid-template-columns:1fr 1fr}
 }
-.theme-toggle-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.12);backdrop-filter:blur(4px);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background 0.15s;flex-shrink:0;color:inherit}
-html[data-theme="dark"] .theme-toggle-btn,.header .theme-toggle-btn{background:rgba(255,255,255,0.08)}
-.theme-toggle-btn:hover{background:rgba(255,255,255,0.18)}
+/* ── TOGGLE TEMA ── */
+/* ── TOGGLE TEMA ── */
+.theme-toggle-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,border-color 0.15s;flex-shrink:0;color:var(--text-muted)}
+.theme-toggle-btn:hover{background:var(--surface3)}
+.theme-toggle-btn svg{display:block;pointer-events:none}
+/* Claro → mostra lua; Escuro → mostra sol */
+.icon-sun{display:none}
+@media (prefers-color-scheme: dark){html:not([data-theme="light"]) .icon-sun{display:block}html:not([data-theme="light"]) .icon-moon{display:none}}
+html[data-theme="dark"] .icon-sun{display:block}
+html[data-theme="dark"] .icon-moon{display:none}
+.theme-toggle-btn svg{display:block;pointer-events:none}
+/* Claro → mostra lua; Escuro → mostra sol */
+.icon-sun{display:none}
+@media (prefers-color-scheme: dark){html:not([data-theme="light"]) .icon-sun{display:block}html:not([data-theme="light"]) .icon-moon{display:none}}
+html[data-theme="dark"] .icon-sun{display:block}
+html[data-theme="dark"] .icon-moon{display:none}
 </style>
 <script src="js/theme.js"></script>
 </head>
@@ -207,7 +220,7 @@ html[data-theme="dark"] .theme-toggle-btn,.header .theme-toggle-btn{background:r
 <!-- Modal bloqueado -->
 <div class="modal-bloqueado" id="modalBloqueado">
   <div class="modal-bloqueado-card">
-    <div style="font-size:48px;margin-bottom:16px">🔒</div>
+    <div style="font-size:48px;margin-bottom:16px;color:var(--text-muted)"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
     <h2>Simulado Bloqueado</h2>
     <p>Complete as revisões das 3 disciplinas antes de acessar o simulado. Isso garante que você chegue preparado!</p>
     <div class="req-chips" id="reqChips"></div>
@@ -219,11 +232,11 @@ html[data-theme="dark"] .theme-toggle-btn,.header .theme-toggle-btn{background:r
 <header class="header">
   <div class="header-left">
     <div class="header-logo">CN <span>Portal</span></div>
-    <div class="sim-badge">🎯 Simulado Final</div>
+    <div class="sim-badge">Simulado Final</div>
   </div>
   <div class="header-right">
     <div class="cronometro" id="cronometro">3:00:00</div>
-    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Modo escuro">🌙</button>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema"><svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="icon-sun"  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>
     <a class="btn-professor" href="painel.html#simulados">Painel</a>
     <button class="btn-finalizar" id="btnFinalizar" onclick="confirmarFinalizar()">Entregar</button>
   </div>
@@ -251,7 +264,7 @@ html[data-theme="dark"] .theme-toggle-btn,.header .theme-toggle-btn{background:r
 <!-- Overlay de resultado -->
 <div class="resultado-overlay" id="resultadoOverlay">
   <div class="resultado-card">
-    <div class="resultado-emoji" id="resEmoji">🎯</div>
+    <div class="resultado-emoji" id="resEmoji">—</div>
     <h2 class="resultado-titulo" id="resTitulo">Simulado Concluído!</h2>
     <p class="resultado-sub" id="resSub">Veja seu desempenho abaixo</p>
     <div class="resultado-stats">
@@ -270,7 +283,7 @@ html[data-theme="dark"] .theme-toggle-btn,.header .theme-toggle-btn{background:r
     </div>
     <div class="resultado-btns">
       <button class="btn-ver-gabarito" onclick="verGabarito()">📋 Ver gabarito</button>
-      <a href="portal.html" class="btn-dashboard">🏠 Dashboard</a>
+      <a href="portal.html" class="btn-dashboard">Dashboard</a>
     </div>
   </div>
 </div>
@@ -316,7 +329,7 @@ function mostrarBannerOffline() {
     + 'background:#0d1526;border:1px solid rgba(245,158,11,0.4);color:#f59e0b;'
     + 'padding:12px 20px;border-radius:12px;font-size:13px;z-index:500;'
     + 'text-align:center;max-width:420px;box-shadow:0 8px 24px rgba(0,0,0,0.4)';
-  banner.innerHTML = '⚠️ Conexão instável — respostas salvas localmente. Não feche o navegador.';
+  banner.innerHTML = 'Conexão instável — respostas salvas localmente. Não feche o navegador.';
   document.body.appendChild(banner);
 }
 
@@ -376,12 +389,12 @@ const paramsUrl = new URLSearchParams(window.location.search);
     if (!bio || !quim || !fis) {
       const chips = document.getElementById('reqChips');
       chips.innerHTML = [
-        { disc: 'bio',  nome: '🧬 Biologia',  ok: bio  },
-        { disc: 'quim', nome: '⚗️ Química',   ok: quim },
-        { disc: 'fis',  nome: '⚡ Física',    ok: fis  },
+        { disc: 'bio',  nome: 'Biologia',  ok: bio  },
+        { disc: 'quim', nome: 'Química',   ok: quim },
+        { disc: 'fis',  nome: 'Física',    ok: fis  },
       ].map(r => `
         <div class="req-chip-item ${r.ok ? 'ok' : ''}">
-          <span>${r.ok ? '✅' : '○'}</span>
+          <span>${r.ok ? '✓' : '○'}</span>
           <span>${r.nome}</span>
           <span style="margin-left:auto;font-size:12px">${r.ok ? 'Concluída' : 'Pendente'}</span>
         </div>
@@ -434,7 +447,7 @@ const paramsUrl = new URLSearchParams(window.location.search);
     document.getElementById('loadingScreen').style.display = 'none';
   } catch (e) {
     const msg = document.getElementById('loadingSimMsg');
-    if (msg) msg.innerHTML = '⚠️ Erro ao carregar — verifique sua conexão.<br>'
+    if (msg) msg.innerHTML = 'Erro ao carregar — verifique sua conexão.<br>'
       + '<a href="portal.html" style="color:var(--azul-light);font-size:12px">← Voltar ao portal</a>';
   } finally {
     clearTimeout(_watchdog);
@@ -595,9 +608,9 @@ function htmlQuestaoA(q, num) {
       <p class="sim-enunciado">${q.enunciado}</p>
       <div class="sim-ce-btns" id="salts-${q.id}">
         <button class="sim-ce-btn" id="salt-${q.id}-CERTO"
-          onclick="responderSimA('${q.id}','CERTO')">✅ CERTO</button>
+          onclick="responderSimA('${q.id}','CERTO')">Certo</button>
         <button class="sim-ce-btn" id="salt-${q.id}-ERRADO"
-          onclick="responderSimA('${q.id}','ERRADO')">❌ ERRADO</button>
+          onclick="responderSimA('${q.id}','ERRADO')">Errado</button>
       </div>
       <div class="sim-gabarito" id="sgab-${q.id}"></div>
     </div>
@@ -781,15 +794,18 @@ async function finalizarSimulado(tempoEsgotado = false) {
       console.warn('Erro ao salvar resultado no Supabase:', e);
       // Resultado preservado no localStorage — avisar o aluno
       document.getElementById('resSub').textContent =
-        '⚠️ Resultado salvo localmente. Fale com o professor para confirmar no sistema.';
+        'Resultado salvo localmente. Fale com o professor para confirmar no sistema.';
     }
   }
 
   // Mostrar resultado
-  const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎯' : pct >= 40 ? '📚' : '💪';
+  const scoreLabel = pct >= 80 ? `${pct}%` : pct >= 60 ? `${pct}%` : `${pct}%`;
   const titulo = pct >= 80 ? 'Excelente resultado!' : pct >= 60 ? 'Bom desempenho!' : pct >= 40 ? 'Continue estudando!' : 'Não desista!';
+  const scoreColor = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--ouro)' : 'var(--red)';
 
-  document.getElementById('resEmoji').textContent   = emoji;
+  const resEmoji = document.getElementById('resEmoji');
+  resEmoji.textContent = scoreLabel;
+  resEmoji.style.color = scoreColor;
   document.getElementById('resTitulo').textContent  = titulo;
   document.getElementById('resSub').textContent     = tempoEsgotado ? 'Tempo esgotado — simulado encerrado automaticamente.' : 'Simulado finalizado!';
   document.getElementById('resAcertos').textContent = `${acertos}/${total}`;
@@ -830,7 +846,7 @@ function verGabarito() {
     // Mostrar explicação
     const correta = r?.correta;
     gab.className = `sim-gabarito show ${correta ? 'acerto' : 'erro'}`;
-    gab.innerHTML = `<strong>${correta ? '✅ Correto' : `❌ Incorreto — Gabarito: ${q.gabarito}`}</strong><br>${q.explicacao}`;
+    gab.innerHTML = `<strong>${correta ? 'Correto' : `Incorreto — Gabarito: ${q.gabarito}`}</strong><br>${q.explicacao}`;
 
     // Atualizar navbar
     marcarRespondida(q.id);

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CN Portal — Ranking Geral</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <style>
@@ -17,9 +17,9 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
 .header{position:sticky;top:0;z-index:20;background:rgba(2,6,15,0.9);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
-.logo{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-family:'Syne',sans-serif;font-weight:800}
+.logo{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800}
 .logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));display:flex;align-items:center;justify-content:center}
 .logo span{color:var(--ouro)}
 .nav{display:flex;gap:10px;align-items:center}
@@ -28,7 +28,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);lin
 .main{max-width:800px;margin:0 auto;padding:34px 20px 64px}
 .hero{padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px;text-align:center}
 .eyebrow{color:var(--ouro);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-h1{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05;letter-spacing:0;margin-bottom:14px}
+h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05;letter-spacing:0;margin-bottom:14px}
 .lead{max-width:880px;margin:0 auto;color:var(--text-muted);font-size:17px}
 
 .ranking-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
@@ -88,21 +88,21 @@ h1{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05
 }
 .modal-close:hover{color:var(--text)}
 .modal-header{position:relative;margin-bottom:24px}
-.modal-nome{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px}
+.modal-nome{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px}
 .modal-turma{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;color:var(--text-muted);padding:2px 10px}
-.modal-xp-total{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--ouro);line-height:1;margin:20px 0 4px}
+.modal-xp-total{font-family:'Plus Jakarta Sans',sans-serif;font-size:38px;font-weight:800;color:var(--ouro);line-height:1;margin:20px 0 4px}
 .modal-xp-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
 .modal-section{margin-bottom:20px}
 .modal-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px}
 .modal-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal-stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
-.modal-stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);line-height:1}
+.modal-stat-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--text);line-height:1}
 .modal-stat-val.verde{color:var(--green)}
 .modal-stat-val.ouro{color:var(--ouro)}
 .modal-stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
 .xp-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
 .xp-disc{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
-.xp-disc-val{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;line-height:1}
+.xp-disc-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;line-height:1}
 .xp-disc-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}
 .xp-disc.bio .xp-disc-val{color:#22c55e}
 .xp-disc.quim .xp-disc-val{color:#f59e0b}

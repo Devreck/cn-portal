@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CN Portal — Revisão</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <!-- MathJax para renderização de equações (align, equation*, etc.) -->
 <script>
   window.MathJax = {
@@ -80,7 +80,7 @@ html[data-theme="dark"] {
   --shadow-md:0 4px 16px rgba(0,0,0,0.35);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* ── HEADER ── */
 .header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(244,247,251,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 1px 4px rgba(15,23,42,0.06);height:64px;display:flex;align-items:center;padding:0 24px;gap:16px}
@@ -88,7 +88,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .header-back{display:flex;align-items:center;gap:8px;color:var(--text-muted);text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px;transition:all 0.2s}
 .header-back:hover{background:var(--surface2);color:var(--text)}
 .header-disc-tabs{display:flex;gap:4px;flex:1;justify-content:center}
-.disc-tab{padding:8px 20px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+.disc-tab{padding:8px 20px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--text-muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px}
 .disc-tab:hover{background:var(--surface2);color:var(--text)}
 .disc-tab.active.bio  {background:var(--green-bg);border-color:rgba(22,163,74,0.3);color:var(--bio-cor)}
 .disc-tab.active.quim {background:var(--amber-bg);border-color:rgba(217,119,6,0.3);color:var(--quim-cor)}
@@ -130,7 +130,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 .questao-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .questao-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.q-num{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--ouro)}
+.q-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:800;color:var(--ouro)}
 .q-tipo{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:0.5px}
 .tipo-c{background:var(--blue-bg);color:var(--blue)}
 .tipo-a{background:var(--amber-bg);color:var(--amber)}
@@ -141,7 +141,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* ── ALTERNATIVAS TIPO C ── */
 .alternativas{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
-.alt-btn{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.15s;text-align:left;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}
+.alt-btn{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.15s;text-align:left;font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}
 .alt-btn:hover:not(:disabled){border-color:rgba(37,99,235,0.2);background:var(--surface3)}
 .alt-btn:disabled{cursor:not-allowed}
 .alt-btn.correta{border-color:rgba(22,163,74,0.35);background:var(--green-bg);color:var(--green)}
@@ -152,7 +152,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* ── BOTÕES CERTO/ERRADO ── */
 .ce-btns{display:flex;gap:12px;margin-bottom:4px}
-.ce-btn{flex:1;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.ce-btn{flex:1;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s}
 .ce-btn.certo:hover:not(:disabled){border-color:rgba(22,163,74,0.3);background:var(--green-bg);color:var(--green)}
 .ce-btn.errado:hover:not(:disabled){border-color:rgba(220,38,38,0.3);background:var(--red-bg);color:var(--red)}
 .ce-btn.correta{border-color:rgba(22,163,74,0.35);background:var(--green-bg);color:var(--green)}
@@ -171,7 +171,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .explicacao-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:13px;line-height:1.7;color:var(--text-muted)}
 
 /* ── STEPS ── */
-.btn-steps{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid rgba(37,99,235,0.2);background:var(--blue-bg);color:var(--blue);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-steps{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid rgba(37,99,235,0.2);background:var(--blue-bg);color:var(--blue);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
 .btn-steps:hover{background:rgba(37,99,235,0.14)}
 
 .steps-container{display:flex;flex-direction:column;gap:8px;margin-top:4px}
@@ -191,7 +191,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .step-destaque{font-size:15px;text-align:center;margin:12px 0;padding:10px;background:rgba(217,119,6,0.06);border-radius:8px;border:1px solid rgba(217,119,6,0.15);overflow-x:auto}
 
 /* ── TUTOR IA ── */
-.btn-ia-tutor{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid rgba(124,58,237,0.2);background:rgba(124,58,237,0.06);color:var(--purple,#7C3AED);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-ia-tutor{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid rgba(124,58,237,0.2);background:rgba(124,58,237,0.06);color:var(--purple,#7C3AED);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .btn-ia-tutor{border-color:rgba(168,85,247,0.25);background:rgba(168,85,247,0.06);color:#A855F7}} html[data-theme="dark"] .btn-ia-tutor{border-color:rgba(168,85,247,0.25);background:rgba(168,85,247,0.06);color:#A855F7}
 .btn-ia-tutor:hover{background:rgba(124,58,237,0.1)}
 .btn-ia-tutor:disabled{opacity:0.6;cursor:not-allowed}
@@ -208,7 +208,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .gerar-extra{text-align:center;margin:24px 0;padding:24px;border:1px dashed rgba(124,58,237,0.2);border-radius:16px;background:rgba(124,58,237,0.04)}
 @media (prefers-color-scheme: dark){html:not([data-theme="light"]) .gerar-extra{border-color:rgba(168,85,247,0.25);background:rgba(168,85,247,0.05)}} html[data-theme="dark"] .gerar-extra{border-color:rgba(168,85,247,0.25);background:rgba(168,85,247,0.05)}
 .gerar-extra p{font-size:13px;color:var(--text-muted);margin-bottom:16px}
-.btn-gerar-top{position:fixed;right:24px;bottom:24px;z-index:90;padding:12px 16px;border-radius:12px;border:none;background:linear-gradient(135deg,#7C3AED,#9333EA);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 8px 24px rgba(124,58,237,0.3)}
+.btn-gerar-top{position:fixed;right:24px;bottom:24px;z-index:90;padding:12px 16px;border-radius:12px;border:none;background:linear-gradient(135deg,#7C3AED,#9333EA);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 8px 24px rgba(124,58,237,0.3)}
 .btn-gerar-top:hover{box-shadow:0 12px 32px rgba(124,58,237,0.4)}
 
 /* ── LOADING ── */
@@ -276,8 +276,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       /* Garantir cores do MathJax nos steps */
       .step-body mjx-container{color:var(--text) !important}
       .step-body mjx-container[display="true"]{display:block !important;margin:8px auto !important;text-align:center !important}
-.theme-toggle-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background 0.15s;flex-shrink:0}
+/* ── TOGGLE TEMA ── */
+.theme-toggle-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,border-color 0.15s;flex-shrink:0;color:var(--text-muted)}
 .theme-toggle-btn:hover{background:var(--surface3)}
+.theme-toggle-btn svg{display:block;pointer-events:none}
+/* Claro → mostra lua; Escuro → mostra sol */
+.icon-sun{display:none}
+@media (prefers-color-scheme: dark){html:not([data-theme="light"]) .icon-sun{display:block}html:not([data-theme="light"]) .icon-moon{display:none}}
+html[data-theme="dark"] .icon-sun{display:block}
+html[data-theme="dark"] .icon-moon{display:none}
 </style>
 <script src="js/theme.js"></script>
 </head>
@@ -293,12 +300,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <header class="header">
   <a href="portal.html" class="header-back">← Dashboard</a>
   <div class="header-disc-tabs">
-    <button class="disc-tab bio"  id="tab-bio"  onclick="trocarDisciplina('bio')">🧬 Biologia</button>
-    <button class="disc-tab quim" id="tab-quim" onclick="trocarDisciplina('quim')">⚗️ Química</button>
-    <button class="disc-tab fis"  id="tab-fis"  onclick="trocarDisciplina('fis')">⚡ Física</button>
+    <button class="disc-tab bio"  id="tab-bio"  onclick="trocarDisciplina('bio')">Biologia</button>
+    <button class="disc-tab quim" id="tab-quim" onclick="trocarDisciplina('quim')">Química</button>
+    <button class="disc-tab fis"  id="tab-fis"  onclick="trocarDisciplina('fis')">Física</button>
   </div>
-  <div class="header-pts" id="headerPts">⭐ 0 pts</div>
-  <button class="theme-toggle-btn" onclick="toggleTheme()" title="Modo escuro">🌙</button>
+  <div class="header-pts" id="headerPts">0 pts</div>
+  <button class="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema"><svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="icon-sun"  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>
 </header>
 
 <!-- Barra de progresso -->
@@ -328,7 +335,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
     <!-- Gerar item com IA -->
     <div class="gerar-extra" id="gerarExtra">
-      <p>⚡ Crie um item inédito e personalizado no padrão da AV4 — escolha tema, cenário, tipo e dificuldade.</p>
+      <p>Crie um item inédito e personalizado no padrão da AV4 — escolha tema, cenário, tipo e dificuldade.</p>
       <a href="gerador.html" class="btn-gerar-top" style="position:static;display:inline-flex;align-items:center;gap:8px;box-shadow:none">✨ Gerar item</a>
     </div>
     <div id="questoesExtras"></div>
@@ -378,7 +385,7 @@ const TEMAS_IA = {
     await trocarDisciplina(disc);
   } catch (e) {
     const msg = document.getElementById('loadingMsg');
-    if (msg) msg.innerHTML = '⚠️ Erro ao carregar — verifique sua conexão.<br>'
+    if (msg) msg.innerHTML = 'Erro ao carregar — verifique sua conexão.<br>'
       + '<a href="portal.html" style="color:var(--azul-light);font-size:12px">← Voltar ao portal</a>';
     return;
   } finally {
@@ -453,7 +460,7 @@ async function atualizarHeaderPts() {
       .eq('aluno_id', userAtual.id)
       .single();
     if (data) {
-      document.getElementById('headerPts').textContent = `⭐ ${(data.pontos_total || 0).toLocaleString('pt-BR')} pts`;
+      document.getElementById('headerPts').textContent = `${(data.pontos_total || 0).toLocaleString('pt-BR')} pts`;
     }
   } catch(e) {}
 }
