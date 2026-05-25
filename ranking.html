@@ -4,79 +4,332 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CN Portal — Ranking Geral</title>
+<script src="js/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <style>
+/* ── Variáveis — Modo Claro ── */
 :root{
-  --azul:#003366;--azul-mid:#004d99;--azul-light:#1a6abf;--ouro:#c9a84c;--ouro-light:#e8c96a;
-  --bg:#02060f;--surface:#080e1a;--surface2:#0d1526;--surface3:#111d35;
-  --border:rgba(255,255,255,0.08);--text:#e8edf5;--text-muted:#8a96b3;
-  --green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;
+  --bg:#F4F7FB;
+  --surface:#FFFFFF;
+  --surface2:#F1F5F9;
+  --surface3:#E8EEF7;
+  --border:#E2E8F0;
+  --border-mid:rgba(0,0,0,0.08);
+  --text:#0F172A;
+  --text-muted:#64748B;
+  --azul:#1E3A5F;
+  --azul-mid:#1D4ED8;
+  --azul-light:#2563EB;
+  --ouro:#D97706;
+  --ouro-light:#F59E0B;
+  --green:#16A34A;
+  --amber:#D97706;
+  --red:#DC2626;
+  --purple:#7C3AED;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:0 12px 32px rgba(0,0,0,0.10),0 4px 8px rgba(0,0,0,0.04);
+
+  /* Row accent backgrounds (light) */
+  --row-gold-bg:linear-gradient(135deg,#FFFBEB,#FEF3C7);
+  --row-gold-border:#FDE68A;
+  --row-silver-bg:linear-gradient(135deg,#F8FAFC,#F1F5F9);
+  --row-silver-border:#CBD5E1;
+  --row-bronze-bg:linear-gradient(135deg,#FFF7ED,#FFEDD5);
+  --row-bronze-border:#FED7AA;
+  --row-me-bg:linear-gradient(135deg,#EFF6FF,#DBEAFE);
+  --row-me-border:#BFDBFE;
+  --row-default-bg:var(--surface);
+  --row-default-border:var(--border);
 }
+
+/* ── Modo Escuro via OS ── */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --bg:#0B0F1A;
+    --surface:#111827;
+    --surface2:#1A2234;
+    --surface3:#1F2D42;
+    --border:rgba(255,255,255,0.08);
+    --border-mid:rgba(255,255,255,0.10);
+    --text:#F1F5F9;
+    --text-muted:#94A3B8;
+    --azul-mid:#2563EB;
+    --azul-light:#3B82F6;
+    --ouro:#F59E0B;
+    --ouro-light:#FBBF24;
+    --green:#22C55E;
+    --amber:#F59E0B;
+    --red:#F87171;
+    --purple:#A78BFA;
+    --shadow-sm:0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md:0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg:0 12px 32px rgba(0,0,0,0.5);
+    --row-gold-bg:linear-gradient(135deg,rgba(217,119,6,0.15),rgba(245,158,11,0.08));
+    --row-gold-border:rgba(245,158,11,0.25);
+    --row-silver-bg:linear-gradient(135deg,rgba(148,163,184,0.12),rgba(148,163,184,0.06));
+    --row-silver-border:rgba(148,163,184,0.20);
+    --row-bronze-bg:linear-gradient(135deg,rgba(180,83,9,0.15),rgba(217,119,6,0.08));
+    --row-bronze-border:rgba(180,83,9,0.25);
+    --row-me-bg:linear-gradient(135deg,rgba(37,99,235,0.18),rgba(59,130,246,0.08));
+    --row-me-border:rgba(59,130,246,0.30);
+    --row-default-bg:var(--surface);
+    --row-default-border:var(--border);
+  }
+}
+/* ── Modo Escuro manual ── */
+html[data-theme="dark"] {
+  --bg:#0B0F1A;
+  --surface:#111827;
+  --surface2:#1A2234;
+  --surface3:#1F2D42;
+  --border:rgba(255,255,255,0.08);
+  --border-mid:rgba(255,255,255,0.10);
+  --text:#F1F5F9;
+  --text-muted:#94A3B8;
+  --azul-mid:#2563EB;
+  --azul-light:#3B82F6;
+  --ouro:#F59E0B;
+  --ouro-light:#FBBF24;
+  --green:#22C55E;
+  --amber:#F59E0B;
+  --red:#F87171;
+  --purple:#A78BFA;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg:0 12px 32px rgba(0,0,0,0.5);
+  --row-gold-bg:linear-gradient(135deg,rgba(217,119,6,0.15),rgba(245,158,11,0.08));
+  --row-gold-border:rgba(245,158,11,0.25);
+  --row-silver-bg:linear-gradient(135deg,rgba(148,163,184,0.12),rgba(148,163,184,0.06));
+  --row-silver-border:rgba(148,163,184,0.20);
+  --row-bronze-bg:linear-gradient(135deg,rgba(180,83,9,0.15),rgba(217,119,6,0.08));
+  --row-bronze-border:rgba(180,83,9,0.25);
+  --row-me-bg:linear-gradient(135deg,rgba(37,99,235,0.18),rgba(59,130,246,0.08));
+  --row-me-border:rgba(59,130,246,0.30);
+  --row-default-bg:var(--surface);
+  --row-default-border:var(--border);
+}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
-.header{position:sticky;top:0;z-index:20;background:rgba(2,6,15,0.9);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
-.logo{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800}
-.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));display:flex;align-items:center;justify-content:center}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;transition:background 0.2s,color 0.2s}
+
+/* ── Header ── */
+.header{
+  position:sticky;top:0;z-index:20;
+  background:rgba(244,247,251,0.85);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;
+  transition:background 0.2s,border-color 0.2s;
+}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .header{background:rgba(11,15,26,0.85)}
+}
+html[data-theme="dark"] .header{background:rgba(11,15,26,0.85)}
+
+.logo{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1D4ED8,#2563EB);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo span{color:var(--ouro)}
-.nav{display:flex;gap:10px;align-items:center}
-.nav a{color:var(--text-muted);text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px}
-.nav a:hover{background:var(--surface3);color:var(--text)}
-.main{max-width:800px;margin:0 auto;padding:34px 20px 64px}
-.hero{padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px;text-align:center}
-.eyebrow{color:var(--ouro);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(30px,4vw,42px);line-height:1.05;letter-spacing:0;margin-bottom:14px}
-.lead{max-width:880px;margin:0 auto;color:var(--text-muted);font-size:17px}
+.header-right{display:flex;align-items:center;gap:6px}
+.nav{display:flex;gap:2px;align-items:center}
+.nav a{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;padding:7px 12px;border-radius:8px;transition:background 0.15s,color 0.15s}
+.nav a:hover{background:var(--surface2);color:var(--text)}
+.nav a.active{background:var(--surface2);color:var(--azul-mid)}
 
-.ranking-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
-.ranking-item{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--border)}
+/* Toggle claro/escuro */
+.theme-toggle-btn{
+  width:36px;height:36px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.15s;flex-shrink:0;color:var(--text-muted);margin-left:4px;
+}
+.theme-toggle-btn:hover{background:var(--surface3)}
+.icon-sun{display:none}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .icon-sun{display:block}
+  html:not([data-theme="light"]) .icon-moon{display:none}
+}
+html[data-theme="dark"] .icon-sun{display:block}
+html[data-theme="dark"] .icon-moon{display:none}
+
+/* ── Layout principal ── */
+.main{max-width:800px;margin:0 auto;padding:40px 20px 80px}
+
+/* ── Hero ── */
+.hero{padding:8px 0 32px;text-align:center}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--azul-mid);font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;
+  background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.15);
+  padding:4px 12px;border-radius:100px;
+}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .eyebrow{background:rgba(37,99,235,0.15);border-color:rgba(59,130,246,0.25)}
+}
+html[data-theme="dark"] .eyebrow{background:rgba(37,99,235,0.15);border-color:rgba(59,130,246,0.25)}
+
+h1{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(28px,4vw,40px);font-weight:800;
+  line-height:1.1;letter-spacing:-0.5px;margin-bottom:12px;
+}
+.lead{color:var(--text-muted);font-size:16px;max-width:520px;margin:0 auto}
+
+/* ── Card container ── */
+.ranking-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:var(--shadow-md);
+}
+
+/* ── Header da lista ── */
+.ranking-list-header{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 20px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+}
+.ranking-list-header span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted)}
+.col-pos{width:48px;flex-shrink:0}
+.col-nome{flex:1}
+.col-pts{width:120px;text-align:right;flex-shrink:0}
+
+/* ── Linha de ranking ── */
+.ranking-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  transition:opacity 0.15s;
+  cursor:default;
+}
 .ranking-item:last-child{border-bottom:none}
-.ranking-pos{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
-.ranking-pos.p1{background:rgba(201,168,76,0.15);color:var(--ouro);font-size:20px}
-.ranking-pos.p2{background:rgba(192,192,192,0.15);color:#c0c0c0;font-size:20px}
-.ranking-pos.p3{background:rgba(205,127,50,0.15);color:#cd7f32;font-size:20px}
-.ranking-pos.pn{background:var(--surface2);color:var(--text-muted)}
-.ranking-pos.me{background:rgba(0,77,153,0.2);color:var(--azul-light)}
-.ranking-nome-wrap{flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.ranking-nome{font-size:16px;font-weight:500}
-.ranking-nome.me{color:var(--azul-light);font-weight:700}
-.ranking-nome.clicavel{cursor:pointer;transition:color 0.15s}
-.ranking-nome.clicavel:hover{color:var(--ouro-light)}
-.ranking-pts{font-size:16px;font-weight:700;color:var(--ouro);background:rgba(201,168,76,0.1);padding:4px 12px;border-radius:100px;white-space:nowrap;flex-shrink:0}
-.ranking-sep{text-align:center;font-size:11px;color:var(--text-muted);padding:8px 0}
 
-/* Badge única pill no ranking */
+/* Top 3 e "eu" — cards com background */
+.ranking-item.pos-1{background:var(--row-gold-bg);border-bottom:1px solid var(--row-gold-border)}
+.ranking-item.pos-2{background:var(--row-silver-bg);border-bottom:1px solid var(--row-silver-border)}
+.ranking-item.pos-3{background:var(--row-bronze-bg);border-bottom:1px solid var(--row-bronze-border)}
+.ranking-item.pos-me{background:var(--row-me-bg);border-bottom:1px solid var(--row-me-border)}
+
+/* ── Medalha / posição ── */
+.ranking-pos{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;flex-shrink:0;
+  background:var(--surface2);color:var(--text-muted);
+}
+.ranking-pos.gold{
+  background:rgba(245,158,11,0.15);color:#B45309;
+  font-size:20px;
+}
+.ranking-pos.silver{
+  background:rgba(148,163,184,0.15);color:#475569;
+  font-size:20px;
+}
+.ranking-pos.bronze{
+  background:rgba(180,83,9,0.15);color:#92400E;
+  font-size:20px;
+}
+.ranking-pos.me-pos{
+  background:rgba(37,99,235,0.15);color:var(--azul-mid);
+  font-weight:800;
+}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .ranking-pos.gold{color:#FBBF24}
+  html:not([data-theme="light"]) .ranking-pos.silver{color:#CBD5E1}
+  html:not([data-theme="light"]) .ranking-pos.bronze{color:#FBB57E}
+  html:not([data-theme="light"]) .ranking-pos.me-pos{color:var(--azul-light)}
+}
+html[data-theme="dark"] .ranking-pos.gold{color:#FBBF24}
+html[data-theme="dark"] .ranking-pos.silver{color:#CBD5E1}
+html[data-theme="dark"] .ranking-pos.bronze{color:#FBB57E}
+html[data-theme="dark"] .ranking-pos.me-pos{color:var(--azul-light)}
+
+/* ── Info do aluno ── */
+.ranking-info{flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.ranking-nome{font-size:15px;font-weight:600;color:var(--text)}
+.ranking-nome.me-nome{color:var(--azul-mid);font-weight:700}
+.ranking-nome.clicavel{cursor:pointer;transition:color 0.15s}
+.ranking-nome.clicavel:hover{color:var(--azul-light);text-decoration:underline;text-underline-offset:3px}
+.you-tag{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;
+  background:rgba(37,99,235,0.12);color:var(--azul-mid);
+  border:1px solid rgba(37,99,235,0.2);
+  padding:2px 7px;border-radius:100px;flex-shrink:0;
+}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .ranking-nome.me-nome{color:var(--azul-light)}
+  html:not([data-theme="light"]) .you-tag{background:rgba(59,130,246,0.15);color:var(--azul-light);border-color:rgba(59,130,246,0.25)}
+}
+html[data-theme="dark"] .ranking-nome.me-nome{color:var(--azul-light)}
+html[data-theme="dark"] .you-tag{background:rgba(59,130,246,0.15);color:var(--azul-light);border-color:rgba(59,130,246,0.25)}
+
+/* ── Pontuação ── */
+.ranking-pts{
+  font-size:14px;font-weight:700;color:var(--ouro);
+  background:rgba(217,119,6,0.10);
+  padding:5px 14px;border-radius:100px;
+  white-space:nowrap;flex-shrink:0;
+  border:1px solid rgba(217,119,6,0.15);
+  letter-spacing:-0.2px;
+}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .ranking-pts{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.20)}
+}
+html[data-theme="dark"] .ranking-pts{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.20)}
+
+/* ── Separador "..." ── */
+.ranking-sep{
+  text-align:center;font-size:12px;color:var(--text-muted);
+  padding:10px 0;border-bottom:1px solid var(--border);
+  letter-spacing:2px;
+}
+
+/* ── Badge única pill ── */
 .badge-unica-pill{
   display:inline-flex;align-items:center;gap:5px;
-  background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(168,85,247,0.08));
-  border:1px solid rgba(168,85,247,0.35);
-  color:#c084fc;
-  font-size:11px;font-weight:700;
-  padding:2px 9px;border-radius:100px;
-  white-space:nowrap;
-  cursor:default;
-  position:relative;
+  background:rgba(124,58,237,0.10);
+  border:1px solid rgba(124,58,237,0.25);
+  color:#7C3AED;
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:100px;
+  white-space:nowrap;cursor:default;position:relative;
 }
-.badge-unica-pill .pill-emoji{font-size:13px}
-.badge-unica-pill[data-tooltip]::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#111d35;border:1px solid rgba(168,85,247,0.35);color:#c084fc;font-size:11px;font-weight:400;padding:7px 11px;border-radius:9px;width:max-content;max-width:220px;white-space:normal;line-height:1.5;pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+.badge-unica-pill .pill-emoji{font-size:12px}
+.badge-unica-pill[data-tooltip]::after{
+  content:attr(data-tooltip);position:absolute;bottom:calc(100% + 7px);left:50%;
+  transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);
+  color:var(--text);font-size:11px;font-weight:400;padding:7px 11px;border-radius:9px;
+  width:max-content;max-width:220px;white-space:normal;line-height:1.5;
+  pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:200;box-shadow:var(--shadow-md);
+}
 .badge-unica-pill[data-tooltip]:hover::after{opacity:1}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .badge-unica-pill{background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.25);color:#A78BFA}
+}
+html[data-theme="dark"] .badge-unica-pill{background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.25);color:#A78BFA}
 
 /* ── MODAL PERFIL ── */
 .modal-overlay{
   position:fixed;inset:0;z-index:100;
-  background:rgba(2,6,15,0.75);
+  background:rgba(15,23,42,0.60);
   backdrop-filter:blur(8px);
   display:flex;align-items:center;justify-content:center;padding:20px;
-  opacity:0;pointer-events:none;transition:opacity 0.2s
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
 }
 .modal-overlay.aberto{opacity:1;pointer-events:auto}
 .modal{
   background:var(--surface);border:1px solid var(--border);
   border-radius:20px;width:100%;max-width:480px;
   max-height:90vh;overflow-y:auto;padding:32px;
+  box-shadow:var(--shadow-lg);
   transform:translateY(12px);transition:transform 0.2s;
 }
 .modal-overlay.aberto .modal{transform:translateY(0)}
@@ -84,12 +337,15 @@ h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(30px,4vw,42px);lin
   position:absolute;top:16px;right:20px;
   background:none;border:none;color:var(--text-muted);
   font-size:22px;cursor:pointer;line-height:1;padding:4px;
-  transition:color 0.15s
+  transition:color 0.15s;
 }
 .modal-close:hover{color:var(--text)}
 .modal-header{position:relative;margin-bottom:24px}
 .modal-nome{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px}
-.modal-turma{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;color:var(--text-muted);padding:2px 10px}
+.modal-turma{
+  display:inline-block;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;font-size:12px;font-weight:600;color:var(--text-muted);padding:2px 10px;
+}
 .modal-xp-total{font-family:'Plus Jakarta Sans',sans-serif;font-size:38px;font-weight:800;color:var(--ouro);line-height:1;margin:20px 0 4px}
 .modal-xp-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
 .modal-section{margin-bottom:20px}
@@ -99,30 +355,49 @@ h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(30px,4vw,42px);lin
 .modal-stat-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--text);line-height:1}
 .modal-stat-val.verde{color:var(--green)}
 .modal-stat-val.ouro{color:var(--ouro)}
-.modal-stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
 .xp-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
 .xp-disc{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
 .xp-disc-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;line-height:1}
 .xp-disc-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}
-.xp-disc.bio .xp-disc-val{color:#22c55e}
-.xp-disc.quim .xp-disc-val{color:#f59e0b}
-.xp-disc.fis .xp-disc-val{color:#3b82f6}
-.xp-disc.sim .xp-disc-val{color:#a855f7}
+.xp-disc.bio .xp-disc-val{color:#16A34A}
+.xp-disc.quim .xp-disc-val{color:var(--amber)}
+.xp-disc.fis .xp-disc-val{color:#2563EB}
+.xp-disc.sim .xp-disc-val{color:var(--purple)}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .xp-disc.bio .xp-disc-val{color:#22C55E}
+  html:not([data-theme="light"]) .xp-disc.fis .xp-disc-val{color:#3B82F6}
+}
+html[data-theme="dark"] .xp-disc.bio .xp-disc-val{color:#22C55E}
+html[data-theme="dark"] .xp-disc.fis .xp-disc-val{color:#3B82F6}
+
 .modal-badges-row{display:flex;flex-wrap:wrap;gap:8px}
 .modal-badge-unica{
   display:inline-flex;align-items:center;gap:8px;
-  background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(168,85,247,0.06));
-  border:1px solid rgba(168,85,247,0.4);
+  background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.20);
   border-radius:12px;padding:10px 14px;
 }
 .modal-badge-unica-emoji{font-size:24px}
-.modal-badge-unica-info{}
-.modal-badge-unica-nome{font-size:13px;font-weight:700;color:#c084fc;display:block}
+.modal-badge-unica-nome{font-size:13px;font-weight:700;color:#7C3AED;display:block}
 .modal-badge-unica-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) .modal-badge-unica{background:rgba(167,139,250,0.10);border-color:rgba(167,139,250,0.22)}
+  html:not([data-theme="light"]) .modal-badge-unica-nome{color:#A78BFA}
+}
+html[data-theme="dark"] .modal-badge-unica{background:rgba(167,139,250,0.10);border-color:rgba(167,139,250,0.22)}
+html[data-theme="dark"] .modal-badge-unica-nome{color:#A78BFA}
+
 .modal-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 .modal-badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
-.modal-badge-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);text-align:center;opacity:0.25;filter:grayscale(1);transition:opacity 0.15s}
-.modal-badge-item.ok{opacity:1;filter:none;border-color:rgba(201,168,76,0.25);background:rgba(201,168,76,0.05)}
+.modal-badge-item{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 6px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface2);text-align:center;
+  opacity:0.3;filter:grayscale(1);transition:opacity 0.15s;
+}
+.modal-badge-item.ok{
+  opacity:1;filter:none;
+  border-color:rgba(217,119,6,0.25);background:rgba(217,119,6,0.06);
+}
 .modal-badge-item-emoji{font-size:20px}
 .modal-badge-item-nome{font-size:8px;color:var(--text-muted);line-height:1.2}
 .modal-badge-item.ok .modal-badge-item-nome{color:var(--ouro)}
@@ -131,31 +406,55 @@ h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(30px,4vw,42px);lin
   .header{padding:0 16px}
   .nav a{padding:7px 8px}
   .xp-breakdown{grid-template-columns:repeat(2,1fr)}
-  .modal-stats-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .nav{display:none}
+  .ranking-list-header{display:none}
 }
 </style>
 </head>
 <body>
+
 <header class="header">
-  <a href="portal.html" class="logo"><span class="logo-icon">⚗️</span>CN <span>Portal</span></a>
-  <nav class="nav">
-    <a href="portal.html">Dashboard</a>
-    <a href="revisao.html">Revisão</a>
-    <a href="simulado.html">Simulado</a>
-    <a href="teoria.html">Teoria</a>
-  </nav>
+  <a href="portal.html" class="logo">
+    <div class="logo-icon">
+      <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13px;color:#fff;letter-spacing:-0.5px">CN</span>
+    </div>
+    CN <span>Portal</span>
+  </a>
+  <div class="header-right">
+    <nav class="nav">
+      <a href="portal.html">Dashboard</a>
+      <a href="revisao.html">Revisão</a>
+      <a href="simulado.html">Simulado</a>
+      <a href="teoria.html">Teoria</a>
+      <a href="ranking.html" class="active">Ranking</a>
+    </nav>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Alternar tema">
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
+  </div>
 </header>
 
 <main class="main">
   <section class="hero">
-    <div class="eyebrow">Ranking Geral</div>
+    <div class="eyebrow">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      Ranking Geral
+    </div>
     <h1>Top Alunos</h1>
     <p class="lead">Os estudantes com maior pontuação nas questões de revisão e nos simulados.</p>
   </section>
 
   <div class="ranking-card">
+    <div class="ranking-list-header">
+      <div class="col-pos"><span>Pos.</span></div>
+      <div class="col-nome"><span>Aluno</span></div>
+      <div class="col-pts"><span>Pontuação</span></div>
+    </div>
     <div id="rankingList">
-      <div style="text-align:center;color:var(--text-muted);font-size:14px;padding:40px">Carregando ranking...</div>
+      <div style="text-align:center;color:var(--text-muted);font-size:14px;padding:48px 20px">Carregando ranking...</div>
     </div>
   </div>
 </main>
@@ -196,11 +495,7 @@ const BADGES = [
   {id:'lenda_marista',       emoji:'👑', nome:'Lenda Marista'},
 ];
 
-// Badges ocultas: só aparecem quando conquistadas, nunca mostradas como bloqueadas.
-// Adicione entradas aqui quando definidas pelo professor.
-const BADGES_OCULTAS = [
-  // {id:'exemplo_oculta', emoji:'🌟', nome:'Exemplo Oculto'},
-];
+const BADGES_OCULTAS = [];
 
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -218,11 +513,10 @@ async function carregarRankingFull() {
   const list = document.getElementById('rankingList');
 
   if (rankingResult.error || !rankingResult.data || rankingResult.data.length === 0) {
-    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:14px;padding:40px">Nenhuma pontuação registrada ainda.</div>';
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:14px;padding:48px 20px">Nenhuma pontuação registrada ainda.</div>';
     return;
   }
 
-  // Build unique badges map: aluno_id → [badge objects]
   uniqueBadgesMap = {};
   (uniqueResult.data || []).forEach(ub => {
     if (!uniqueBadgesMap[ub.aluno_id]) uniqueBadgesMap[ub.aluno_id] = [];
@@ -231,34 +525,44 @@ async function carregarRankingFull() {
 
   rankingData = rankingResult.data;
 
-  // Conceder badge top3 ao usuário atual se ele estiver no top 3
   const myRank = rankingData.find(r => r.aluno_id === userAtual.id);
   if (myRank && Number(myRank.posicao) <= 3) {
     sb.from('badges_conquistados')
       .insert({ aluno_id: userAtual.id, badge_id: 'top3' })
-      .then(() => {}).catch(() => {}); // ignora duplicata silenciosamente
+      .then(() => {}).catch(() => {});
   }
 
   let html = '';
   rankingData.forEach((r, index) => {
     const pos = Number(r.posicao) || (index + 1);
-    const classe = pos === 1 ? 'p1' : pos === 2 ? 'p2' : pos === 3 ? 'p3' : 'pn';
-    const icone = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
     const euMesmo = r.aluno_id === userAtual.id;
+
+    // Classes de posição
+    let rowClass = '';
+    let posClass = '';
+    let posLabel = '';
+    if (pos === 1)       { rowClass = 'pos-1';  posClass = 'gold';   posLabel = '🥇'; }
+    else if (pos === 2)  { rowClass = 'pos-2';  posClass = 'silver'; posLabel = '🥈'; }
+    else if (pos === 3)  { rowClass = 'pos-3';  posClass = 'bronze'; posLabel = '🥉'; }
+    else if (euMesmo)    { rowClass = 'pos-me'; posClass = 'me-pos'; posLabel = `${pos}º`; }
+    else                 { rowClass = '';       posClass = '';       posLabel = `${pos}º`; }
 
     const myUniques = uniqueBadgesMap[r.aluno_id] || [];
     const pills = myUniques.map(b => {
       const icon = b.imagem_url
-        ? `<img src="${b.imagem_url}" style="width:14px;height:14px;border-radius:3px;object-fit:cover">`
+        ? `<img src="${b.imagem_url}" style="width:13px;height:13px;border-radius:3px;object-fit:cover">`
         : `<span class="pill-emoji">${b.emoji || '✨'}</span>`;
       return `<span class="badge-unica-pill" data-tooltip="${b.descricao || ''}">${icon}${b.nome || b.badge_id}</span>`;
     }).join('');
 
+    const youTag = euMesmo ? `<span class="you-tag">Você</span>` : '';
+
     html += `
-      <div class="ranking-item">
-        <div class="ranking-pos ${classe}${euMesmo && pos > 3 ? ' me' : ''}">${icone}</div>
-        <div class="ranking-nome-wrap">
-          <span class="ranking-nome clicavel${euMesmo ? ' me' : ''}" data-index="${index}">${r.nome}${euMesmo ? ' (você)' : ''}</span>
+      <div class="ranking-item ${rowClass}">
+        <div class="ranking-pos ${posClass}">${posLabel}</div>
+        <div class="ranking-info">
+          <span class="ranking-nome clicavel${euMesmo ? ' me-nome' : ''}" data-index="${index}">${r.nome}</span>
+          ${youTag}
           ${pills}
         </div>
         <div class="ranking-pts">${Number(r.pontos_total).toLocaleString('pt-BR')} XP</div>
@@ -275,7 +579,6 @@ async function carregarRankingFull() {
 }
 
 async function abrirPerfil(index) {
-  // Abre o modal imediatamente com loading
   document.getElementById('modalConteudo').innerHTML =
     `<div style="text-align:center;padding:48px 0;color:var(--text-muted);font-size:14px">Carregando...</div>`;
   document.getElementById('modalOverlay').classList.add('aberto');
@@ -284,7 +587,6 @@ async function abrirPerfil(index) {
   const r = rankingData[index];
   if (!r) return;
 
-  // Busca badges conquistadas do aluno
   const { data: conquistadosData } = await sb
     .from('badges_conquistados')
     .select('badge_id')
@@ -300,10 +602,9 @@ async function abrirPerfil(index) {
   const corretas = Number(r.questoes_corretas) || 0;
   const pct = respondidas > 0 ? Math.round((corretas / respondidas) * 100) : 0;
 
-  // Grid de badges gerais
   const badgesGridHtml = `
     <div class="modal-section" style="margin-top:16px">
-      <div class="modal-section-title">🏅 Conquistas (${conquistados.size} de ${BADGES.length})</div>
+      <div class="modal-section-title">Conquistas (${conquistados.size} de ${BADGES.length})</div>
       <div class="modal-badges-grid">
         ${BADGES.map(b => {
           const ok = conquistados.has(b.id);
@@ -315,12 +616,11 @@ async function abrirPerfil(index) {
       </div>
     </div>`;
 
-  // Badges únicas
   const myUniques = uniqueBadgesMap[r.aluno_id] || [];
   const uniquesBadgesHtml = myUniques.length > 0 ? `
     <hr class="modal-divider">
     <div class="modal-section">
-      <div class="modal-section-title">✨ Badges Únicas</div>
+      <div class="modal-section-title">Badges Únicas</div>
       <div class="modal-badges-row">
         ${myUniques.map(b => {
           const icon = b.imagem_url
@@ -338,12 +638,11 @@ async function abrirPerfil(index) {
       </div>
     </div>` : '';
 
-  // Badges ocultas (só aparecem quando conquistadas)
   const oculatasConquistadas = BADGES_OCULTAS.filter(b => conquistados.has(b.id));
   const ocultasHtml = oculatasConquistadas.length > 0 ? `
     <hr class="modal-divider">
     <div class="modal-section">
-      <div class="modal-section-title">🔮 Conquistas Especiais</div>
+      <div class="modal-section-title">Conquistas Especiais</div>
       <div class="modal-badges-grid" style="grid-template-columns:repeat(3,1fr)">
         ${oculatasConquistadas.map(b => `
           <div class="modal-badge-item ok">
@@ -366,19 +665,19 @@ async function abrirPerfil(index) {
     <div class="xp-breakdown">
       <div class="xp-disc bio">
         <div class="xp-disc-val">${Number(r.pontos_bio || 0).toLocaleString('pt-BR')}</div>
-        <div class="xp-disc-label">🧬 Bio</div>
+        <div class="xp-disc-label">Bio</div>
       </div>
       <div class="xp-disc quim">
         <div class="xp-disc-val">${Number(r.pontos_quim || 0).toLocaleString('pt-BR')}</div>
-        <div class="xp-disc-label">⚗️ Quím</div>
+        <div class="xp-disc-label">Quím</div>
       </div>
       <div class="xp-disc fis">
         <div class="xp-disc-val">${Number(r.pontos_fis || 0).toLocaleString('pt-BR')}</div>
-        <div class="xp-disc-label">⚡ Fís</div>
+        <div class="xp-disc-label">Fís</div>
       </div>
       <div class="xp-disc sim">
         <div class="xp-disc-val">${Number(r.pontos_simulado || 0).toLocaleString('pt-BR')}</div>
-        <div class="xp-disc-label">🎯 Simu</div>
+        <div class="xp-disc-label">Simu</div>
       </div>
     </div>
 
@@ -396,7 +695,7 @@ async function abrirPerfil(index) {
         <div class="modal-stat-label">Taxa de acerto</div>
       </div>
       <div class="modal-stat">
-        <div class="modal-stat-val ouro">${Number(r.streak_maximo) || 0}🔥</div>
+        <div class="modal-stat-val ouro">${Number(r.streak_maximo) || 0}</div>
         <div class="modal-stat-label">Streak máximo</div>
       </div>
     </div>
