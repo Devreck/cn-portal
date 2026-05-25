@@ -201,6 +201,16 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .badge-form-title{font-family:Syne,sans-serif;font-size:15px;font-weight:700;color:#c084fc;margin-bottom:4px}
 .badge-form-sub{font-size:12px;color:var(--text-muted);margin-bottom:20px}
 .badge-form-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+/* ── EMOJI PICKER ── */
+.emoji-picker-wrap{position:relative}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:10px;background:var(--surface3);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.emoji-opt{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;font-size:18px;border:2px solid transparent;transition:all 0.1s;background:none}
+.emoji-opt:hover{background:var(--surface);border-color:rgba(168,85,247,0.3)}
+.emoji-opt.selected{background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.5)}
+.emoji-custom-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.emoji-custom-label{font-size:11px;color:var(--text-muted);white-space:nowrap}
+.emoji-custom-input{flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:18px;outline:none;text-align:center;width:60px;transition:border-color 0.2s}
+.emoji-custom-input:focus{border-color:rgba(168,85,247,0.5)}
 .badge-form-full{grid-column:1/-1}
 .badge-form .form-field textarea{width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;resize:vertical;min-height:70px;transition:border-color 0.2s}
 .badge-form .form-field textarea:focus{border-color:rgba(168,85,247,0.5)}
@@ -790,9 +800,13 @@ mjx-container[display="false"] {
           <input type="text" id="badgeNome" placeholder="Ex: The First" maxlength="40" oninput="atualizarPreviewBadge()">
         </div>
 
-        <div class="form-field">
+        <div class="form-field emoji-picker-wrap">
           <label>Emoji</label>
-          <input type="text" id="badgeEmoji" placeholder="✨" maxlength="4" value="✨" oninput="atualizarPreviewBadge()">
+          <div class="emoji-grid" id="emojiGrid"></div>
+          <div class="emoji-custom-row">
+            <span class="emoji-custom-label">Personalizado:</span>
+            <input type="text" class="emoji-custom-input" id="badgeEmoji" placeholder="✨" value="✨" oninput="onEmojiCustomInput(this)">
+          </div>
         </div>
 
         <div class="form-field badge-form-full">
@@ -996,6 +1010,8 @@ function htmlPreviewQuestaoPainel(q, opcoes = {}) {
       carregarBadgesUnicasPainel(),
     ]);
 
+    inicializarEmojiPicker();   // Picker sempre pronto ao carregar
+
     const paginaInicial = window.location.hash?.replace('#', '');
     if (paginaInicial && document.getElementById(`page-${paginaInicial}`)) {
       irPara(paginaInicial);
@@ -1017,7 +1033,7 @@ function irPara(pagina) {
   document.querySelector(`[onclick="irPara('${pagina}')"]`)?.classList.add('active');
   history.replaceState(null, '', `#${pagina}`);
   if (pagina === 'banco') renderizarListaTemas?.();
-  if (pagina === 'badges-unicas') popularSelectAlunos?.();
+  if (pagina === 'badges-unicas') { popularSelectAlunos?.(); inicializarEmojiPicker(); }
 }
 
 // ── VISÃO GERAL ──
@@ -2102,6 +2118,57 @@ function popularSelectAlunos() {
       opt.textContent = `${a.nome} — ${a.turma || '?'}`;
       sel.appendChild(opt);
     });
+}
+
+// ── EMOJI PICKER ─────────────────────────────────────────────────────────────
+const EMOJI_SUGESTOES = [
+  '✨','⭐','🌟','💫','🔥','❄️','🌊','⚡',
+  '🏆','🥇','🥈','🥉','🏅','🎖️','👑','💎',
+  '🚀','🌙','☀️','🌈','🦋','🦁','🐉','🦅',
+  '🧬','⚗️','🔬','🧪','🔭','🌡️','💡','🧠',
+  '📚','🎯','🛡️','⚔️','🔑','🗝️','🎓','🎪',
+  '🍀','🌺','🌸','🌻','🌴','🍎','🎵','🎨',
+];
+
+let _emojiSelecionado = '✨';
+
+function inicializarEmojiPicker() {
+  const grid = document.getElementById('emojiGrid');
+  if (!grid) return;
+  grid.innerHTML = EMOJI_SUGESTOES.map(e =>
+    `<button type="button" class="emoji-opt${e === _emojiSelecionado ? ' selected' : ''}"
+       onclick="selecionarEmoji('${e}')" title="${e}">${e}</button>`
+  ).join('');
+}
+
+function selecionarEmoji(e) {
+  _emojiSelecionado = e;
+  document.getElementById('badgeEmoji').value = e;
+  // Atualizar grade
+  document.querySelectorAll('.emoji-opt').forEach(btn => {
+    btn.classList.toggle('selected', btn.textContent === e);
+  });
+  atualizarPreviewBadge();
+}
+
+function onEmojiCustomInput(input) {
+  // Pegar o último grapheme cluster escrito (pode ser emoji multibyte)
+  const val = input.value;
+  // Iterar por grapheme clusters usando Intl.Segmenter se disponível
+  let emoji = val;
+  try {
+    const segs = [...new Intl.Segmenter().segment(val)];
+    if (segs.length > 0) emoji = segs[segs.length - 1].segment;
+  } catch(e) {
+    emoji = [...val].slice(-2).join(''); // fallback: últimos 2 code points
+  }
+  _emojiSelecionado = emoji || '✨';
+  input.value = _emojiSelecionado;
+  // Desmarcar grade se não for sugestão padrão
+  document.querySelectorAll('.emoji-opt').forEach(btn => {
+    btn.classList.toggle('selected', btn.textContent === _emojiSelecionado);
+  });
+  atualizarPreviewBadge();
 }
 
 function atualizarPreviewBadge() {
