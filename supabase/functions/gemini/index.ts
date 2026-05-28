@@ -117,30 +117,63 @@ const SCHEMA_QUESTAO_A = `
 }`;
 
 // ── PROMPT COMPARTILHADO: EXTRAÇÃO DE QUESTÕES ─────────────
-const PROMPT_EXTRACAO_QUESTOES = `Para cada questão retorne um objeto JSON com esta estrutura exata:
+const PROMPT_EXTRACAO_QUESTOES = `
+Você está analisando uma prova brasileira de Ciências da Natureza (Biologia, Química, Física).
+
+════════════════════════════════════
+ESTRUTURA TÍPICA DO ARQUIVO
+════════════════════════════════════
+• Layout pode ser em 1 ou 2 COLUNAS — leia coluna por coluna, não linha por linha.
+• Cada questão começa com "QUESTÃO XX" ou "Questão XX" (número inteiro).
+• Algumas têm subtítulo em negrito logo abaixo do número — inclua no texto_base.
+• Alternativas marcadas com Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ ou ❶❷❸❹❺ ou simplesmente A) B) C) D) E) — trate todas como A B C D E.
+• O gabarito NUNCA aparece no caderno de questões — use sempre null.
+
+════════════════════════════════════
+INSTRUÇÕES PARA IMAGENS E FIGURAS
+════════════════════════════════════
+• Se uma questão tem figura descritível (diagrama, gráfico, tabela, mapa, foto), descreva brevemente: [Figura: descrição do conteúdo visível].
+• Para TABELAS: extraia o conteúdo completo em texto estruturado (cabeçalho | col1 | col2...).
+• Se as próprias ALTERNATIVAS são imagens (ex: heredogramas diferentes, vetores, gráficos distintos): descreva cada uma em 1-2 linhas — ex: A: "Heredograma com pai afetado e filho não afetado".
+• Para equações químicas visíveis no PDF: extraia o texto completo.
+
+════════════════════════════════════
+CONVERSÃO PARA LATEX
+════════════════════════════════════
+• Toda fórmula química ou matemática deve virar LaTeX.
+• Inline: \\(...\\) — ex: \\(H_2O\\), \\(Ca^{2+}\\), \\(\\Delta H\\)
+• Bloco: \\[...\\] — para equações longas ou de reação
+• Setas de reação: \\rightarrow ou \\rightleftharpoons
+• Íons: \\(Ca^{2+}_{(aq)}\\), \\(PO_4^{3-}\\)
+• Subscritos de estado: _{(aq)}, _{(s)}, _{(g)}, _{(l)}
+• Exemplos:
+  - "Mg²⁺(aq) + Ca(OH)₂(aq) → Mg(OH)₂(s) + Ca²⁺(aq)"
+    vira: \\(Mg^{2+}_{(aq)} + Ca(OH)_{2(aq)} \\rightarrow Mg(OH)_{2(s)} + Ca^{2+}_{(aq)}\\)
+
+════════════════════════════════════
+SCHEMA JSON OBRIGATÓRIO — uma entrada por questão
+════════════════════════════════════
 {
-  "numero": <int — número da questão no arquivo>,
-  "tipo": "A" | "C",
+  "numero": <int — número original da questão>,
+  "tipo": "C",
   "disciplina": "bio" | "quim" | "fis" | "inter",
-  "tema": "<tema principal inferido do conteúdo>",
+  "tema": "<tema principal inferido>",
   "subtema": "<subtema ou null>",
   "nivel": "basico" | "intermediario" | "avancado",
-  "texto_base": { "paragrafos": ["<parágrafo 1>", "..."] } | null,
-  "enunciado": "<enunciado completo>",
-  "alternativas": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." } | null,
-  "gabarito": "<letra A-E, CERTO, ERRADO, ou null se não estiver no arquivo>",
+  "texto_base": { "paragrafos": ["<parágrafo ou descrição de figura>", "..."] } | null,
+  "enunciado": "<pergunta ou comando final da questão>",
+  "alternativas": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
+  "gabarito": null,
   "explicacao": ""
 }
 
-REGRAS CRÍTICAS:
-1. Extraia TODAS as questões sem pular nenhuma
-2. Tipo A = afirmativa para julgar CERTO/ERRADO; Tipo C = múltipla escolha com letras A–E
-3. Converta toda matemática para LaTeX: inline \\(...\\), bloco \\[...\\]
-4. Se o gabarito não aparecer, use null — o professor irá preencher
-5. Texto introdutório compartilhado por várias questões: inclua em texto_base de cada uma
-6. Preserve o texto exatamente como está; não resuma nem reescreva
-7. Disciplina: bio=biologia/genética, quim=química/eletroquímica, fis=física/elétrica, inter=interdisciplinar
-8. Responda APENAS com JSON: { "questoes": [...], "total": <N> }`;
+REGRAS FINAIS:
+1. Extraia TODAS as questões — não pule nenhuma.
+2. Preserve o texto fiel ao original; não resuma nem reescreva.
+3. Disciplina: bio=biologia/genética/ecologia, quim=química, fis=física, inter=interdisciplinar.
+4. Tipo A (certo/errado) é raro em ENEM — se existir, use "tipo":"A" e "alternativas":null.
+5. Responda APENAS com JSON válido: { "questoes": [...], "total": <N> }
+   Sem texto antes ou depois, sem markdown.`;
 
 // ── HANDLER PRINCIPAL ───────────────────────────────────────
 Deno.serve(async (req) => {
@@ -338,14 +371,7 @@ async function extrairQuestoesPDF(key: string, dados: any) {
 
   // Para MD: usar chamarGemini (texto puro, sem inlineData)
   if (isMD) {
-    const prompt = `Analise o conteúdo Markdown abaixo de uma prova de Ciências da Natureza e extraia TODAS as questões.
-
-CONTEÚDO DO ARQUIVO:
-\`\`\`
-${md_texto}
-\`\`\`
-
-${PROMPT_EXTRACAO_QUESTOES}`;
+    const prompt = `Analise o conteúdo Markdown abaixo de uma prova de Ciências da Natureza e extraia TODAS as questões.\n\nCONTEÚDO DO ARQUIVO:\n\`\`\`\n${md_texto}\n\`\`\`\n\n${PROMPT_EXTRACAO_QUESTOES}`;
 
     const texto = await chamarGemini(key, prompt, 2, 8192, true, 0.1);
     const resultado = parsearJSON(texto);
@@ -375,7 +401,6 @@ ${PROMPT_EXTRACAO_QUESTOES}`;
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 8192,
-          responseMimeType: 'application/json',
         },
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
