@@ -719,8 +719,8 @@ const BADGES = [
   {id:'mestre_genetica',     emoji:'🧬', nome:'Mestre da Genética',     como:'Acerte 100% da revisão de Biologia.'},
   {id:'expert_eletroquimica',emoji:'⚗️',  nome:'Expert Eletroquímica',   como:'Acerte 100% da revisão de Química.'},
   {id:'senhor_joule',        emoji:'⚡', nome:'Senhor do Joule',        como:'Acerte 100% da revisão de Física.'},
-  {id:'maratonista',         emoji:'⏱️', nome:'Maratonista',            como:'Complete uma revisão em menos de 30 minutos.'},
-  {id:'consistente',         emoji:'📅', nome:'Consistente',            como:'Acesse o portal em 3 dias diferentes.'},
+  {id:'maratonista',         emoji:'⏱️', nome:'Maratonista',            como:'Acumule 2 horas de estudo no portal.'},
+  {id:'consistente',         emoji:'📅', nome:'Consistente',            como:'Acesse o portal em 3 dias consecutivos.'},
   {id:'top3',                emoji:'🥇', nome:'Top 3',                  como:'Entre no top 3 do ranking geral.'},
   {id:'avaliador_1',         emoji:'🔍', nome:'Avaliador Nível 1',      como:'Acumule 100 pontos de avaliação (professor concorda com sua análise de itens).'},
   {id:'avaliador_2',         emoji:'🧐', nome:'Avaliador Nível 2',      como:'Acumule 200 pontos de avaliação.'},
@@ -975,6 +975,50 @@ async function carregarBadges() {
 
   badgesConquistados = new Set((conquistados || []).map(b => b.badge_id));
 
+  // ── Maratonista e Consistente: só consulta se ainda não tem as duas ──
+  const precisaSessoes = !badgesConquistados.has('maratonista') || !badgesConquistados.has('consistente');
+  if (precisaSessoes) {
+    const { data: sessoes } = await sb
+      .from('sessoes')
+      .select('inicio, duracao_segundos')
+      .eq('aluno_id', userAtual.id)
+      .order('inicio');
+
+    if (!badgesConquistados.has('maratonista')) {
+      const totalSegundos = (sessoes || []).reduce((s, sess) => s + (sess.duracao_segundos || 0), 0);
+      if (totalSegundos >= 7200) await garantirBadge('maratonista');
+    }
+
+    if (!badgesConquistados.has('consistente')) {
+      const dias = [...new Set((sessoes || []).map(s => s.inicio.slice(0, 10)))].sort();
+      let consecutivos = 1;
+      for (let i = 1; i < dias.length; i++) {
+        const diffMs = new Date(dias[i]) - new Date(dias[i - 1]);
+        if (Math.round(diffMs / 86400000) === 1) {
+          consecutivos++;
+          if (consecutivos >= 3) { await garantirBadge('consistente'); break; }
+        } else {
+          consecutivos = 1;
+        }
+      }
+    }
+  }
+
+  // ── Avaliador: só consulta se ainda não tem o nível máximo ──
+  if (!badgesConquistados.has('avaliador_3')) {
+    const { data: pts } = await sb
+      .from('pontuacao')
+      .select('pontos_avaliacao')
+      .eq('aluno_id', userAtual.id)
+      .single();
+
+    const ptsAv = pts?.pontos_avaliacao || 0;
+    if (ptsAv >= 100) await garantirBadge('avaliador_1');
+    if (ptsAv >= 200) await garantirBadge('avaliador_2');
+    if (ptsAv >= 300) await garantirBadge('avaliador_3');
+  }
+
+  // ── Renderizar grid ──
   const grid = document.getElementById('badgesGrid');
   grid.innerHTML = '';
 
@@ -1007,8 +1051,16 @@ async function carregarBadges() {
     ocultasCard.style.display = 'none';
   }
 
-  // Badge lenda marista (apenas contagem de badges normais, não ocultas)
-  if (total >= 15) await garantirBadge('lenda_marista');
+  // ── Lenda Marista: exige as 15 badges principais ──
+  const BADGES_PARA_LENDA = [
+    'primeiro_acesso','dna_ativo','reacao_em_cadeia','forca_total','triforce',
+    'simulado_desbloq','sobrevivente','streak_fogo','perfeccionista',
+    'mestre_genetica','expert_eletroquimica','senhor_joule',
+    'maratonista','consistente','top3',
+  ];
+  if (BADGES_PARA_LENDA.every(id => badgesConquistados.has(id))) {
+    await garantirBadge('lenda_marista');
+  }
 }
 
 // ── BADGES ÚNICAS ──

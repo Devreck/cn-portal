@@ -36,6 +36,8 @@ const QuestaoRenderer = {
       this.carregarRespostasExistentes(),
       this.carregarStreakPersistido(),
     ]);
+    // Retroativo: concede badges que possam ter sido perdidos por bugs anteriores
+    await this.verificarBadgesRetroativo();
     this.renderizarNavbar();
     this.renderizarTodasQuestoes();
     this.atualizarProgresso();
@@ -61,7 +63,7 @@ const QuestaoRenderer = {
     } catch (_) {}
 
     try {
-      const campos = 'id, origem, gerada_para, disciplina, tema, subtema, tipo, nivel, interdisciplinar_com, enunciado, texto_base, alternativas, gabarito, explicacao, steps, elementos_visuais, status, created_at';
+      const campos = 'id, origem, gerada_para, disciplina, tema, subtema, tipo, nivel, interdisciplinar_com, enunciado, texto_base, alternativas, gabarito, explicacao, steps, elementos_visuais, status, created_at, avaliacao_aluno';
       const [diretas, interdisciplinares] = await Promise.all([
         sb
           .from('questoes_banco')
@@ -104,6 +106,7 @@ const QuestaoRenderer = {
         steps: q.steps || [],
         elementos_visuais: q.elementos_visuais || q.texto_base?.elementos_visuais || [],
         status: q.status,
+        avaliacao_aluno: q.avaliacao_aluno || null,
       })).filter(q => q.enunciado && q.gabarito && (q.tipo === 'A' || q.tipo === 'C'));
 
       // Salvar no cache para próximas visitas nos próximos 10 min
@@ -282,6 +285,40 @@ const QuestaoRenderer = {
     });
   },
 
+  // ── AVALIAÇÃO DE QUESTÃO DO BANCO ────────────────────────
+  _htmlAvaliacaoQuestao(q) {
+    if (!q.banco_id || q.gerada_para !== this.estado.userId) return '';
+    if (q.avaliacao_aluno) {
+      const labels = { joinha: '👍 Boa e calibrada', alerta: '⚠️ Confusa mas resolúvel', errado: '❌ Mal formulada' };
+      return `<div class="av-questao"><span class="av-feita ${q.avaliacao_aluno}">${labels[q.avaliacao_aluno]}</span></div>`;
+    }
+    return `
+      <div class="av-questao" id="av-${q.id}">
+        <span class="av-label">Como você avalia esta questão?</span>
+        <div class="av-btns">
+          <button class="av-btn joinha" onclick="QuestaoRenderer.avaliarQuestao('${q.id}','joinha')">👍 Boa</button>
+          <button class="av-btn alerta" onclick="QuestaoRenderer.avaliarQuestao('${q.id}','alerta')">⚠️ Confusa</button>
+          <button class="av-btn errado" onclick="QuestaoRenderer.avaliarQuestao('${q.id}','errado')">❌ Incorreta</button>
+        </div>
+      </div>`;
+  },
+
+  async avaliarQuestao(qId, avaliacao) {
+    const q = this.estado.questoes.find(q => q.id === qId);
+    if (!q || !q.banco_id) return;
+    q.avaliacao_aluno = avaliacao;
+    const avDiv = document.getElementById(`av-${qId}`);
+    if (avDiv) {
+      const labels = { joinha: '👍 Boa e calibrada', alerta: '⚠️ Confusa mas resolúvel', errado: '❌ Mal formulada' };
+      avDiv.innerHTML = `<span class="av-feita ${avaliacao}">${labels[avaliacao]}</span>`;
+    }
+    try {
+      await sb.from('questoes_banco')
+        .update({ avaliacao_aluno: avaliacao })
+        .eq('id', q.banco_id);
+    } catch (e) { console.warn('Erro ao salvar avaliação:', e); }
+  },
+
   // ── HTML TIPO C (Múltipla Escolha) ───────────────────────
   htmlTipoC(q, num) {
     const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
@@ -340,6 +377,7 @@ const QuestaoRenderer = {
             🤖 Não entendi — explicar diferente
           </button>
           <div class="ia-resposta" id="ia-resp-${q.id}" style="display:none"></div>
+          ${this._htmlAvaliacaoQuestao(q)}
         </div>
       </div>
     `;
@@ -383,6 +421,7 @@ const QuestaoRenderer = {
             🤖 Não entendi — explicar diferente
           </button>
           <div class="ia-resposta" id="ia-resp-${q.id}" style="display:none"></div>
+          ${this._htmlAvaliacaoQuestao(q)}
         </div>
       </div>
     `;
@@ -744,32 +783,66 @@ const QuestaoRenderer = {
   async verificarBadges(concluida, acertos, total) {
     const badgeMap = { bio: 'dna_ativo', quim: 'reacao_em_cadeia', fis: 'forca_total' };
 
-    // Badge de disciplina concluída
     if (concluida) {
       await this.desbloquearBadge(badgeMap[this.estado.disciplina]);
 
-      // Verificar se as 3 disciplinas estão concluídas
       const { data: progs } = await sb
         .from('progresso_revisao')
         .select('concluida')
         .eq('aluno_id', this.estado.userId);
 
-      if (progs && progs.every(p => p.concluida)) {
+      // Triforce: exige exatamente 3 linhas, todas concluídas
+      if (progs && progs.length >= 3 && progs.every(p => p.concluida)) {
         await this.desbloquearBadge('triforce');
+      }
+
+      // 100% apenas em questões nativas (questões de IA/banco não contam)
+      const questoesNativas = this.estado.questoes.filter(q => !q.banco_id);
+      const acertosNativas  = questoesNativas.filter(q => this.estado.respostas[q.id]?.correta).length;
+      if (questoesNativas.length > 0 && acertosNativas === questoesNativas.length) {
+        await this.desbloquearBadge('perfeccionista');
+        const pctBadge = { bio: 'mestre_genetica', quim: 'expert_eletroquimica', fis: 'senhor_joule' };
+        await this.desbloquearBadge(pctBadge[this.estado.disciplina]);
       }
     }
 
-    // Badge de 100% de acerto
-    if (acertos === total && total > 0) {
-      await this.desbloquearBadge('perfeccionista');
-      const pctBadge = { bio: 'mestre_genetica', quim: 'expert_eletroquimica', fis: 'senhor_joule' };
-      await this.desbloquearBadge(pctBadge[this.estado.disciplina]);
-    }
-
-    // Badge de streak
     if (this.estado.streakMaximo >= 10) {
       await this.desbloquearBadge('streak_fogo');
     }
+  },
+
+  // ── VERIFICAR BADGES RETROATIVOS (roda no init) ──────────
+  async verificarBadgesRetroativo() {
+    if (!this.estado.userId || typeof sb === 'undefined') return;
+    try {
+      const questoesNativas = this.estado.questoes.filter(q => !q.banco_id);
+      const concluida = questoesNativas.length > 0 &&
+        questoesNativas.every(q => !!this.estado.respostas[q.id]);
+
+      if (concluida) {
+        const badgeMap = { bio: 'dna_ativo', quim: 'reacao_em_cadeia', fis: 'forca_total' };
+        await this.desbloquearBadge(badgeMap[this.estado.disciplina]);
+
+        const acertosNativas = questoesNativas.filter(q => this.estado.respostas[q.id]?.correta).length;
+        if (acertosNativas === questoesNativas.length) {
+          await this.desbloquearBadge('perfeccionista');
+          const pctBadge = { bio: 'mestre_genetica', quim: 'expert_eletroquimica', fis: 'senhor_joule' };
+          await this.desbloquearBadge(pctBadge[this.estado.disciplina]);
+        }
+
+        const { data: progs } = await sb
+          .from('progresso_revisao')
+          .select('concluida')
+          .eq('aluno_id', this.estado.userId);
+        if (progs && progs.length >= 3 && progs.every(p => p.concluida)) {
+          await this.desbloquearBadge('triforce');
+        }
+      }
+
+      if (this.estado.streakMaximo >= 10) {
+        await this.desbloquearBadge('streak_fogo');
+      }
+    } catch (e) { console.warn('Erro ao verificar badges retroativos:', e); }
   },
 
   async desbloquearBadge(badgeId) {
@@ -826,53 +899,107 @@ const QuestaoRenderer = {
     const div = document.getElementById(`ia-resp-${qId}`);
     if (!q || !btn || !div) return;
 
+    // Nível atual: 1 (primária), 2 (secundária), 3 (terciária)
+    const nivel = parseInt(btn.dataset.tutorNivel || '1');
+
     btn.disabled = true;
     btn.textContent = '⏳ Consultando tutor IA...';
     div.style.display = 'block';
-    div.innerHTML = '<div class="ia-loading">🤖 Analisando seu erro...</div>';
+    div.innerHTML = '<div class="ia-loading">🤖 Analisando...</div>';
 
     try {
-      const resp = await sb.functions.invoke('gemini', {
-        body: {
-          funcao: 'tutor_erro',
-          dados: {
-            enunciado:           q.enunciado,
-            resposta_aluno:      this.estado.respostas[qId]?.resposta || '?',
-            gabarito:            q.gabarito,
-            explicacao_original: q.explicacao,
-            disciplina:          this.estado.disciplina,
-          }
+      // 1. Tentar buscar explicação já salva no banco
+      let texto = await this._buscarExplicacaoTutor(qId, nivel);
+
+      // 2. Não existe ainda — gerar pela IA e salvar
+      if (!texto) {
+        const respostaLetra = this.estado.respostas[qId]?.resposta || '?';
+        const respostaTexto = q.alternativas?.[respostaLetra] || null;
+
+        const resp = await sb.functions.invoke('gemini', {
+          body: {
+            funcao: 'tutor_erro',
+            dados: {
+              enunciado:           q.enunciado,
+              resposta_aluno:      respostaLetra,
+              resposta_aluno_texto: respostaTexto,
+              gabarito:            q.gabarito,
+              explicacao_original: q.explicacao,
+              disciplina:          this.estado.disciplina,
+              alternativas:        q.alternativas || null,
+              nivel,
+            },
+          },
+        });
+
+        if (resp.error || resp.data?.error) {
+          throw new Error(resp.data?.detalhe || resp.error?.message || 'Erro na geração');
         }
-      });
+        texto = resp.data?.explicacao;
+        if (!texto) throw new Error('IA não retornou explicação');
 
-      if (resp.error) {
-        throw resp.error;
-      }
-      if (resp.data?.error) {
-        throw new Error(resp.data.detalhe || resp.data.error);
+        // Salvar para compartilhar com outros alunos
+        await this._salvarExplicacaoTutor(qId, nivel, texto);
       }
 
-      const explicacao = resp.data?.explicacao;
-      if (!explicacao) {
-        throw new Error('Edge Function não retornou o campo explicacao.');
-      }
-
+      // 3. Renderizar
       div.innerHTML = `
         <div class="ia-card">
-          <div class="ia-header">🤖 Tutor IA</div>
-          <div class="ia-texto">${explicacao.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
-        </div>
-      `;
+          <div class="ia-header">🤖 Tutor IA${nivel > 1 ? ` · Explicação ${nivel}` : ''}</div>
+          <div class="ia-texto">${texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+        </div>`;
       if (window.MathJax?.typesetPromise) {
         MathJax.typesetPromise([div]).catch(e => console.warn('MathJax Tutor IA:', e));
       }
+
+      // 4. Atualizar botão para o próximo nível
+      const proximo = nivel + 1;
+      if (proximo <= 3) {
+        btn.dataset.tutorNivel = String(proximo);
+        btn.disabled = false;
+        btn.textContent = proximo === 2
+          ? '🔄 Explicar diferente'
+          : '🔄 Ainda não, pode tentar outra vez?';
+      } else {
+        btn.style.display = 'none'; // esgotou as 3 explicações
+      }
+
     } catch (e) {
       console.error('Erro Tutor IA:', e);
       div.innerHTML = '<div class="ia-erro">❌ Tutor indisponível no momento. Consulte a explicação acima.</div>';
+      btn.disabled = false;
+      // Restaurar label correto conforme nível
+      const labels = { 1: '🤖 Não entendi — explicar diferente', 2: '🔄 Explicar diferente', 3: '🔄 Ainda não, pode tentar outra vez?' };
+      btn.textContent = labels[nivel] || labels[1];
     }
+  },
 
-    btn.disabled = false;
-    btn.textContent = '🤖 Pedir nova explicação';
+  // Busca explicação salva para uma questão+nível
+  async _buscarExplicacaoTutor(qId, nivel) {
+    if (!this.estado.userId || typeof sb === 'undefined') return null;
+    try {
+      const { data } = await sb
+        .from('explicacoes_tutor')
+        .select('texto')
+        .eq('questao_id', qId)
+        .eq('nivel', nivel)
+        .maybeSingle();
+      return data?.texto || null;
+    } catch { return null; }
+  },
+
+  // Salva explicação gerada (ignora conflito — outro aluno pode ter salvo ao mesmo tempo)
+  async _salvarExplicacaoTutor(qId, nivel, texto) {
+    if (!this.estado.userId || typeof sb === 'undefined') return;
+    try {
+      await sb.from('explicacoes_tutor')
+        .insert({ questao_id: qId, nivel, texto });
+    } catch (e) {
+      // Conflito de unicidade é esperado em acesso simultâneo — silencioso
+      if (!String(e).includes('duplicate') && !String(e?.message).includes('duplicate')) {
+        console.warn('Erro ao salvar explicação tutor:', e);
+      }
+    }
   },
 
   // ── GERAR QUESTÃO EXTRA (IA) ─────────────────────────────

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importar Questões — CN Marista</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+:root{
+  --bg:#02060f;--surface:#080e1a;--surface2:#0d1526;--surface3:#111d35;
+  --border:rgba(255,255,255,0.07);--text:#e8edf5;--text-muted:#6b7a99;
+  --green:#22c55e;--amber:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+  --red:#ef4444;--ouro:#c9a84c;--azul-mid:#004d99;--azul-light:#1a6abf;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* LOADING */
+#pageLoading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--ouro);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px}
+.logo span{color:var(--ouro)}
+.btn-back{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;text-decoration:none;transition:all 0.15s}
+.btn-back:hover{background:var(--surface2);color:var(--text)}
+
+/* LAYOUT */
+main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
+.page-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;margin-bottom:6px}
+.page-sub{font-size:14px;color:var(--text-muted);margin-bottom:32px}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);border-radius:20px;padding:48px 32px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.03)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:48px;margin-bottom:16px}
+.upload-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px}
+.upload-sub{font-size:13px;color:var(--text-muted);line-height:1.6}
+.upload-limit{display:inline-block;margin-top:12px;font-size:11px;color:var(--text-muted);background:var(--surface2);padding:4px 12px;border-radius:100px;border:1px solid var(--border)}
+
+/* PROCESSANDO */
+#processando{display:none;margin-top:28px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center}
+.proc-spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--ouro);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px}
+.proc-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;margin-bottom:8px}
+.proc-etapa{font-size:13px;color:var(--text-muted);min-height:20px}
+.proc-bar{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:20px;overflow:hidden}
+.proc-bar-fill{height:100%;background:linear-gradient(90deg,var(--azul-mid),var(--ouro));border-radius:2px;width:0;transition:width 0.8s ease}
+
+/* RESULTADO HEADER */
+#resultadoHeader{display:none;margin-top:32px}
+.res-summary{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;padding:18px 22px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+.res-info{font-size:14px;color:var(--text-muted)}
+.res-info strong{color:var(--text)}
+.res-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-salvar-todas{padding:10px 22px;border-radius:10px;border:none;background:var(--azul-mid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:8px}
+.btn-salvar-todas:hover:not(:disabled){background:var(--azul-light)}
+.btn-salvar-todas:disabled{opacity:0.5;cursor:not-allowed}
+.btn-novo-pdf{padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;transition:all 0.15s}
+.btn-novo-pdf:hover{background:var(--surface2);color:var(--text)}
+.progress-bar{width:100%;height:6px;background:var(--surface2);border-radius:3px;margin-top:10px;overflow:hidden;display:none}
+.progress-bar-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.3s}
+
+/* GRID DE QUESTÕES */
+#questoesGrid{display:flex;flex-direction:column;gap:20px}
+
+/* CARD DE QUESTÃO */
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color 0.2s}
+.q-card.salvo{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.02)}
+.q-card.erro-card{border-color:rgba(239,68,68,0.3)}
+.q-card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.q-num{background:var(--azul-mid);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif}
+.q-card-selects{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.q-select{padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;outline:none}
+.q-select:focus{border-color:rgba(201,168,76,0.4)}
+.q-card-body{padding:18px}
+.field-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px;margin-top:14px;display:block}
+.field-label:first-child{margin-top:0}
+.field-textarea{width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;line-height:1.6;resize:vertical;min-height:70px;outline:none;transition:border-color 0.15s}
+.field-textarea:focus{border-color:rgba(201,168,76,0.4)}
+.field-input{width:100%;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color 0.15s}
+.field-input:focus{border-color:rgba(201,168,76,0.4)}
+
+/* ALTERNATIVAS */
+.alts-grid{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.alt-row{display:flex;align-items:flex-start;gap:8px}
+.alt-letra-badge{width:26px;height:26px;border-radius:7px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0;margin-top:5px}
+.alt-row.is-gab .alt-letra-badge{background:rgba(34,197,94,0.2);color:var(--green)}
+.alt-row textarea{flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;resize:vertical;min-height:36px;outline:none}
+.alt-row textarea:focus{border-color:rgba(201,168,76,0.4)}
+
+/* GABARITO */
+.gab-section{margin-top:14px}
+.gab-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.gab-btn{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.gab-btn:hover{border-color:rgba(201,168,76,0.3);color:var(--ouro)}
+.gab-btn.selected{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.12);color:var(--green)}
+.gab-aviso{font-size:12px;color:var(--amber);margin-top:6px;display:none}
+.gab-aviso.show{display:block}
+
+/* TIPO A gabarito */
+.gab-ce{display:flex;gap:8px;margin-top:6px}
+.gab-ce-btn{flex:1;padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'Plus Jakarta Sans',sans-serif}
+.gab-ce-btn:hover{border-color:rgba(201,168,76,0.3);color:var(--ouro)}
+.gab-ce-btn.selected{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.12);color:var(--green)}
+
+/* FOOTER DO CARD */
+.q-card-footer{padding:14px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.q-status{font-size:12px;color:var(--text-muted)}
+.q-status.ok{color:var(--green)}
+.q-status.err{color:var(--red)}
+.btn-salvar-q{padding:9px 20px;border-radius:9px;border:none;background:var(--azul-mid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.btn-salvar-q:hover:not(:disabled){background:var(--azul-light)}
+.btn-salvar-q:disabled{opacity:0.5;cursor:not-allowed}
+.btn-salvar-q.salvo{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+
+/* TEXTO BASE */
+.texto-base-box{background:rgba(255,255,255,0.02);border-left:3px solid var(--ouro);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:var(--text-muted);line-height:1.65;margin-bottom:12px}
+
+/* ALERTA */
+.alerta{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;display:none;align-items:center;gap:10px}
+.alerta.show{display:flex}
+.alerta-ok{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:#86efac}
+.alerta-err{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);color:#fca5a5}
+
+@media(max-width:600px){main{padding:20px 12px 60px}.form-row{flex-direction:column}.q-card-header{flex-direction:column;align-items:flex-start}}
+</style>
+<link rel="stylesheet" href="css/ds.css">
+</head>
+<body>
+<div class="ds-blobs" aria-hidden="true">
+  <div class="ds-blob ds-blob-1"></div>
+  <div class="ds-blob ds-blob-2"></div>
+</div>
+<div class="ds-grid" aria-hidden="true"></div>
+
+<div id="pageLoading">
+  <div class="spinner"></div>
+  <span style="font-size:13px;color:var(--text-muted)">Verificando acesso...</span>
+</div>
+
+<header>
+  <div class="logo">CN<span>.</span>Marista</div>
+  <a href="painel.html" class="btn-back">← Painel</a>
+</header>
+
+<main>
+  <h1 class="page-title">📄 Importar Questões via PDF</h1>
+  <p class="page-sub">Faça upload de uma prova em PDF. A IA extrai todas as questões automaticamente para revisão antes de salvar no banco.</p>
+
+  <div class="alerta alerta-err" id="alertaErro">
+    <span>⚠️</span><span id="alertaErroMsg">Erro ao processar o PDF.</span>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="upload-zone" id="uploadZone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+    <input type="file" id="filePdf" accept="application/pdf" onchange="onFileChange(event)">
+    <div class="upload-icon">📋</div>
+    <div class="upload-title">Arraste o PDF aqui ou clique para selecionar</div>
+    <div class="upload-sub">A IA lerá o PDF completo e identificará cada questão,<br>tipo, alternativas, gabarito e disciplina automaticamente.</div>
+    <span class="upload-limit">Máximo 15 MB · somente PDF</span>
+  </div>
+
+  <!-- PROCESSANDO -->
+  <div id="processando">
+    <div class="proc-spinner"></div>
+    <div class="proc-title">Processando PDF...</div>
+    <div class="proc-etapa" id="procEtapa">Lendo arquivo</div>
+    <div class="proc-bar"><div class="proc-bar-fill" id="procBarFill"></div></div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="resultadoHeader">
+    <div class="res-summary">
+      <div class="res-info">
+        <strong id="resTotal">0</strong> questões extraídas ·
+        <span id="resSalvas">0</span> salvas
+      </div>
+      <div class="res-actions">
+        <button class="btn-novo-pdf" onclick="resetar()">↩ Novo PDF</button>
+        <button class="btn-salvar-todas" id="btnSalvarTodas" onclick="salvarTodas()">
+          💾 Salvar todas as pendentes
+        </button>
+      </div>
+    </div>
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-bar-fill" id="progressBarFill"></div>
+    </div>
+  </div>
+
+  <div id="questoesGrid"></div>
+</main>
+
+<script>
+const sb = CN_CONFIG.createSupabaseClient();
+let userAtual = null;
+let questoesExtraidas = [];
+let salvasCount = 0;
+
+const DISC_LABEL = { bio:'🧬 Biologia', quim:'⚗️ Química', fis:'⚡ Física', inter:'🔬 Inter.' };
+const NIVEL_LABEL = { basico:'Fácil', intermediario:'Intermediário', avancado:'Difícil' };
+
+// ── INIT ──────────────────────────────────────────────────────
+(async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+
+  const { data: perfil } = await sb.from('perfis')
+    .select('nome, role, ativo').eq('id', session.user.id).single();
+
+  if (!perfil?.ativo || perfil?.role !== 'professor') {
+    window.location.href = perfil?.role === 'aluno' ? 'portal.html' : 'index.html';
+    return;
+  }
+  userAtual = { ...session.user, perfil };
+  document.getElementById('pageLoading').style.display = 'none';
+})();
+
+// ── DRAG & DROP ───────────────────────────────────────────────
+function onDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('drag');
+}
+function onDragLeave() {
+  document.getElementById('uploadZone').classList.remove('drag');
+}
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) processarArquivo(file);
+}
+function onFileChange(e) {
+  const file = e.target.files[0];
+  if (file) processarArquivo(file);
+}
+
+// ── PROCESSAR ARQUIVO ─────────────────────────────────────────
+async function processarArquivo(file) {
+  esconderAlerta();
+
+  if (file.type !== 'application/pdf') {
+    mostrarAlerta('Apenas arquivos PDF são aceitos.');
+    return;
+  }
+  if (file.size > 15 * 1024 * 1024) {
+    mostrarAlerta('O arquivo excede o limite de 15 MB.');
+    return;
+  }
+
+  // Mostrar loading
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('resultadoHeader').style.display = 'none';
+  document.getElementById('questoesGrid').innerHTML = '';
+  document.getElementById('processando').style.display = 'block';
+
+  atualizarEtapa('Lendo arquivo PDF...', 15);
+
+  try {
+    // Converter para base64
+    const base64 = await fileParaBase64(file);
+    atualizarEtapa('Enviando para análise da IA...', 35);
+
+    // Iniciar animação de progresso enquanto aguarda
+    const animTimer = animarEtapas([
+      [55, 'Identificando questões...'],
+      [70, 'Extraindo alternativas...'],
+      [82, 'Convertendo fórmulas para LaTeX...'],
+      [92, 'Finalizando estruturação...'],
+    ]);
+
+    const resp = await sb.functions.invoke('gemini', {
+      body: { funcao: 'extrair_questoes_pdf', dados: { pdf_base64: base64 } },
+    });
+
+    clearTimeout(animTimer);
+    atualizarEtapa('Concluído!', 100);
+
+    if (resp.error || resp.data?.error) {
+      throw new Error(resp.data?.detalhe || resp.error?.message || 'Erro na extração');
+    }
+    if (!resp.data?.questoes?.length) {
+      throw new Error('Nenhuma questão encontrada no PDF. Verifique se o arquivo contém texto selecionável.');
+    }
+
+    questoesExtraidas = resp.data.questoes;
+    salvasCount = 0;
+
+    await new Promise(r => setTimeout(r, 400));
+    document.getElementById('processando').style.display = 'none';
+    renderizarQuestoes(questoesExtraidas);
+
+  } catch (e) {
+    document.getElementById('processando').style.display = 'none';
+    document.getElementById('uploadZone').style.display = 'block';
+    mostrarAlerta(e.message || 'Erro ao processar PDF. Tente novamente.');
+  }
+}
+
+function fileParaBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      resolve(dataUrl.split(',')[1]); // remove "data:application/pdf;base64,"
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function atualizarEtapa(msg, pct) {
+  document.getElementById('procEtapa').textContent = msg;
+  document.getElementById('procBarFill').style.width = pct + '%';
+}
+
+function animarEtapas(etapas) {
+  let i = 0;
+  function tick() {
+    if (i >= etapas.length) return;
+    const [pct, msg] = etapas[i++];
+    atualizarEtapa(msg, pct);
+    return setTimeout(tick, 2500);
+  }
+  return tick();
+}
+
+// ── RENDERIZAR QUESTÕES ───────────────────────────────────────
+function renderizarQuestoes(questoes) {
+  document.getElementById('resTotal').textContent = questoes.length;
+  document.getElementById('resSalvas').textContent = '0';
+  document.getElementById('resultadoHeader').style.display = 'block';
+
+  const grid = document.getElementById('questoesGrid');
+  grid.innerHTML = '';
+  questoes.forEach((q, idx) => grid.appendChild(criarCard(q, idx)));
+}
+
+function criarCard(q, idx) {
+  const card = document.createElement('div');
+  card.className = 'q-card';
+  card.id = `card-${idx}`;
+
+  const disc = q.disciplina || 'bio';
+  const nivel = q.nivel || 'intermediario';
+  const tipo = q.tipo || 'C';
+
+  // ── HEADER ──
+  const header = document.createElement('div');
+  header.className = 'q-card-header';
+  header.innerHTML = `
+    <span class="q-num">Questão ${q.numero || idx + 1}</span>
+    <div class="q-card-selects">
+      <select class="q-select" id="disc-${idx}" onchange="onDiscChange(${idx})">
+        <option value="bio"  ${disc==='bio'  ?'selected':''}>🧬 Biologia</option>
+        <option value="quim" ${disc==='quim' ?'selected':''}>⚗️ Química</option>
+        <option value="fis"  ${disc==='fis'  ?'selected':''}>⚡ Física</option>
+        <option value="inter"${disc==='inter'?'selected':''}>🔬 Inter.</option>
+      </select>
+      <select class="q-select" id="nivel-${idx}">
+        <option value="basico"        ${nivel==='basico'        ?'selected':''}>Fácil</option>
+        <option value="intermediario" ${nivel==='intermediario' ?'selected':''}>Intermediário</option>
+        <option value="avancado"      ${nivel==='avancado'      ?'selected':''}>Difícil</option>
+      </select>
+      <select class="q-select" id="tipo-${idx}" onchange="onTipoChange(${idx})">
+        <option value="C" ${tipo==='C'?'selected':''}>Tipo C — Múltipla</option>
+        <option value="A" ${tipo==='A'?'selected':''}>Tipo A — C/E</option>
+      </select>
+    </div>`;
+
+  // ── BODY ──
+  const body = document.createElement('div');
+  body.className = 'q-card-body';
+
+  // Tema
+  body.innerHTML += `
+    <span class="field-label">Tema</span>
+    <input class="field-input" id="tema-${idx}" value="${escapar(q.tema || '')}" placeholder="Tema principal">`;
+
+  // Texto base
+  const textoBase = q.texto_base?.paragrafos?.join('\n') || '';
+  if (textoBase) {
+    body.innerHTML += `
+      <span class="field-label">Texto introdutório</span>
+      <textarea class="field-textarea" id="textobase-${idx}" rows="3">${escapar(textoBase)}</textarea>`;
+  }
+
+  // Enunciado
+  body.innerHTML += `
+    <span class="field-label">Enunciado</span>
+    <textarea class="field-textarea" id="enunciado-${idx}" rows="4">${escapar(q.enunciado || '')}</textarea>`;
+
+  // Alternativas / Gabarito (container dinâmico)
+  const altsDiv = document.createElement('div');
+  altsDiv.id = `alts-container-${idx}`;
+  body.appendChild(altsDiv);
+
+  card.appendChild(header);
+  card.appendChild(body);
+
+  // ── FOOTER ──
+  const footer = document.createElement('div');
+  footer.className = 'q-card-footer';
+  footer.innerHTML = `
+    <span class="q-status" id="status-${idx}">Gabarito não definido</span>
+    <button class="btn-salvar-q" id="btn-${idx}" onclick="salvarQuestao(${idx})" disabled>
+      Salvar como pendente
+    </button>`;
+  card.appendChild(footer);
+
+  // Renderizar alternativas/gabarito conforme tipo
+  renderizarAlternativas(idx, q);
+
+  return card;
+}
+
+function renderizarAlternativas(idx, q) {
+  const tipo = document.getElementById(`tipo-${idx}`)?.value || q?.tipo || 'C';
+  const container = document.getElementById(`alts-container-${idx}`);
+  if (!container) return;
+
+  const gabAtual = q?.gabarito || null;
+
+  if (tipo === 'C') {
+    const letras = ['A','B','C','D','E'];
+    const alts = q?.alternativas || {};
+
+    let html = `<span class="field-label">Alternativas</span><div class="alts-grid">`;
+    letras.forEach(l => {
+      const texto = alts[l] || '';
+      const isGab = l === gabAtual;
+      html += `
+        <div class="alt-row ${isGab ? 'is-gab' : ''}" id="altrow-${idx}-${l}">
+          <div class="alt-letra-badge">${l}</div>
+          <textarea id="alt-${idx}-${l}" rows="2" placeholder="Alternativa ${l}"
+            oninput="onAltChange(${idx})">${escapar(texto)}</textarea>
+        </div>`;
+    });
+    html += `</div>`;
+
+    html += `<div class="gab-section">
+      <span class="field-label">Gabarito</span>
+      <div class="gab-row" id="gab-row-${idx}">
+        ${letras.map(l => `<button class="gab-btn ${l===gabAtual?'selected':''}"
+          id="gab-${idx}-${l}" onclick="selecionarGabarito(${idx},'${l}')">${l}</button>`).join('')}
+      </div>
+      <div class="gab-aviso ${!gabAtual?'show':''}" id="gab-aviso-${idx}">
+        ⚠️ Defina o gabarito para salvar esta questão
+      </div>
+    </div>`;
+
+    container.innerHTML = html;
+
+  } else {
+    // Tipo A
+    const isC = gabAtual === 'CERTO';
+    const isE = gabAtual === 'ERRADO';
+    container.innerHTML = `
+      <div class="gab-section">
+        <span class="field-label">Gabarito</span>
+        <div class="gab-ce">
+          <button class="gab-ce-btn ${isC?'selected':''}" id="gab-${idx}-CERTO"
+            onclick="selecionarGabarito(${idx},'CERTO')">✅ CERTO</button>
+          <button class="gab-ce-btn ${isE?'selected':''}" id="gab-${idx}-ERRADO"
+            onclick="selecionarGabarito(${idx},'ERRADO')">❌ ERRADO</button>
+        </div>
+        <div class="gab-aviso ${!gabAtual?'show':''}" id="gab-aviso-${idx}">
+          ⚠️ Defina o gabarito para salvar esta questão
+        </div>
+      </div>`;
+  }
+
+  // Atualizar estado do botão
+  atualizarBotaoSalvar(idx, gabAtual);
+}
+
+function onTipoChange(idx) {
+  const q = questoesExtraidas[idx];
+  const novoTipo = document.getElementById(`tipo-${idx}`).value;
+  if (q) q.tipo = novoTipo;
+  renderizarAlternativas(idx, { ...q, tipo: novoTipo, gabarito: null });
+}
+
+function onDiscChange(idx) {
+  // nada além de manter o valor — salvarQuestao lerá do select
+}
+
+function onAltChange(idx) {
+  // sync sem travar — o save lê do DOM
+}
+
+function selecionarGabarito(idx, letra) {
+  const tipo = document.getElementById(`tipo-${idx}`)?.value || 'C';
+  const letras = tipo === 'C' ? ['A','B','C','D','E'] : ['CERTO','ERRADO'];
+
+  letras.forEach(l => {
+    const btn = document.getElementById(`gab-${idx}-${l}`);
+    if (btn) btn.classList.toggle('selected', l === letra);
+    // highlight da alternativa
+    if (tipo === 'C') {
+      const row = document.getElementById(`altrow-${idx}-${l}`);
+      if (row) row.classList.toggle('is-gab', l === letra);
+    }
+  });
+
+  const aviso = document.getElementById(`gab-aviso-${idx}`);
+  if (aviso) aviso.classList.remove('show');
+
+  atualizarBotaoSalvar(idx, letra);
+}
+
+function atualizarBotaoSalvar(idx, gabarito) {
+  const btn = document.getElementById(`btn-${idx}`);
+  const status = document.getElementById(`status-${idx}`);
+  if (!btn || !status) return;
+
+  if (gabarito) {
+    btn.disabled = false;
+    status.textContent = `Gabarito: ${gabarito}`;
+    status.className = 'q-status';
+  } else {
+    btn.disabled = true;
+    status.textContent = 'Gabarito não definido';
+    status.className = 'q-status';
+  }
+}
+
+function getGabaritoSelecionado(idx) {
+  const tipo = document.getElementById(`tipo-${idx}`)?.value || 'C';
+  const letras = tipo === 'C' ? ['A','B','C','D','E'] : ['CERTO','ERRADO'];
+  for (const l of letras) {
+    if (document.getElementById(`gab-${idx}-${l}`)?.classList.contains('selected')) return l;
+  }
+  return null;
+}
+
+// ── SALVAR UMA QUESTÃO ────────────────────────────────────────
+async function salvarQuestao(idx) {
+  const btn   = document.getElementById(`btn-${idx}`);
+  const card  = document.getElementById(`card-${idx}`);
+  const status = document.getElementById(`status-${idx}`);
+
+  if (!btn || btn.disabled || btn.classList.contains('salvo')) return;
+
+  const gabarito = getGabaritoSelecionado(idx);
+  if (!gabarito) {
+    document.getElementById(`gab-aviso-${idx}`)?.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvando...';
+
+  try {
+    const tipo  = document.getElementById(`tipo-${idx}`)?.value || 'C';
+    const disc  = document.getElementById(`disc-${idx}`)?.value || 'bio';
+    const nivel = document.getElementById(`nivel-${idx}`)?.value || 'intermediario';
+    const tema  = document.getElementById(`tema-${idx}`)?.value?.trim() || 'Sem tema';
+    const enunciado = document.getElementById(`enunciado-${idx}`)?.value?.trim() || '';
+    const tbEl  = document.getElementById(`textobase-${idx}`);
+
+    // Alternativas
+    let alternativas = null;
+    if (tipo === 'C') {
+      alternativas = {};
+      ['A','B','C','D','E'].forEach(l => {
+        const v = document.getElementById(`alt-${idx}-${l}`)?.value?.trim();
+        if (v) alternativas[l] = v;
+      });
+    }
+
+    // Texto base
+    let texto_base = null;
+    if (tbEl?.value?.trim()) {
+      texto_base = { paragrafos: tbEl.value.trim().split('\n').filter(p => p.trim()) };
+    }
+
+    const payload = {
+      origem:    'manual',
+      disciplina: disc,
+      tema,
+      subtema:   questoesExtraidas[idx]?.subtema || null,
+      tipo,
+      nivel,
+      enunciado,
+      texto_base,
+      alternativas,
+      gabarito,
+      explicacao: '',
+      steps:     null,
+      elementos_visuais: null,
+      status:    'pendente',
+      gerada_para: null,
+    };
+
+    const { error } = await sb.from('questoes_banco').insert(payload);
+    if (error) throw error;
+
+    // Sucesso
+    btn.textContent = '✓ Salvo';
+    btn.classList.add('salvo');
+    btn.disabled = true;
+    card.classList.add('salvo');
+    status.textContent = '✓ Salvo como pendente';
+    status.className = 'q-status ok';
+
+    salvasCount++;
+    document.getElementById('resSalvas').textContent = salvasCount;
+
+  } catch (e) {
+    console.error('Erro ao salvar questão:', e);
+    btn.textContent = '✕ Erro — tentar novamente';
+    btn.disabled = false;
+    status.textContent = 'Falha ao salvar';
+    status.className = 'q-status err';
+    card.classList.add('erro-card');
+  }
+}
+
+// ── SALVAR TODAS ──────────────────────────────────────────────
+async function salvarTodas() {
+  const btn = document.getElementById('btnSalvarTodas');
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvando...';
+
+  const progressBar = document.getElementById('progressBar');
+  const progressFill = document.getElementById('progressBarFill');
+  progressBar.style.display = 'block';
+
+  const pendentes = questoesExtraidas
+    .map((_, idx) => idx)
+    .filter(idx => {
+      const b = document.getElementById(`btn-${idx}`);
+      return b && !b.classList.contains('salvo') && !b.disabled;
+    });
+
+  let feitas = 0;
+  for (const idx of pendentes) {
+    await salvarQuestao(idx);
+    feitas++;
+    progressFill.style.width = Math.round((feitas / pendentes.length) * 100) + '%';
+  }
+
+  progressBar.style.display = 'none';
+  btn.disabled = false;
+  btn.textContent = '✓ Concluído';
+}
+
+// ── RESETAR ───────────────────────────────────────────────────
+function resetar() {
+  questoesExtraidas = [];
+  salvasCount = 0;
+  document.getElementById('questoesGrid').innerHTML = '';
+  document.getElementById('resultadoHeader').style.display = 'none';
+  document.getElementById('uploadZone').style.display = 'block';
+  document.getElementById('filePdf').value = '';
+  esconderAlerta();
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function escapar(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function mostrarAlerta(msg) {
+  document.getElementById('alertaErroMsg').textContent = msg;
+  document.getElementById('alertaErro').classList.add('show');
+}
+function esconderAlerta() {
+  document.getElementById('alertaErro').classList.remove('show');
+}
+</script>
+</body>
+</html>

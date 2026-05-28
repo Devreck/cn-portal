@@ -17,32 +17,25 @@ const CORS = {
 
 // ── CONTEXTO BASE DA PROVA ──────────────────────────────────
 const CONTEXTO_PROVA = `
-Você é um tutor especialista em Ciências da Natureza para o 
+Você é um elaborador de itens especialista em Ciências da Natureza para o
 Ensino Médio brasileiro (3ª Série), focado na AV4 do Colégio Marista.
 
 CONTEÚDOS DA AV4:
-BIOLOGIA: Herança ligada ao sexo (cromossomo X), alelos múltiplos (Sistema ABO), 
-codominância, pleiotropia, epistasia recessiva dupla, linkage e recombinação 
-(centiMorgans), herança quantitativa/poligênica, fator Rh e doença hemolítica, 
+BIOLOGIA: Herança ligada ao sexo (cromossomo X), alelos múltiplos (Sistema ABO),
+codominância, pleiotropia, epistasia recessiva dupla, linkage e recombinação
+(centiMorgans), herança quantitativa/poligênica, fator Rh e doença hemolítica,
 transgenia, probabilidade genética (mono e diibridismo), hemizigose, anemia falciforme.
 
-QUÍMICA: Ânodo/cátodo, oxidação/redução, células galvânicas e eletrolíticas, 
-Leis de Faraday, galvanoplastia, baterias de lítio, Princípio de Le Chatelier 
-(pressão, temperatura, concentração), equilíbrio químico (Kc), soluções tampão, 
-pH de ácido fraco (Ka), catálise enzimática, energia de ativação, 
+QUÍMICA: Ânodo/cátodo, oxidação/redução, células galvânicas e eletrolíticas,
+Leis de Faraday, galvanoplastia, baterias de lítio, Princípio de Le Chatelier
+(pressão, temperatura, concentração), equilíbrio químico (Kc), soluções tampão,
+pH de ácido fraco (Ka), catálise enzimática, energia de ativação,
 termoquímica (ΔH), gráficos de perfil energético.
 
-FÍSICA: Efeito Joule (P = V²/R, E = Pt), carga elétrica (Q = It), 
-energia elétrica (E = VQ), potência elétrica (P = VI), 
+FÍSICA: Efeito Joule (P = V²/R, E = Pt), carga elétrica (Q = It),
+energia elétrica (E = VQ), potência elétrica (P = VI),
 associação de geradores em série, kWh, mAh, baterias e capacidade,
 circuitos elétricos simples e associação de resistores em série.
-
-CARACTERÍSTICAS DAS QUESTÕES:
-- Interdisciplinares: cada questão une 2-3 disciplinas
-- Contextos contemporâneos: marcapassos, biossensores, galvanoplastia, 
-  baterias de celular, veículos elétricos, anemia falciforme
-- Tipo A (Certo/Errado): afirmativas com pegadinhas conceituais sutis
-- Tipo C (Múltipla Escolha): 5 alternativas, cálculos numéricos precisos
 
 PADRÃO DE MATEMÁTICA PROFISSIONAL:
 - Em respostas textuais, use MathJax com \\(...\\) para expressões inline e \\[...\\] para blocos.
@@ -152,6 +145,8 @@ Deno.serve(async (req) => {
     switch (funcao) {
       case 'gerar_questao':
         return await gerarQuestao(GEMINI_KEY, dados);
+      case 'extrair_questoes_pdf':
+        return await extrairQuestoesPDF(GEMINI_KEY, dados);
       case 'tutor_erro':
         return await tutorErro(GEMINI_KEY, dados);
       case 'diagnostico':
@@ -171,76 +166,117 @@ Deno.serve(async (req) => {
 
 // ── FUNÇÃO 1: GERAR QUESTÃO ─────────────────────────────────
 async function gerarQuestao(key: string, dados: any) {
-  const { disciplina, tema, tipo, nivel, disciplinas_integradas, contexto_chunks = [] } = dados;
-  const chunksBase = await buscarChunksConhecimento(disciplina, tema, contexto_chunks);
+  const {
+    disciplina,
+    tema,
+    tipo,
+    subtipo,           // 'teorica' | 'calculo' | null
+    nivel,
+    disciplinas_integradas,
+    contexto_chunks = [],
+    cenario,           // texto livre do aluno ou 'Automatico'
+    tema_secundario,   // tema completo da 2ª disciplina, se houver
+  } = dados;
 
+  const chunksBase = await buscarChunksConhecimento(disciplina, tema, contexto_chunks);
   const schema = tipo === 'C' ? SCHEMA_QUESTAO_C : SCHEMA_QUESTAO_A;
-  const contextoTipo = tipo === 'C'
-    ? 'múltipla escolha com 5 alternativas e cálculo numérico'
-    : 'certo ou errado com pegadinha conceitual sutil';
+
+  // ── Tipo da questão ──
+  let descTipo: string;
+  if (tipo === 'A') {
+    descTipo = 'Tipo A (Certo ou Errado) — afirmativa com pegadinha conceitual sutil';
+  } else if (subtipo === 'teorica') {
+    descTipo = 'Tipo C (Múltipla Escolha) CONCEITUAL — 5 alternativas, SEM cálculo numérico; foco em interpretação, comparação de conceitos ou análise de situações';
+  } else {
+    descTipo = 'Tipo C (Múltipla Escolha) COM CÁLCULO — 5 alternativas; o aluno precisa calcular o valor correto; inclua steps de resolução detalhados';
+  }
+
+  // ── Interdisciplinaridade: só quando o aluno escolheu tema secundário ──
+  const temInterdisciplinar = Array.isArray(disciplinas_integradas) && disciplinas_integradas.length > 0 && tema_secundario;
+  const secaoInter = temInterdisciplinar
+    ? `CONEXÃO INTERDISCIPLINAR OBRIGATÓRIA:
+   Conecte organicamente o tema principal com: "${tema_secundario}" (${disciplinas_integradas.join(', ')}).
+   A conexão deve ser natural — o contexto deve exigir os dois temas ao mesmo tempo, não apenas mencioná-los.`
+    : `DISCIPLINA ÚNICA:
+   Esta questão é monodisciplinar. NÃO force conexão com outras disciplinas.
+   O campo "interdisciplinar_com" deve ser um array vazio [].`;
+
+  // ── Cenário ──
+  const cenarioEhManual = cenario && cenario !== 'Automatico';
+  const secaoCenario = cenarioEhManual
+    ? `CENÁRIO OBRIGATÓRIO (escolhido pelo aluno): "${cenario}"
+   O enunciado DEVE estar ambientado neste contexto de forma natural.
+   Não mencione o cenário superficialmente; ele deve ser a situação-problema da questão.`
+    : `CENÁRIO: Escolha um contexto tecnológico e contemporâneo adequado ao tema
+   (ex: dispositivos médicos, baterias, veículos elétricos, diagnóstico genético, galvanoplastia).
+   Evite exemplos genéricos ou artificiais.`;
 
   const prompt = `
 ${CONTEXTO_PROVA}
 
-TAREFA: Gere UMA questão de ${contextoTipo} sobre "${tema}" (${disciplina}),
-integrando com ${disciplinas_integradas?.join(' e ') || 'outra disciplina'}.
-Nível: ${nivel}.
+═══════════════════════════════════════════
+TAREFA: Elabore UMA questão de vestibular para a AV4 Marista.
+═══════════════════════════════════════════
+
+TEMA PRINCIPAL: "${tema}" — disciplina: ${disciplina}
+TIPO: ${descTipo}
+NÍVEL: ${{ basico: 'Fácil (conceito direto, sem armadilhas complexas)', intermediario: 'Intermediário (exige raciocínio, um passo além do óbvio)', avancado: 'Difícil (exige integração de conceitos ou cálculo em etapas)' }[nivel] || nivel}
+
+${secaoInter}
+
+${secaoCenario}
 
 CONTEXTO VALIDADO DA BASE DO PROFESSOR:
 ${chunksBase.length
   ? chunksBase.slice(0, 4).map((c: any, i: number) => `CHUNK ${i + 1}: ${typeof c === 'string' ? c : c.texto || c.content || JSON.stringify(c)}`).join('\n\n')
   : 'Nenhum chunk fornecido nesta chamada.'}
 
-REGRAS ABSOLUTAS:
-1. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois
-2. Todos os valores numéricos devem ser cientificamente corretos
-3. Toda matemática deve ser em LaTeX profissional compatível com MathJax.
-   - Em "linhas_latex" e "destaque_latex", use APENAS a expressão LaTeX, sem \\[ \\], sem $$.
-   - Para várias linhas, prefira \\begin{aligned} ... \\end{aligned} ou \\begin{array} ... \\end{array}.
-   - PREVINA SOBREPOSIÇÃO DE PALAVRAS: Ao usar \\text{}, SEMPRE adicione espaço físico (\\ ) ou \\quad antes de números e variáveis. Exemplo: \\text{Resultado: } x = 2.
+REGRAS DE ELABORAÇÃO:
+1. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.
+2. Todos os valores numéricos devem ser cientificamente corretos e coerentes entre si.
+3. Toda matemática deve usar LaTeX profissional (MathJax):
+   - "linhas_latex" e "destaque_latex": APENAS expressão LaTeX pura, sem \\[ \\] ou $$.
+   - Prefira \\begin{aligned}...\\end{aligned} para múltiplas linhas.
    - Use \\frac{}, \\cdot, \\Omega, \\text{}, \\mathrm{}, expoentes e unidades corretamente.
-   - Em LaTeX, escreva vírgula decimal como {,}: 0{,}40, 18{,}0, 216{,}5.
-   - Em LaTeX, escreva milhar com espaço fino: 18\\,000, não 18.000.
-   - NÃO escreva contas em texto corrido como "P = V²/R = 400/100".
-   - NÃO use Unicode matemático como ², Ω solto, Δ solto quando estiver em fórmula; use LaTeX.
-4. O contexto deve ser tecnológico e contemporâneo (nunca exemplos genéricos)
-5. Para Tipo C: os steps devem resolver o cálculo passo a passo como um professor.
-   Cada step deve ter explicação textual curta e uma ou mais "linhas_latex" bem formatadas.
-6. Para Tipo A: a pegadinha deve ser sutil — uma palavra errada muda tudo
-7. Não use nenhuma questão da prova original AV4
-8. Gere pelo menos 1 elemento visual quando o tema permitir:
-   - Biologia/genética: use "heredograma" ou "tabela".
-   - Física/circuitos: use "circuito_serie" ou "grafico_xy".
-   - Química/eletroquímica/equilíbrio: use "equacao_quimica", "tabela" ou "grafico_energia".
-   O elemento deve ficar em "elementos_visuais" no topo da questão. Não duplique o mesmo elemento em "texto_base.elementos_visuais".
-   - REGRAS PARA TEXTOS NAS IMAGENS: Para evitar poluição visual, use APENAS incógnitas curtas (ex: "R1", "R2", "E") e seus valores nos campos "label" dos elementos visuais. Coloque o significado de cada incógnita (ex: "Sensor Cardíaco") no enunciado da questão ou no campo "legenda" / "titulo" da imagem. NUNCA escreva textos longos dentro dos gráficos ou circuitos.
-9. Tipos de elemento visual aceitos pelo site:
+   - Vírgula decimal em LaTeX: use {,} — ex: 0{,}40 em vez de 0.40.
+   - Milhar: use espaço fino — ex: 18\\,000 em vez de 18.000.
+   - NÃO escreva contas em texto corrido ("P = V²/R = 400/100").
+   - NÃO use Unicode matemático solto (², Ω, Δ) dentro de fórmulas; use LaTeX.
+   - Ao usar \\text{}, adicione \\quad ou \\ antes de variáveis adjacentes.
+4. Para Tipo A: a pegadinha deve depender de uma distinção conceitual real, não de um detalhe trivial.
+5. Para Tipo C com cálculo: steps devem mostrar o raciocínio completo, um conceito por step.
+6. Para Tipo C conceitual: as alternativas erradas devem ser plausíveis — erros comuns reais, não absurdos óbvios.
+7. Não reproduza questões da prova AV4 original.
+8. Elemento visual (quando o tema permitir — não obrigatório se não agregar):
+   - Genética: "heredograma" ou "tabela" de genótipos.
+   - Física/circuitos: "circuito_serie" ou "grafico_xy".
+   - Química: "equacao_quimica", "tabela" ou "grafico_energia".
+   - Coloque em "elementos_visuais". NÃO duplique em "texto_base.elementos_visuais".
+   - Nos elementos visuais: use apenas rótulos curtos (R1, E, V); explique no enunciado ou em "legenda"/"titulo". NUNCA textos longos dentro do visual.
+9. Tipos de elemento visual aceitos:
    - tabela: { "tipo":"tabela", "titulo":"...", "cabecalho":["..."], "linhas":[["..."]] }
    - circuito_serie: { "tipo":"circuito_serie", "titulo":"...", "componentes":[{"tipo":"bateria","label":"V","valor":"20 V"},{"tipo":"resistor","label":"R1","valor":"100 \\Omega"}] }
    - heredograma: { "tipo":"heredograma", "titulo":"...", "geracoes":[{"individuos":[{"sexo":"M","afetado":false,"label":"I-1"},{"sexo":"F","afetado":false,"label":"I-2"}],"unioes":[{"pai":0,"mae":1}]},{"individuos":[{"sexo":"M","afetado":true,"label":"II-1"}]}] }
    - equacao_quimica: { "tipo":"equacao_quimica", "equacao":"Cu^{2+}_{(aq)} + 2e^- \\rightarrow Cu_{(s)}", "legenda":"Redução no cátodo" }
    - grafico_energia: { "tipo":"grafico_energia", "reagentes":0, "estado_transicao":80, "produtos":-30, "com_catalisador":35 }
    - grafico_xy: { "tipo":"grafico_xy", "eixo_x":"t (s)", "eixo_y":"Q (C)", "series":[{"label":"Q = It","pontos":[{"x":0,"y":0},{"x":10,"y":50}]}] }
-10. Se o tema for "Circuitos Elétricos", restrinja a circuitos simples com resistores em série:
-   - resistência equivalente: R_{eq} = R_1 + R_2 + ...
-   - Lei de Ohm: V = R \\cdot I
-   - potência simples: P = V \\cdot I, P = R \\cdot I^2 ou P = \\frac{V^2}{R}
-   Não gere associação em paralelo, malhas complexas, Leis de Kirchhoff avançadas ou capacitores.
+10. Circuitos elétricos: restrinja a série simples (R_eq = R_1 + R_2, Lei de Ohm, P = VI ou RI²).
+    Não gere paralelo, malhas, Kirchhoff avançado ou capacitores.
 
 SCHEMA OBRIGATÓRIO:
 ${schema}
 
-Valide internamente: os cálculos estão corretos? O LaTeX é válido?
+Antes de responder, valide internamente: os cálculos batem? As alternativas erradas são plausíveis? O LaTeX é sintaticamente válido?
 `;
 
   let ultimoResultado = '';
   for (let i = 0; i < 3; i++) {
     const promptTentativa = i === 0 ? prompt : `${prompt}
 
-A tentativa anterior retornou JSON inválido ou incompleto.
-Responda novamente com UM JSON completo e válido, sem markdown.`;
+ATENÇÃO: A tentativa anterior retornou JSON inválido ou incompleto.
+Responda agora com UM JSON completo e válido, sem markdown, sem texto fora do JSON.`;
 
-    ultimoResultado = await chamarGemini(key, promptTentativa, 3, 8192, true, 0.35);
+    ultimoResultado = await chamarGemini(key, promptTentativa, 3, 8192, true, 0.65);
     const questao = parsearJSON(ultimoResultado);
 
     if (questao) {
@@ -259,33 +295,154 @@ Responda novamente com UM JSON completo e válido, sem markdown.`;
   return json({ error: 'IA não retornou JSON válido', raw: ultimoResultado }, 422);
 }
 
-// ── FUNÇÃO 2: TUTOR POR ERRO ────────────────────────────────
+// ── FUNÇÃO 2: EXTRAIR QUESTÕES DE PDF ───────────────────────
+async function extrairQuestoesPDF(key: string, dados: any) {
+  const { pdf_base64 } = dados;
+  if (!pdf_base64) return json({ error: 'PDF não enviado' }, 400);
+
+  const prompt = `Analise este PDF de prova de Ciências da Natureza e extraia TODAS as questões.
+
+Para cada questão retorne um objeto JSON com esta estrutura exata:
+{
+  "numero": <int — número da questão no PDF>,
+  "tipo": "A" | "C",
+  "disciplina": "bio" | "quim" | "fis" | "inter",
+  "tema": "<tema principal inferido do conteúdo>",
+  "subtema": "<subtema ou null>",
+  "nivel": "basico" | "intermediario" | "avancado",
+  "texto_base": { "paragrafos": ["<parágrafo 1>", "..."] } | null,
+  "enunciado": "<enunciado completo>",
+  "alternativas": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." } | null,
+  "gabarito": "<letra A-E, CERTO, ERRADO, ou null se não estiver no PDF>",
+  "explicacao": ""
+}
+
+REGRAS CRÍTICAS:
+1. Extraia TODAS as questões sem pular nenhuma
+2. Tipo A = afirmativa para julgar CERTO/ERRADO; Tipo C = múltipla escolha com letras A–E
+3. Converta toda matemática para LaTeX: inline \\(...\\), bloco \\[...\\]
+4. Se o gabarito não aparecer no PDF, use null — o professor irá preencher
+5. Texto introdutório compartilhado por várias questões: inclua em texto_base de cada uma
+6. Preserve o texto exatamente como está na prova; não resuma nem reescreva
+7. Disciplina: bio=biologia/genética, quim=química/eletroquímica, fis=física/elétrica, inter=interdisciplinar
+8. Responda APENAS com JSON: { "questoes": [...], "total": <N> }`;
+
+  const res = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { inlineData: { mimeType: 'application/pdf', data: pdf_base64 } },
+          { text: prompt },
+        ],
+      }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gemini HTTP ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!texto) throw new Error('Gemini retornou resposta vazia');
+
+  const resultado = parsearJSON(texto);
+  if (!resultado?.questoes) throw new Error('Estrutura JSON inválida');
+
+  return json({ sucesso: true, questoes: resultado.questoes, total: resultado.questoes.length });
+}
+
+// ── FUNÇÃO 3 (antiga 2): TUTOR POR ERRO ─────────────────────
 async function tutorErro(key: string, dados: any) {
-  const { enunciado, resposta_aluno, gabarito, explicacao_original, disciplina } = dados;
+  const {
+    enunciado,
+    resposta_aluno,
+    resposta_aluno_texto,  // texto completo da alternativa escolhida (Tipo C)
+    gabarito,
+    explicacao_original,
+    disciplina,
+    alternativas,          // { A: "...", B: "...", C: "...", D: "...", E: "..." }
+    nivel = 1,             // 1 = primária, 2 = secundária, 3 = terciária
+  } = dados;
+
+  // ── Seção de alternativas (só para Tipo C) ──
+  const letras = ['A','B','C','D','E'].filter(l => alternativas?.[l] != null);
+  const temAlts = letras.length > 0;
+
+  const secaoAlternativas = temAlts
+    ? `\nALTERNATIVAS:\n${letras.map(l =>
+        `  ${l}) ${alternativas[l]}${l === gabarito ? '  ← CORRETA' : ''}`
+      ).join('\n')}\n`
+    : '';
+
+  const respostaDesc = resposta_aluno_texto
+    ? `${resposta_aluno}: "${resposta_aluno_texto}"`
+    : resposta_aluno;
+
+  // ── Abordagem diferente por nível ──
+  const instrucao: Record<number, string> = {
+    1: `Explique de forma clara e direta:
+• Por que a resposta "${respostaDesc}" está errada — identifique o equívoco conceitual específico
+${temAlts ? '• Analise CADA alternativa: uma linha por alternativa dizendo por que está certa ou errada\n' : ''}• Qual o conceito correto, com exemplo do cotidiano
+• Uma dica objetiva para não cometer esse erro de novo`,
+
+    2: `O aluno já recebeu uma explicação direta e ainda não entendeu. Use uma abordagem COMPLETAMENTE DIFERENTE:
+• Comece por uma analogia ou metáfora do dia a dia que explique o conceito intuitivamente
+• Mostre POR QUE faz sentido pensar como o aluno pensou — e onde exatamente o raciocínio desvia
+${temAlts ? '• Compare diretamente a alternativa escolhida com a correta, explicando a diferença conceitual\n' : ''}• Reformule o conceito central sem jargão técnico`,
+
+    3: `O aluno tentou duas vezes. Volte ao FUNDAMENTO MAIS BÁSICO possível:
+• Ignore a questão por um momento — defina o conceito-chave do zero, como se o aluno nunca tivesse visto
+• Use a situação mais simples e concreta que consiga imaginar
+• Só então conecte esse fundamento à questão e mostre por que a resposta correta é inevitável
+${temAlts ? '• Explique a alternativa correta com uma frase cristalina, sem ambiguidade\n' : ''}• Encerre com uma regra mental de uma linha para fixar`,
+  };
+
+  const nivelLabel = ['', 'primeira', 'segunda', 'terceira'][nivel] || 'primeira';
+  const avisoNivel = nivel > 1
+    ? `\nEsta é a ${nivelLabel} explicação para esta questão. Use uma abordagem completamente diferente das anteriores — não repita metáforas, exemplos ou estrutura já usados.\n`
+    : '';
 
   const prompt = `
 ${CONTEXTO_PROVA}
 
-TAREFA: Um aluno errou uma questão. Explique o erro de forma personalizada.
-
-QUESTÃO: ${enunciado}
-
-RESPOSTA DO ALUNO: ${resposta_aluno}
+TAREFA: Um aluno errou uma questão. Gere uma explicação personalizada (nível ${nivel}/3).
+${avisoNivel}
+QUESTÃO:
+${enunciado}
+${secaoAlternativas}
+RESPOSTA DO ALUNO: ${respostaDesc}
 RESPOSTA CORRETA: ${gabarito}
-EXPLICAÇÃO PADRÃO: ${explicacao_original}
+EXPLICAÇÃO ORIGINAL DA QUESTÃO: ${explicacao_original}
 
-Crie uma explicação que:
-1. Reconheça especificamente o que o aluno pensou (sem julgamento)
-2. Explique o conceito errado com uma analogia simples
-3. Mostre o raciocínio correto passo a passo
-4. Dê uma dica memorável para não errar de novo
-5. Use linguagem encorajadora e direta
+COMO EXPLICAR NESTE NÍVEL:
+${instrucao[nivel] || instrucao[1]}
 
-Responda em texto corrido, máximo 200 palavras, sem JSON.
-Use **negrito** para destacar conceitos importantes.
+REGRAS DE FORMATO:
+- Linguagem encorajadora, direta e em português
+- Máximo 280 palavras
+- Use **negrito** para conceitos-chave e fórmulas
+- Use MathJax (\\(...\\) inline, \\[...\\] em bloco) para matemática
+- Não reproduza a questão inteira
+- Não use frases como "como mencionado antes" ou "conforme explicado"
+- Sem JSON, sem markdown extra além de **negrito**
 `;
 
-  const explicacao = await chamarGemini(key, prompt);
+  const explicacao = await chamarGemini(key, prompt, 3, 1024, false, 0.75);
   return json({ sucesso: true, explicacao });
 }
 

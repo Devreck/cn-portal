@@ -792,9 +792,11 @@ async function finalizarSimulado(tempoEsgotado = false) {
         .update({ pontos_simulado: pontos })
         .eq('aluno_id', userAtual.id);
 
-      // Badge sobrevivente
-      await sb.from('badges_conquistados')
-        .insert({ aluno_id: userAtual.id, badge_id: 'sobrevivente' });
+      // Badge sobrevivente (ignora duplicata caso o aluno refaça)
+      try {
+        await sb.from('badges_conquistados')
+          .insert({ aluno_id: userAtual.id, badge_id: 'sobrevivente' });
+      } catch (_) {}
 
       // Limpar backup local após salvar com sucesso
       try { if (BACKUP_KEY) localStorage.removeItem(BACKUP_KEY); } catch (_) {}
