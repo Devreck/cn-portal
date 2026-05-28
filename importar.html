@@ -127,7 +127,25 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 .alerta-ok{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:#86efac}
 .alerta-err{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);color:#fca5a5}
 
-@media(max-width:600px){main{padding:20px 12px 60px}.form-row{flex-direction:column}.q-card-header{flex-direction:column;align-items:flex-start}}
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px}
+.tab{flex:1;padding:10px 16px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--surface2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+
+/* MANUAL FORM */
+.manual-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.manual-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.manual-header-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700}
+.manual-body{padding:20px 18px}
+.manual-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.manual-row .field-input,.manual-row .q-select{flex:1;min-width:120px}
+.manual-footer{padding:14px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.btn-add-outra{padding:9px 18px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;transition:all 0.15s;display:none}
+.btn-add-outra:hover{background:var(--surface2);color:var(--text)}
+.manual-sucesso{font-size:13px;color:var(--green);display:none}
+
+@media(max-width:600px){main{padding:20px 12px 60px}.form-row{flex-direction:column}.q-card-header{flex-direction:column;align-items:flex-start}.manual-row{flex-direction:column}}
 </style>
 <link rel="stylesheet" href="css/ds.css">
 </head>
@@ -149,50 +167,116 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 </header>
 
 <main>
-  <h1 class="page-title">📄 Importar Questões via PDF</h1>
-  <p class="page-sub">Faça upload de uma prova em PDF. A IA extrai todas as questões automaticamente para revisão antes de salvar no banco.</p>
+  <h1 class="page-title">Banco de Questões</h1>
+  <p class="page-sub">Importe questões via PDF com IA ou adicione manualmente uma por vez.</p>
 
-  <div class="alerta alerta-err" id="alertaErro">
-    <span>⚠️</span><span id="alertaErroMsg">Erro ao processar o PDF.</span>
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tab-pdf" onclick="mudarAba('pdf')">📄 Importar PDF</button>
+    <button class="tab" id="tab-manual" onclick="mudarAba('manual')">✏️ Questão Manual</button>
   </div>
 
-  <!-- UPLOAD -->
-  <div class="upload-zone" id="uploadZone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-    <input type="file" id="filePdf" accept="application/pdf" onchange="onFileChange(event)">
-    <div class="upload-icon">📋</div>
-    <div class="upload-title">Arraste o PDF aqui ou clique para selecionar</div>
-    <div class="upload-sub">A IA lerá o PDF completo e identificará cada questão,<br>tipo, alternativas, gabarito e disciplina automaticamente.</div>
-    <span class="upload-limit">Máximo 15 MB · somente PDF</span>
-  </div>
+  <!-- ═══════════ ABA PDF ═══════════ -->
+  <div id="secao-pdf">
+    <div class="alerta alerta-err" id="alertaErro">
+      <span>⚠️</span><span id="alertaErroMsg">Erro ao processar o PDF.</span>
+    </div>
 
-  <!-- PROCESSANDO -->
-  <div id="processando">
-    <div class="proc-spinner"></div>
-    <div class="proc-title">Processando PDF...</div>
-    <div class="proc-etapa" id="procEtapa">Lendo arquivo</div>
-    <div class="proc-bar"><div class="proc-bar-fill" id="procBarFill"></div></div>
-  </div>
+    <!-- UPLOAD -->
+    <div class="upload-zone" id="uploadZone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+      <input type="file" id="filePdf" accept="application/pdf" onchange="onFileChange(event)">
+      <div class="upload-icon">📋</div>
+      <div class="upload-title">Arraste o PDF aqui ou clique para selecionar</div>
+      <div class="upload-sub">A IA lerá o PDF completo e identificará cada questão,<br>tipo, alternativas, gabarito e disciplina automaticamente.</div>
+      <span class="upload-limit">Máximo 15 MB · somente PDF</span>
+    </div>
 
-  <!-- RESULTADO -->
-  <div id="resultadoHeader">
-    <div class="res-summary">
-      <div class="res-info">
-        <strong id="resTotal">0</strong> questões extraídas ·
-        <span id="resSalvas">0</span> salvas
+    <!-- PROCESSANDO -->
+    <div id="processando">
+      <div class="proc-spinner"></div>
+      <div class="proc-title">Processando PDF...</div>
+      <div class="proc-etapa" id="procEtapa">Lendo arquivo</div>
+      <div class="proc-bar"><div class="proc-bar-fill" id="procBarFill"></div></div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div id="resultadoHeader">
+      <div class="res-summary">
+        <div class="res-info">
+          <strong id="resTotal">0</strong> questões extraídas ·
+          <span id="resSalvas">0</span> salvas
+        </div>
+        <div class="res-actions">
+          <button class="btn-novo-pdf" onclick="resetar()">↩ Novo PDF</button>
+          <button class="btn-salvar-todas" id="btnSalvarTodas" onclick="salvarTodas()">
+            💾 Salvar todas as pendentes
+          </button>
+        </div>
       </div>
-      <div class="res-actions">
-        <button class="btn-novo-pdf" onclick="resetar()">↩ Novo PDF</button>
-        <button class="btn-salvar-todas" id="btnSalvarTodas" onclick="salvarTodas()">
-          💾 Salvar todas as pendentes
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+    </div>
+
+    <div id="questoesGrid"></div>
+  </div>
+
+  <!-- ═══════════ ABA MANUAL ═══════════ -->
+  <div id="secao-manual" style="display:none">
+    <div class="alerta alerta-ok" id="alertaManualOk" style="margin-bottom:16px">
+      <span>✅</span><span id="alertaManualOkMsg">Questão salva com sucesso!</span>
+    </div>
+    <div class="alerta alerta-err" id="alertaManualErr" style="margin-bottom:16px">
+      <span>⚠️</span><span id="alertaManualErrMsg">Erro ao salvar.</span>
+    </div>
+
+    <div class="manual-card">
+      <div class="manual-header">
+        <span class="manual-header-title">✏️ Nova Questão</span>
+        <div class="q-card-selects" style="margin-left:auto">
+          <select class="q-select" id="m-disc">
+            <option value="bio">🧬 Biologia</option>
+            <option value="quim">⚗️ Química</option>
+            <option value="fis">⚡ Física</option>
+            <option value="inter">🔬 Interdisciplinar</option>
+          </select>
+          <select class="q-select" id="m-tipo" onchange="renderizarManualAlts()">
+            <option value="C">Tipo C</option>
+            <option value="A">Tipo A</option>
+          </select>
+          <select class="q-select" id="m-nivel">
+            <option value="basico">Fácil</option>
+            <option value="intermediario" selected>Intermediário</option>
+            <option value="avancado">Difícil</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="manual-body">
+        <span class="field-label">Tema</span>
+        <input class="field-input" id="m-tema" type="text" placeholder="Ex: Herança ligada ao sexo, Eletroquímica...">
+
+        <span class="field-label" style="margin-top:14px;display:block">Texto-base / Contexto <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></span>
+        <textarea class="field-textarea" id="m-textobase" rows="3" placeholder="Texto introdutório compartilhado, tabela descrita em texto, enunciado de situação-problema..."></textarea>
+
+        <span class="field-label" style="margin-top:14px;display:block">Enunciado</span>
+        <textarea class="field-textarea" id="m-enunciado" rows="4" placeholder="Digite o enunciado completo da questão..."></textarea>
+
+        <!-- Container dinâmico: alternativas + gabarito -->
+        <div id="m-alts-container"></div>
+      </div>
+
+      <div class="manual-footer">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="q-status" id="m-status">Gabarito não definido</span>
+          <button class="btn-add-outra" id="btnAddOutra" onclick="novaQuestaoManual()">+ Adicionar outra</button>
+        </div>
+        <button class="btn-salvar-q" id="btnSalvarManual" onclick="salvarManual()" disabled>
+          Salvar como pendente
         </button>
       </div>
     </div>
-    <div class="progress-bar" id="progressBar">
-      <div class="progress-bar-fill" id="progressBarFill"></div>
-    </div>
   </div>
-
-  <div id="questoesGrid"></div>
 </main>
 
 <script>
@@ -219,6 +303,17 @@ const NIVEL_LABEL = { basico:'Fácil', intermediario:'Intermediário', avancado:
   userAtual = { ...session.user, perfil };
   document.getElementById('pageLoading').style.display = 'none';
 })();
+
+// ── TABS ──────────────────────────────────────────────────────
+function mudarAba(aba) {
+  document.getElementById('secao-pdf').style.display    = aba === 'pdf'    ? 'block' : 'none';
+  document.getElementById('secao-manual').style.display = aba === 'manual' ? 'block' : 'none';
+  document.getElementById('tab-pdf').classList.toggle('active', aba === 'pdf');
+  document.getElementById('tab-manual').classList.toggle('active', aba === 'manual');
+  if (aba === 'manual' && !document.getElementById('m-alts-container').innerHTML) {
+    renderizarManualAlts();
+  }
+}
 
 // ── DRAG & DROP ───────────────────────────────────────────────
 function onDragOver(e) {
@@ -659,6 +754,184 @@ function resetar() {
   document.getElementById('uploadZone').style.display = 'block';
   document.getElementById('filePdf').value = '';
   esconderAlerta();
+}
+
+// ── FORMULÁRIO MANUAL ─────────────────────────────────────────
+let manualGabarito = null;
+
+function renderizarManualAlts() {
+  const tipo = document.getElementById('m-tipo')?.value || 'C';
+  const container = document.getElementById('m-alts-container');
+  if (!container) return;
+  manualGabarito = null;
+  atualizarBotaoManual();
+
+  if (tipo === 'C') {
+    const letras = ['A','B','C','D','E'];
+    let html = `<span class="field-label" style="margin-top:14px;display:block">Alternativas</span><div class="alts-grid">`;
+    letras.forEach(l => {
+      html += `
+        <div class="alt-row" id="m-altrow-${l}">
+          <div class="alt-letra-badge">${l}</div>
+          <textarea id="m-alt-${l}" rows="2" placeholder="Alternativa ${l}"></textarea>
+        </div>`;
+    });
+    html += `</div>`;
+    html += `<div class="gab-section">
+      <span class="field-label">Gabarito</span>
+      <div class="gab-row">
+        ${letras.map(l => `<button class="gab-btn" id="m-gab-${l}" onclick="selecionarManualGab('${l}')">${l}</button>`).join('')}
+      </div>
+      <div class="gab-aviso show" id="m-gab-aviso">⚠️ Defina o gabarito para salvar</div>
+    </div>`;
+    container.innerHTML = html;
+  } else {
+    container.innerHTML = `
+      <div class="gab-section" style="margin-top:14px">
+        <span class="field-label">Gabarito</span>
+        <div class="gab-ce">
+          <button class="gab-ce-btn" id="m-gab-CERTO"  onclick="selecionarManualGab('CERTO')">✅ CERTO</button>
+          <button class="gab-ce-btn" id="m-gab-ERRADO" onclick="selecionarManualGab('ERRADO')">❌ ERRADO</button>
+        </div>
+        <div class="gab-aviso show" id="m-gab-aviso">⚠️ Defina o gabarito para salvar</div>
+      </div>`;
+  }
+}
+
+function selecionarManualGab(letra) {
+  const tipo = document.getElementById('m-tipo')?.value || 'C';
+  const letras = tipo === 'C' ? ['A','B','C','D','E'] : ['CERTO','ERRADO'];
+  letras.forEach(l => {
+    const btn = document.getElementById(`m-gab-${l}`);
+    if (btn) btn.classList.toggle('selected', l === letra);
+    if (tipo === 'C') {
+      const row = document.getElementById(`m-altrow-${l}`);
+      if (row) row.classList.toggle('is-gab', l === letra);
+    }
+  });
+  document.getElementById('m-gab-aviso')?.classList.remove('show');
+  manualGabarito = letra;
+  atualizarBotaoManual();
+}
+
+function atualizarBotaoManual() {
+  const btn    = document.getElementById('btnSalvarManual');
+  const status = document.getElementById('m-status');
+  if (!btn || !status) return;
+  if (manualGabarito) {
+    btn.disabled = false;
+    status.textContent = `Gabarito: ${manualGabarito}`;
+    status.className = 'q-status';
+  } else {
+    btn.disabled = true;
+    status.textContent = 'Gabarito não definido';
+    status.className = 'q-status';
+  }
+}
+
+async function salvarManual() {
+  const btn = document.getElementById('btnSalvarManual');
+  if (!btn || btn.disabled) return;
+
+  esconderAlertaManual();
+
+  const tipo  = document.getElementById('m-tipo')?.value || 'C';
+  const disc  = document.getElementById('m-disc')?.value || 'bio';
+  const nivel = document.getElementById('m-nivel')?.value || 'intermediario';
+  const tema  = document.getElementById('m-tema')?.value?.trim();
+  const enunciado = document.getElementById('m-enunciado')?.value?.trim();
+
+  if (!tema) { mostrarAlertaManualErr('Preencha o tema.'); return; }
+  if (!enunciado) { mostrarAlertaManualErr('Preencha o enunciado.'); return; }
+  if (!manualGabarito) { document.getElementById('m-gab-aviso')?.classList.add('show'); return; }
+
+  let alternativas = null;
+  if (tipo === 'C') {
+    alternativas = {};
+    let ok = true;
+    ['A','B','C','D','E'].forEach(l => {
+      const v = document.getElementById(`m-alt-${l}`)?.value?.trim();
+      if (v) alternativas[l] = v;
+      else ok = false;
+    });
+    if (!ok) { mostrarAlertaManualErr('Preencha todas as 5 alternativas.'); return; }
+  }
+
+  let texto_base = null;
+  const tb = document.getElementById('m-textobase')?.value?.trim();
+  if (tb) texto_base = { paragrafos: tb.split('\n').filter(p => p.trim()) };
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvando...';
+
+  try {
+    const { error } = await sb.from('questoes_banco').insert({
+      origem: 'manual',
+      disciplina: disc,
+      tema,
+      subtema: null,
+      tipo,
+      nivel,
+      enunciado,
+      texto_base,
+      alternativas,
+      gabarito: manualGabarito,
+      explicacao: '',
+      steps: null,
+      elementos_visuais: null,
+      status: 'pendente',
+      gerada_para: null,
+    });
+    if (error) throw error;
+
+    mostrarAlertaManualOk('Questão salva com sucesso no banco (pendente de aprovação)!');
+    btn.textContent = '✓ Salvo';
+    btn.classList.add('salvo');
+    document.getElementById('m-status').textContent = '✓ Salvo como pendente';
+    document.getElementById('m-status').className = 'q-status ok';
+    document.getElementById('btnAddOutra').style.display = 'inline-block';
+
+  } catch (e) {
+    console.error('Erro ao salvar manual:', e);
+    mostrarAlertaManualErr('Erro ao salvar: ' + (e.message || 'tente novamente'));
+    btn.disabled = false;
+    btn.textContent = 'Salvar como pendente';
+  }
+}
+
+function novaQuestaoManual() {
+  // Limpar formulário para nova questão
+  document.getElementById('m-tema').value = '';
+  document.getElementById('m-textobase').value = '';
+  document.getElementById('m-enunciado').value = '';
+  document.getElementById('m-tipo').value = 'C';
+  manualGabarito = null;
+  renderizarManualAlts();
+
+  const btn = document.getElementById('btnSalvarManual');
+  btn.textContent = 'Salvar como pendente';
+  btn.classList.remove('salvo');
+  btn.disabled = true;
+  document.getElementById('m-status').textContent = 'Gabarito não definido';
+  document.getElementById('m-status').className = 'q-status';
+  document.getElementById('btnAddOutra').style.display = 'none';
+  esconderAlertaManual();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function mostrarAlertaManualOk(msg) {
+  document.getElementById('alertaManualOkMsg').textContent = msg;
+  document.getElementById('alertaManualOk').classList.add('show');
+  document.getElementById('alertaManualErr').classList.remove('show');
+}
+function mostrarAlertaManualErr(msg) {
+  document.getElementById('alertaManualErrMsg').textContent = msg;
+  document.getElementById('alertaManualErr').classList.add('show');
+  document.getElementById('alertaManualOk').classList.remove('show');
+}
+function esconderAlertaManual() {
+  document.getElementById('alertaManualOk').classList.remove('show');
+  document.getElementById('alertaManualErr').classList.remove('show');
 }
 
 // ── UTILS ─────────────────────────────────────────────────────
