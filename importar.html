@@ -20,6 +20,7 @@
   };
 </script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathlive/dist/mathlive.min.js"></script>
 <style>
 :root{
   --bg:#02060f;--surface:#080e1a;--surface2:#0d1526;--surface3:#111d35;
@@ -215,6 +216,37 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 .tipo-pas-a,.tipo-pas-c,.tipo-pas-b,.tipo-pas-d{padding-left:22px;border-left:3px solid transparent}
 .upload-zone-sm{padding:24px 20px}
 .upload-zone-sm .upload-title{font-size:14px}
+/* EQUATION MODAL */
+.eq-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.eq-modal{background:var(--surface);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px 28px 24px;width:min(580px,96vw);box-shadow:0 24px 72px rgba(0,0,0,0.6)}
+.eq-modal-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.eq-close{background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;padding:0 2px}
+.eq-close:hover{color:var(--text)}
+.eq-field-wrap{border:2px solid var(--border);border-radius:12px;background:white;padding:14px 16px;margin-bottom:16px;transition:border-color 0.2s;cursor:text}
+.eq-field-wrap:focus-within{border-color:rgba(201,168,76,0.6)}
+#equationField{width:100%;min-height:52px;font-size:24px;outline:none;display:block}
+.eq-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.eq-mode-btn{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'Plus Jakarta Sans',sans-serif;text-align:left;line-height:1.5}
+.eq-mode-btn:hover{border-color:rgba(201,168,76,0.3);color:var(--ouro)}
+.eq-mode-btn.ativo{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);color:var(--ouro)}
+.eq-mode-btn code{display:block;font-size:11px;opacity:0.7;margin-top:2px;font-family:monospace}
+.eq-latex-row{font-size:12px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;margin-bottom:18px;min-height:36px;font-family:monospace;word-break:break-all;line-height:1.5}
+.eq-hints{font-size:11px;color:var(--text-muted);margin-bottom:18px;line-height:1.8;opacity:0.75}
+.eq-hints kbd{background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:10px;font-family:monospace}
+.eq-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.eq-footer-hint{font-size:11px;color:var(--text-muted);opacity:0.7}
+.eq-btns{display:flex;gap:10px}
+.eq-cancel{padding:9px 18px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;transition:all 0.15s}
+.eq-cancel:hover{background:var(--surface2);color:var(--text)}
+.eq-insert{padding:9px 24px;border-radius:9px;border:none;background:var(--azul-mid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.eq-insert:hover{background:var(--azul-light)}
+.eq-insert:disabled{opacity:0.4;cursor:not-allowed}
+/* Floating equation button */
+#btnEqFloat{position:fixed;bottom:28px;right:28px;width:50px;height:50px;border-radius:50%;border:none;background:linear-gradient(135deg,#004d99,#1a6abf);color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:900;transition:transform 0.2s,box-shadow 0.2s;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700}
+#btnEqFloat.visivel{display:flex}
+#btnEqFloat:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(0,0,0,0.55)}
+#btnEqFloat .eq-float-tooltip{position:absolute;bottom:56px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+#btnEqFloat:hover .eq-float-tooltip{opacity:1}
 /* IMAGE PASTE */
 .img-previews{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .img-thumb{position:relative;width:72px;height:56px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface2);flex-shrink:0}
@@ -2036,6 +2068,200 @@ function baixarTemplate() {
 
   XLSX.writeFile(wb, 'modelo_importacao_questoes.xlsx');
 }
+
+// ══════════════════════════════════════════════════════════════
+// ── EDITOR DE EQUAÇÃO (MathLive) ─────────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+let lastFocusedTA  = null;  // último textarea focado (exceto dentro do modal)
+let eqCursorStart  = 0;
+let eqCursorEnd    = 0;
+let eqModo         = 'inline'; // 'inline' | 'block'
+
+// ── Rastrear textarea focado ──────────────────────────────────
+document.addEventListener('focusin', (e) => {
+  if (e.target.tagName !== 'TEXTAREA') return;
+  if (e.target.closest('#equationModal')) return;
+  lastFocusedTA = e.target;
+  document.getElementById('btnEqFloat').classList.add('visivel');
+});
+document.addEventListener('focusout', (e) => {
+  if (e.target.tagName !== 'TEXTAREA') return;
+  if (e.target.closest('#equationModal')) return;
+  setTimeout(() => {
+    const active = document.activeElement;
+    if (active?.tagName !== 'TEXTAREA' && active?.id !== 'btnEqFloat') {
+      document.getElementById('btnEqFloat').classList.remove('visivel');
+    }
+  }, 280);
+});
+
+// ── Atalhos globais ────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  // Ctrl+E: abrir editor de equação quando em um textarea
+  if (e.ctrlKey && e.key.toLowerCase() === 'e') {
+    const active = document.activeElement;
+    if (active?.tagName === 'TEXTAREA' && !active.closest('#equationModal')) {
+      e.preventDefault();
+      abrirEditorEquacao();
+    }
+  }
+  // Esc: fechar modal
+  if (e.key === 'Escape') {
+    if (document.getElementById('equationModal').style.display !== 'none') {
+      fecharEditorEquacao();
+    }
+  }
+});
+
+// ── Abrir modal ────────────────────────────────────────────────
+function abrirEditorEquacao() {
+  const modal = document.getElementById('equationModal');
+  const mf    = document.getElementById('equationField');
+
+  // Guardar posição do cursor antes de perder o foco
+  if (lastFocusedTA) {
+    eqCursorStart = lastFocusedTA.selectionStart ?? lastFocusedTA.value.length;
+    eqCursorEnd   = lastFocusedTA.selectionEnd   ?? lastFocusedTA.value.length;
+  }
+
+  // Limpar campo e preview
+  mf.value = '';
+  _eqAtualizarPreview();
+  document.getElementById('btnEqInserir').disabled = true;
+
+  modal.style.display = 'flex';
+
+  // Listener de input no MathLive
+  mf.addEventListener('input', _eqOnInput);
+
+  // Focar o campo com pequeno delay (garantir que o modal esteja visível)
+  setTimeout(() => mf.focus(), 80);
+}
+
+// ── Input no MathLive ──────────────────────────────────────────
+function _eqOnInput() {
+  _eqAtualizarPreview();
+  const latex = document.getElementById('equationField').value?.trim();
+  document.getElementById('btnEqInserir').disabled = !latex;
+}
+
+// ── Atualizar preview LaTeX ────────────────────────────────────
+function _eqAtualizarPreview() {
+  const latex   = document.getElementById('equationField').value?.trim() || '';
+  const preview = document.getElementById('eqLatexPreview');
+  if (!latex) {
+    preview.innerHTML = '<em>Escreva uma equação acima para ver o LaTeX gerado…</em>';
+    preview.style.color = 'var(--text-muted)';
+    return;
+  }
+  const delim = eqModo === 'inline' ? ['$','$'] : ['$$','$$'];
+  preview.textContent = delim[0] + latex + delim[1];
+  preview.style.color = 'var(--ouro)';
+}
+
+// ── Trocar modo inline/bloco ───────────────────────────────────
+function setEqModo(modo) {
+  eqModo = modo;
+  document.getElementById('eq-mode-inline').classList.toggle('ativo', modo === 'inline');
+  document.getElementById('eq-mode-block').classList.toggle('ativo',  modo === 'block');
+  _eqAtualizarPreview();
+}
+
+// ── Fechar modal ────────────────────────────────────────────────
+function fecharEditorEquacao() {
+  const modal = document.getElementById('equationModal');
+  const mf    = document.getElementById('equationField');
+  modal.style.display = 'none';
+  mf.removeEventListener('input', _eqOnInput);
+}
+
+// ── Inserir equação no textarea de origem ─────────────────────
+function inserirEquacao() {
+  const latex = document.getElementById('equationField').value?.trim();
+  if (!latex) { fecharEditorEquacao(); return; }
+
+  const delim  = eqModo === 'inline' ? ['$','$'] : ['$$\n','$$'];
+  const texto  = delim[0] + latex + delim[1];
+  const ta     = lastFocusedTA;
+
+  if (ta) {
+    const antes  = ta.value.slice(0, eqCursorStart);
+    const depois = ta.value.slice(eqCursorEnd);
+    ta.value = antes + texto + depois;
+
+    // Reposicionar cursor
+    const novaCursor = eqCursorStart + texto.length;
+    ta.focus();
+    ta.setSelectionRange(novaCursor, novaCursor);
+
+    // Atualizar modelos dos itens PAS se necessário
+    if (ta.id?.startsWith('pas-enunc-')) {
+      const idx = parseInt(ta.id.replace('pas-enunc-', ''));
+      if (!isNaN(idx) && pasItens[idx]) pasItens[idx].enunciado = ta.value.trim();
+      atualizarBotaoManualPAS();
+    }
+
+    // Disparar evento input para listeners externos
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  fecharEditorEquacao();
+}
 </script>
+
+<!-- ═══════════ MODAL EQUATION EDITOR ═══════════ -->
+<div id="equationModal" style="display:none" class="eq-overlay" onclick="if(event.target===this)fecharEditorEquacao()">
+  <div class="eq-modal" onclick="event.stopPropagation()">
+    <div class="eq-modal-title">
+      <span>∑ Editor de Equação</span>
+      <button class="eq-close" onclick="fecharEditorEquacao()">✕</button>
+    </div>
+
+    <!-- MathLive field (white background needed for the renderer) -->
+    <div class="eq-field-wrap" onclick="document.getElementById('equationField').focus()">
+      <math-field id="equationField" math-virtual-keyboard-policy="off"></math-field>
+    </div>
+
+    <!-- Inline vs Block -->
+    <div class="eq-modes">
+      <button class="eq-mode-btn ativo" id="eq-mode-inline" onclick="setEqModo('inline')">
+        Inline — dentro do texto
+        <code>$\frac{1}{2}mv^2$</code>
+      </button>
+      <button class="eq-mode-btn" id="eq-mode-block" onclick="setEqModo('block')">
+        Bloco — linha própria, centralizado
+        <code>$$E = mc^2$$</code>
+      </button>
+    </div>
+
+    <!-- LaTeX preview -->
+    <div class="eq-latex-row" id="eqLatexPreview" style="color:var(--text-muted)">
+      <em>Escreva uma equação acima para ver o LaTeX gerado…</em>
+    </div>
+
+    <!-- Quick hints -->
+    <div class="eq-hints">
+      <kbd>^</kbd> expoente &nbsp;·&nbsp; <kbd>_</kbd> subscrito &nbsp;·&nbsp;
+      <kbd>\frac</kbd>+Enter fração &nbsp;·&nbsp; <kbd>\sqrt</kbd>+Enter raiz &nbsp;·&nbsp;
+      <kbd>\int</kbd> integral &nbsp;·&nbsp; <kbd>\alpha</kbd> α &nbsp;·&nbsp;
+      <kbd>\Delta</kbd> Δ &nbsp;·&nbsp; <kbd>\ce{H2O}</kbd> química
+    </div>
+
+    <div class="eq-footer">
+      <span class="eq-footer-hint">Ctrl+E abre este editor · Esc fecha</span>
+      <div class="eq-btns">
+        <button class="eq-cancel" onclick="fecharEditorEquacao()">Cancelar</button>
+        <button class="eq-insert" id="btnEqInserir" onclick="inserirEquacao()" disabled>✓ Inserir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating ∑ button -->
+<button id="btnEqFloat" onclick="abrirEditorEquacao()" title="Inserir equação (Ctrl+E)">
+  ∑<span class="eq-float-tooltip">Inserir equação · Ctrl+E</span>
+</button>
+
 </body>
 </html>
