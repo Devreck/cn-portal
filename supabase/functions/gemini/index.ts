@@ -300,6 +300,16 @@ async function extrairQuestoesPDF(key: string, dados: any) {
   const { pdf_base64 } = dados;
   if (!pdf_base64) return json({ error: 'PDF não enviado' }, 400);
 
+  // Verificar tamanho aproximado (base64 ~33% maior que o binário)
+  const tamanhoMB = (pdf_base64.length * 3 / 4) / (1024 * 1024);
+  if (tamanhoMB > 18) {
+    return json({ error: `PDF muito grande para processamento inline (${tamanhoMB.toFixed(1)} MB). Limite: 18 MB.` }, 400);
+  }
+
+  // Usar modelo com suporte explícito a PDF via inlineData
+  const PDF_MODEL = 'gemini-1.5-flash';
+  const PDF_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${PDF_MODEL}:generateContent`;
+
   const prompt = `Analise este PDF de prova de Ciências da Natureza e extraia TODAS as questões.
 
 Para cada questão retorne um objeto JSON com esta estrutura exata:
@@ -327,43 +337,62 @@ REGRAS CRÍTICAS:
 7. Disciplina: bio=biologia/genética, quim=química/eletroquímica, fis=física/elétrica, inter=interdisciplinar
 8. Responda APENAS com JSON: { "questoes": [...], "total": <N> }`;
 
-  const res = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { inlineData: { mimeType: 'application/pdf', data: pdf_base64 } },
-          { text: prompt },
-        ],
-      }],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      ],
-    }),
-  });
+  let ultimoErro = '';
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini HTTP ${res.status}: ${err}`);
+  for (let tentativa = 1; tentativa <= 2; tentativa++) {
+    const res = await fetch(PDF_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { inlineData: { mimeType: 'application/pdf', data: pdf_base64 } },
+            { text: prompt },
+          ],
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 8192,
+          responseMimeType: 'application/json',
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      ultimoErro = await res.text();
+      console.error(`extrairQuestoesPDF tentativa ${tentativa} — HTTP ${res.status}:`, ultimoErro);
+      if (tentativa < 2) {
+        await new Promise(r => setTimeout(r, 2000));
+        continue;
+      }
+      return json({ error: `Gemini recusou o PDF (HTTP ${res.status})`, detalhe: ultimoErro.slice(0, 500) }, 502);
+    }
+
+    const data = await res.json();
+    const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!texto) {
+      ultimoErro = 'Gemini retornou resposta vazia';
+      console.error('extrairQuestoesPDF: resposta vazia', JSON.stringify(data).slice(0, 300));
+      continue;
+    }
+
+    const resultado = parsearJSON(texto);
+    if (!resultado?.questoes) {
+      ultimoErro = 'Estrutura JSON inválida';
+      console.error('extrairQuestoesPDF: JSON inválido', texto.slice(0, 300));
+      continue;
+    }
+
+    return json({ sucesso: true, questoes: resultado.questoes, total: resultado.questoes.length });
   }
 
-  const data = await res.json();
-  const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!texto) throw new Error('Gemini retornou resposta vazia');
-
-  const resultado = parsearJSON(texto);
-  if (!resultado?.questoes) throw new Error('Estrutura JSON inválida');
-
-  return json({ sucesso: true, questoes: resultado.questoes, total: resultado.questoes.length });
+  return json({ error: 'Não foi possível extrair as questões do PDF', detalhe: ultimoErro }, 422);
 }
 
 // ── FUNÇÃO 3 (antiga 2): TUTOR POR ERRO ─────────────────────
