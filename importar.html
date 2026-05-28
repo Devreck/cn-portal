@@ -145,6 +145,22 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 .btn-add-outra:hover{background:var(--surface2);color:var(--text)}
 .manual-sucesso{font-size:13px;color:var(--green);display:none}
 
+/* PAS BUILDER */
+.pas-itens-area{margin-top:14px;border-left:3px solid var(--ouro);padding:0 0 0 14px}
+.pas-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.pas-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.pas-item-badge{background:var(--azul-mid);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:'Plus Jakarta Sans',sans-serif;flex-shrink:0}
+.pas-item-tipo-sel{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap}
+.btn-remover-item{padding:4px 10px;border-radius:7px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:var(--red);font-size:12px;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+.btn-remover-item:hover{background:rgba(239,68,68,0.15)}
+.btn-add-item{margin-top:4px;padding:8px 18px;border-radius:9px;border:1px dashed rgba(201,168,76,0.4);background:transparent;color:var(--ouro);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;display:block;width:100%}
+.btn-add-item:hover{background:rgba(201,168,76,0.05);border-color:rgba(201,168,76,0.7)}
+.pas-digits{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.pas-digit-group{display:flex;flex-direction:column;gap:4px;align-items:center;min-width:70px}
+.pas-digit-group label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px}
+.pas-digit-select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface3);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;outline:none;cursor:pointer;text-align:center;width:70px}
+.pas-digit-select:focus{border-color:rgba(201,168,76,0.4)}
+
 @media(max-width:600px){main{padding:20px 12px 60px}.form-row{flex-direction:column}.q-card-header{flex-direction:column;align-items:flex-start}.manual-row{flex-direction:column}}
 </style>
 <link rel="stylesheet" href="css/ds.css">
@@ -242,7 +258,7 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
           </select>
           <select class="q-select" id="m-tipo" onchange="renderizarManualAlts()">
             <option value="C">Tipo C</option>
-            <option value="A">Tipo A</option>
+            <option value="PAS">PAS</option>
           </select>
           <select class="q-select" id="m-nivel">
             <option value="basico">Fácil</option>
@@ -259,8 +275,10 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
         <span class="field-label" style="margin-top:14px;display:block">Texto-base / Contexto <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></span>
         <textarea class="field-textarea" id="m-textobase" rows="3" placeholder="Texto introdutório compartilhado, tabela descrita em texto, enunciado de situação-problema..."></textarea>
 
+        <div id="m-enunciado-wrap">
         <span class="field-label" style="margin-top:14px;display:block">Enunciado</span>
         <textarea class="field-textarea" id="m-enunciado" rows="4" placeholder="Digite o enunciado completo da questão..."></textarea>
+        </div>
 
         <!-- Container dinâmico: alternativas + gabarito -->
         <div id="m-alts-container"></div>
@@ -777,12 +795,27 @@ function resetar() {
 
 // ── FORMULÁRIO MANUAL ─────────────────────────────────────────
 let manualGabarito = null;
+let pasItens = [];
+let pasItemCount = 0;
 
 function renderizarManualAlts() {
   const tipo = document.getElementById('m-tipo')?.value || 'C';
   const container = document.getElementById('m-alts-container');
   if (!container) return;
   manualGabarito = null;
+
+  // Mostrar/ocultar enunciado principal
+  const enuncWrap = document.getElementById('m-enunciado-wrap');
+  if (enuncWrap) enuncWrap.style.display = tipo === 'PAS' ? 'none' : 'block';
+
+  if (tipo === 'PAS') {
+    pasItens = [];
+    pasItemCount = 0;
+    renderizarPASBuilder();
+    atualizarBotaoManualPAS();
+    return;
+  }
+
   atualizarBotaoManual();
 
   if (tipo === 'C') {
@@ -814,6 +847,217 @@ function renderizarManualAlts() {
         </div>
         <div class="gab-aviso show" id="m-gab-aviso">⚠️ Defina o gabarito para salvar</div>
       </div>`;
+  }
+}
+
+function renderizarPASBuilder() {
+  const container = document.getElementById('m-alts-container');
+  if (!container) return;
+  let html = `<div class="pas-itens-area" id="pas-itens-area">`;
+  if (pasItens.length === 0) {
+    html += `<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Nenhum item adicionado ainda. Clique em "Adicionar item" para começar.</p>`;
+  } else {
+    pasItens.forEach((_, idx) => {
+      html += renderizarPASItem(idx);
+    });
+  }
+  html += `</div>`;
+  html += `<button class="btn-add-item" onclick="adicionarItemPAS()">+ Adicionar item</button>`;
+  container.innerHTML = html;
+}
+
+function adicionarItemPAS() {
+  pasItemCount++;
+  pasItens.push({ tipo: 'A', enunciado: '', gabarito: null });
+  renderizarPASBuilder();
+  atualizarBotaoManualPAS();
+}
+
+function renderizarTodosPASItens() {
+  const area = document.getElementById('pas-itens-area');
+  if (!area) return;
+  if (pasItens.length === 0) {
+    area.innerHTML = `<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Nenhum item adicionado ainda. Clique em "Adicionar item" para começar.</p>`;
+    return;
+  }
+  area.innerHTML = pasItens.map((_, idx) => renderizarPASItem(idx)).join('');
+}
+
+function renderizarPASItem(idx) {
+  const item = pasItens[idx];
+  const n = idx + 1;
+
+  let camposDinamicos = '';
+  if (item.tipo === 'A') {
+    const isC = item.gabarito === 'CERTO';
+    const isE = item.gabarito === 'ERRADO';
+    camposDinamicos = `
+      <span class="field-label" style="margin-top:10px;display:block">Gabarito</span>
+      <div class="gab-ce">
+        <button class="gab-ce-btn ${isC ? 'selected' : ''}" onclick="selecionarGabaritoPAS(${idx},'CERTO')">✅ CERTO</button>
+        <button class="gab-ce-btn ${isE ? 'selected' : ''}" onclick="selecionarGabaritoPAS(${idx},'ERRADO')">❌ ERRADO</button>
+      </div>`;
+  } else if (item.tipo === 'C') {
+    const alts = item.alternativas || {};
+    const letras = ['A','B','C','D'];
+    camposDinamicos = `
+      <span class="field-label" style="margin-top:10px;display:block">Alternativas</span>
+      <div class="alts-grid">`;
+    letras.forEach(l => {
+      const isGab = item.gabarito === l;
+      camposDinamicos += `
+        <div class="alt-row ${isGab ? 'is-gab' : ''}" id="pas-altrow-${idx}-${l}">
+          <div class="alt-letra-badge">${l}</div>
+          <textarea rows="2" placeholder="Alternativa ${l}"
+            oninput="pasItens[${idx}].alternativas = pasItens[${idx}].alternativas||{}; pasItens[${idx}].alternativas['${l}']=this.value"
+          >${escapar(alts[l] || '')}</textarea>
+        </div>`;
+    });
+    camposDinamicos += `</div>
+      <span class="field-label" style="margin-top:10px;display:block">Gabarito</span>
+      <div class="gab-row">
+        ${letras.map(l => `<button class="gab-btn ${item.gabarito===l?'selected':''}" id="pas-gab-${idx}-${l}" onclick="selecionarGabaritoPAS(${idx},'${l}')">${l}</button>`).join('')}
+      </div>`;
+  } else if (item.tipo === 'B') {
+    const parts = (item.gabarito || '--').split('-');
+    const vc = parts[0] !== '-' && parts[0] !== '' ? parts[0] : '';
+    const vd = parts[1] !== '-' && parts[1] !== '' ? parts[1] : '';
+    const vu = parts[2] !== '-' && parts[2] !== '' ? parts[2] : '';
+    const opts = Array.from({length:10}, (_,i) => `<option value="${i}" ${String(i)===String(vc)||String(i)===String(vd)||String(i)===String(vu) ? '' : ''}>${i}</option>`).join('');
+    const optsC = Array.from({length:10}, (_,i) => `<option value="${i}" ${String(i)===String(vc)?'selected':''}>${i}</option>`).join('');
+    const optsD = Array.from({length:10}, (_,i) => `<option value="${i}" ${String(i)===String(vd)?'selected':''}>${i}</option>`).join('');
+    const optsU = Array.from({length:10}, (_,i) => `<option value="${i}" ${String(i)===String(vu)?'selected':''}>${i}</option>`).join('');
+    camposDinamicos = `
+      <span class="field-label" style="margin-top:10px;display:block">Gabarito numérico (Centena / Dezena / Unidade)</span>
+      <div class="pas-digits">
+        <div class="pas-digit-group">
+          <label>Centena</label>
+          <select class="pas-digit-select" id="pas-digit-${idx}-C" onchange="atualizarGabBTipo(${idx})">
+            <option value="">—</option>${optsC}
+          </select>
+        </div>
+        <div class="pas-digit-group">
+          <label>Dezena</label>
+          <select class="pas-digit-select" id="pas-digit-${idx}-D" onchange="atualizarGabBTipo(${idx})">
+            <option value="">—</option>${optsD}
+          </select>
+        </div>
+        <div class="pas-digit-group">
+          <label>Unidade</label>
+          <select class="pas-digit-select" id="pas-digit-${idx}-U" onchange="atualizarGabBTipo(${idx})">
+            <option value="">—</option>${optsU}
+          </select>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px">
+        Gabarito atual: <strong id="pas-gab-b-label-${idx}">${item.gabarito || '—'}</strong>
+      </div>`;
+  } else if (item.tipo === 'D') {
+    camposDinamicos = `
+      <span class="field-label" style="margin-top:10px;display:block">Resposta esperada (referência)</span>
+      <textarea class="field-textarea" rows="3" placeholder="Digite a resposta esperada como referência..."
+        oninput="pasItens[${idx}].gabarito=this.value.trim()||null; atualizarBotaoManualPAS()"
+      >${escapar(item.gabarito || '')}</textarea>`;
+  }
+
+  return `<div class="pas-item" id="pas-item-${idx}">
+    <div class="pas-item-header">
+      <div class="pas-item-tipo-sel">
+        <span class="pas-item-badge">Item ${n}</span>
+        <select class="q-select" onchange="onPASTipoChange(${idx}, this.value)">
+          <option value="A" ${item.tipo==='A'?'selected':''}>Tipo A — Certo/Errado</option>
+          <option value="C" ${item.tipo==='C'?'selected':''}>Tipo C — Múltipla escolha (4 alt.)</option>
+          <option value="B" ${item.tipo==='B'?'selected':''}>Tipo B — Numérico C/D/U</option>
+          <option value="D" ${item.tipo==='D'?'selected':''}>Tipo D — Resposta aberta</option>
+        </select>
+      </div>
+      <button class="btn-remover-item" onclick="removerItemPAS(${idx})">✕</button>
+    </div>
+    <span class="field-label">Enunciado do item</span>
+    <textarea class="field-textarea" rows="3" placeholder="Enunciado do item ${n}..."
+      oninput="pasItens[${idx}].enunciado=this.value.trim(); atualizarBotaoManualPAS()"
+    >${escapar(item.enunciado || '')}</textarea>
+    ${camposDinamicos}
+  </div>`;
+}
+
+function onPASTipoChange(idx, novoTipo) {
+  pasItens[idx].tipo = novoTipo;
+  pasItens[idx].gabarito = null;
+  pasItens[idx].alternativas = {};
+  renderizarTodosPASItens();
+  atualizarBotaoManualPAS();
+}
+
+function removerItemPAS(idx) {
+  pasItens.splice(idx, 1);
+  renderizarTodosPASItens();
+  atualizarBotaoManualPAS();
+}
+
+function selecionarGabaritoPAS(idx, valor) {
+  const item = pasItens[idx];
+  item.gabarito = valor;
+
+  if (item.tipo === 'A') {
+    ['CERTO','ERRADO'].forEach(v => {
+      const btn = document.querySelector(`#pas-item-${idx} .gab-ce-btn:${v==='CERTO'?'first-child':'last-child'}`);
+    });
+    // Re-render só os campos dinâmicos do item A via botões
+    const btns = document.querySelectorAll(`#pas-item-${idx} .gab-ce-btn`);
+    btns.forEach(b => b.classList.toggle('selected', b.textContent.includes(valor)));
+  } else if (item.tipo === 'C') {
+    const letras = ['A','B','C','D'];
+    letras.forEach(l => {
+      const btn = document.getElementById(`pas-gab-${idx}-${l}`);
+      if (btn) btn.classList.toggle('selected', l === valor);
+      const row = document.getElementById(`pas-altrow-${idx}-${l}`);
+      if (row) row.classList.toggle('is-gab', l === valor);
+    });
+  }
+  atualizarBotaoManualPAS();
+}
+
+function atualizarGabBTipo(idx) {
+  const c = document.getElementById(`pas-digit-${idx}-C`)?.value;
+  const d = document.getElementById(`pas-digit-${idx}-D`)?.value;
+  const u = document.getElementById(`pas-digit-${idx}-U`)?.value;
+  if (c !== '' && d !== '' && u !== '') {
+    pasItens[idx].gabarito = `${c}-${d}-${u}`;
+  } else {
+    pasItens[idx].gabarito = null;
+  }
+  const label = document.getElementById(`pas-gab-b-label-${idx}`);
+  if (label) label.textContent = pasItens[idx].gabarito || '—';
+  atualizarBotaoManualPAS();
+}
+
+function atualizarBotaoManualPAS() {
+  const btn    = document.getElementById('btnSalvarManual');
+  const status = document.getElementById('m-status');
+  if (!btn || !status) return;
+
+  if (pasItens.length === 0) {
+    btn.disabled = true;
+    status.textContent = 'Adicione pelo menos 1 item';
+    status.className = 'q-status';
+    return;
+  }
+
+  const todosOk = pasItens.every(item => {
+    const temEnunciado = item.enunciado && item.enunciado.trim().length > 0;
+    const temGabarito = item.gabarito !== null && item.gabarito !== undefined && item.gabarito !== '';
+    return temEnunciado && temGabarito;
+  });
+
+  if (todosOk) {
+    btn.disabled = false;
+    status.textContent = `${pasItens.length} item(s) — pronto para salvar`;
+    status.className = 'q-status';
+  } else {
+    btn.disabled = true;
+    status.textContent = 'Preencha enunciado e gabarito de todos os itens';
+    status.className = 'q-status';
   }
 }
 
@@ -858,9 +1102,64 @@ async function salvarManual() {
   const disc  = document.getElementById('m-disc')?.value || 'bio';
   const nivel = document.getElementById('m-nivel')?.value || 'intermediario';
   const tema  = document.getElementById('m-tema')?.value?.trim();
-  const enunciado = document.getElementById('m-enunciado')?.value?.trim();
 
   if (!tema) { mostrarAlertaManualErr('Preencha o tema.'); return; }
+
+  let texto_base = null;
+  const tb = document.getElementById('m-textobase')?.value?.trim();
+  if (tb) texto_base = { paragrafos: tb.split('\n').filter(p => p.trim()) };
+
+  // PAS
+  if (tipo === 'PAS') {
+    if (pasItens.length === 0) { mostrarAlertaManualErr('Adicione pelo menos 1 item PAS.'); return; }
+    const todosOk = pasItens.every(item => item.enunciado?.trim() && item.gabarito);
+    if (!todosOk) { mostrarAlertaManualErr('Preencha enunciado e gabarito de todos os itens.'); return; }
+    if (!texto_base) { mostrarAlertaManualErr('O texto-base é obrigatório para questões PAS.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Salvando...';
+
+    try {
+      const { error } = await sb.from('questoes_banco').insert({
+        origem: 'manual',
+        disciplina: disc,
+        tema,
+        subtema: null,
+        tipo: 'PAS',
+        nivel,
+        enunciado: null,
+        texto_base,
+        alternativas: { pas_itens: pasItens.map(item => {
+          const base = { tipo: item.tipo, enunciado: item.enunciado, gabarito: item.gabarito };
+          if (item.tipo === 'C') base.alternativas = item.alternativas || {};
+          return base;
+        })},
+        gabarito: null,
+        explicacao: '',
+        steps: null,
+        elementos_visuais: null,
+        status: 'pendente',
+        gerada_para: null,
+      });
+      if (error) throw error;
+
+      mostrarAlertaManualOk('Questão PAS salva com sucesso no banco (pendente de aprovação)!');
+      btn.textContent = '✓ Salvo';
+      btn.classList.add('salvo');
+      document.getElementById('m-status').textContent = '✓ Salvo como pendente';
+      document.getElementById('m-status').className = 'q-status ok';
+      document.getElementById('btnAddOutra').style.display = 'inline-block';
+    } catch (e) {
+      console.error('Erro ao salvar PAS:', e);
+      mostrarAlertaManualErr('Erro ao salvar: ' + (e.message || 'tente novamente'));
+      btn.disabled = false;
+      btn.textContent = 'Salvar como pendente';
+    }
+    return;
+  }
+
+  // Tipos C / A
+  const enunciado = document.getElementById('m-enunciado')?.value?.trim();
   if (!enunciado) { mostrarAlertaManualErr('Preencha o enunciado.'); return; }
   if (!manualGabarito) { document.getElementById('m-gab-aviso')?.classList.add('show'); return; }
 
@@ -875,10 +1174,6 @@ async function salvarManual() {
     });
     if (!ok) { mostrarAlertaManualErr('Preencha todas as 5 alternativas.'); return; }
   }
-
-  let texto_base = null;
-  const tb = document.getElementById('m-textobase')?.value?.trim();
-  if (tb) texto_base = { paragrafos: tb.split('\n').filter(p => p.trim()) };
 
   btn.disabled = true;
   btn.textContent = '⏳ Salvando...';
@@ -925,6 +1220,8 @@ function novaQuestaoManual() {
   document.getElementById('m-enunciado').value = '';
   document.getElementById('m-tipo').value = 'C';
   manualGabarito = null;
+  pasItens = [];
+  pasItemCount = 0;
   renderizarManualAlts();
 
   const btn = document.getElementById('btnSalvarManual');
