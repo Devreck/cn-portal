@@ -116,6 +116,32 @@ const SCHEMA_QUESTAO_A = `
   "explicacao": "string explicando por que é certo ou errado, destacando a pegadinha conceitual"
 }`;
 
+// ── PROMPT COMPARTILHADO: EXTRAÇÃO DE QUESTÕES ─────────────
+const PROMPT_EXTRACAO_QUESTOES = `Para cada questão retorne um objeto JSON com esta estrutura exata:
+{
+  "numero": <int — número da questão no arquivo>,
+  "tipo": "A" | "C",
+  "disciplina": "bio" | "quim" | "fis" | "inter",
+  "tema": "<tema principal inferido do conteúdo>",
+  "subtema": "<subtema ou null>",
+  "nivel": "basico" | "intermediario" | "avancado",
+  "texto_base": { "paragrafos": ["<parágrafo 1>", "..."] } | null,
+  "enunciado": "<enunciado completo>",
+  "alternativas": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." } | null,
+  "gabarito": "<letra A-E, CERTO, ERRADO, ou null se não estiver no arquivo>",
+  "explicacao": ""
+}
+
+REGRAS CRÍTICAS:
+1. Extraia TODAS as questões sem pular nenhuma
+2. Tipo A = afirmativa para julgar CERTO/ERRADO; Tipo C = múltipla escolha com letras A–E
+3. Converta toda matemática para LaTeX: inline \\(...\\), bloco \\[...\\]
+4. Se o gabarito não aparecer, use null — o professor irá preencher
+5. Texto introdutório compartilhado por várias questões: inclua em texto_base de cada uma
+6. Preserve o texto exatamente como está; não resuma nem reescreva
+7. Disciplina: bio=biologia/genética, quim=química/eletroquímica, fis=física/elétrica, inter=interdisciplinar
+8. Responda APENAS com JSON: { "questoes": [...], "total": <N> }`;
+
 // ── HANDLER PRINCIPAL ───────────────────────────────────────
 Deno.serve(async (req) => {
   // CORS preflight
@@ -295,47 +321,43 @@ Responda agora com UM JSON completo e válido, sem markdown, sem texto fora do J
   return json({ error: 'IA não retornou JSON válido', raw: ultimoResultado }, 422);
 }
 
-// ── FUNÇÃO 2: EXTRAIR QUESTÕES DE PDF ───────────────────────
+// ── FUNÇÃO 2: EXTRAIR QUESTÕES DE PDF / MD ──────────────────
 async function extrairQuestoesPDF(key: string, dados: any) {
-  const { pdf_base64 } = dados;
-  if (!pdf_base64) return json({ error: 'PDF não enviado' }, 400);
+  const { pdf_base64, md_texto } = dados;
+  if (!pdf_base64 && !md_texto) return json({ error: 'Nenhum arquivo enviado' }, 400);
 
-  // Verificar tamanho aproximado (base64 ~33% maior que o binário)
-  const tamanhoMB = (pdf_base64.length * 3 / 4) / (1024 * 1024);
-  if (tamanhoMB > 18) {
-    return json({ error: `PDF muito grande para processamento inline (${tamanhoMB.toFixed(1)} MB). Limite: 18 MB.` }, 400);
+  const isMD = !!md_texto;
+
+  // Verificar tamanho do PDF
+  if (pdf_base64) {
+    const tamanhoMB = (pdf_base64.length * 3 / 4) / (1024 * 1024);
+    if (tamanhoMB > 18) {
+      return json({ error: `PDF muito grande (${tamanhoMB.toFixed(1)} MB). Limite: 18 MB.` }, 400);
+    }
   }
 
-  // Usar modelo com suporte explícito a PDF via inlineData
+  // Para MD: usar chamarGemini (texto puro, sem inlineData)
+  if (isMD) {
+    const prompt = `Analise o conteúdo Markdown abaixo de uma prova de Ciências da Natureza e extraia TODAS as questões.
+
+CONTEÚDO DO ARQUIVO:
+\`\`\`
+${md_texto}
+\`\`\`
+
+${PROMPT_EXTRACAO_QUESTOES}`;
+
+    const texto = await chamarGemini(key, prompt, 2, 8192, true, 0.1);
+    const resultado = parsearJSON(texto);
+    if (!resultado?.questoes) throw new Error('Estrutura JSON inválida');
+    return json({ sucesso: true, questoes: resultado.questoes, total: resultado.questoes.length });
+  }
+
+  // Para PDF: usar inlineData com gemini-1.5-flash
   const PDF_MODEL = 'gemini-1.5-flash';
   const PDF_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${PDF_MODEL}:generateContent`;
 
-  const prompt = `Analise este PDF de prova de Ciências da Natureza e extraia TODAS as questões.
-
-Para cada questão retorne um objeto JSON com esta estrutura exata:
-{
-  "numero": <int — número da questão no PDF>,
-  "tipo": "A" | "C",
-  "disciplina": "bio" | "quim" | "fis" | "inter",
-  "tema": "<tema principal inferido do conteúdo>",
-  "subtema": "<subtema ou null>",
-  "nivel": "basico" | "intermediario" | "avancado",
-  "texto_base": { "paragrafos": ["<parágrafo 1>", "..."] } | null,
-  "enunciado": "<enunciado completo>",
-  "alternativas": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." } | null,
-  "gabarito": "<letra A-E, CERTO, ERRADO, ou null se não estiver no PDF>",
-  "explicacao": ""
-}
-
-REGRAS CRÍTICAS:
-1. Extraia TODAS as questões sem pular nenhuma
-2. Tipo A = afirmativa para julgar CERTO/ERRADO; Tipo C = múltipla escolha com letras A–E
-3. Converta toda matemática para LaTeX: inline \\(...\\), bloco \\[...\\]
-4. Se o gabarito não aparecer no PDF, use null — o professor irá preencher
-5. Texto introdutório compartilhado por várias questões: inclua em texto_base de cada uma
-6. Preserve o texto exatamente como está na prova; não resuma nem reescreva
-7. Disciplina: bio=biologia/genética, quim=química/eletroquímica, fis=física/elétrica, inter=interdisciplinar
-8. Responda APENAS com JSON: { "questoes": [...], "total": <N> }`;
+  const prompt = `Analise este PDF de prova de Ciências da Natureza e extraia TODAS as questões.\n\n${PROMPT_EXTRACAO_QUESTOES}`;
 
   let ultimoErro = '';
 

@@ -184,11 +184,11 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 
     <!-- UPLOAD -->
     <div class="upload-zone" id="uploadZone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-      <input type="file" id="filePdf" accept="application/pdf" onchange="onFileChange(event)">
+      <input type="file" id="filePdf" accept="application/pdf,.md,text/markdown" onchange="onFileChange(event)">
       <div class="upload-icon">📋</div>
-      <div class="upload-title">Arraste o PDF aqui ou clique para selecionar</div>
-      <div class="upload-sub">A IA lerá o PDF completo e identificará cada questão,<br>tipo, alternativas, gabarito e disciplina automaticamente.</div>
-      <span class="upload-limit">Máximo 15 MB · somente PDF</span>
+      <div class="upload-title">Arraste o arquivo aqui ou clique para selecionar</div>
+      <div class="upload-sub">A IA lerá o arquivo e identificará cada questão,<br>tipo, alternativas, gabarito e disciplina automaticamente.</div>
+      <span class="upload-limit">PDF até 15 MB · Markdown (.md) até 2 MB</span>
     </div>
 
     <!-- PROCESSANDO -->
@@ -335,15 +335,23 @@ function onFileChange(e) {
 }
 
 // ── PROCESSAR ARQUIVO ─────────────────────────────────────────
+function ehPDF(file) {
+  return file.type === 'application/pdf' || file.name.endsWith('.pdf');
+}
+function ehMD(file) {
+  return file.type === 'text/markdown' || file.name.endsWith('.md');
+}
+
 async function processarArquivo(file) {
   esconderAlerta();
 
-  if (file.type !== 'application/pdf') {
-    mostrarAlerta('Apenas arquivos PDF são aceitos.');
+  if (!ehPDF(file) && !ehMD(file)) {
+    mostrarAlerta('Apenas arquivos PDF ou Markdown (.md) são aceitos.');
     return;
   }
-  if (file.size > 15 * 1024 * 1024) {
-    mostrarAlerta('O arquivo excede o limite de 15 MB.');
+  const limiteBytes = ehPDF(file) ? 15 * 1024 * 1024 : 2 * 1024 * 1024;
+  if (file.size > limiteBytes) {
+    mostrarAlerta(`O arquivo excede o limite de ${ehPDF(file) ? '15 MB' : '2 MB'}.`);
     return;
   }
 
@@ -353,11 +361,18 @@ async function processarArquivo(file) {
   document.getElementById('questoesGrid').innerHTML = '';
   document.getElementById('processando').style.display = 'block';
 
-  atualizarEtapa('Lendo arquivo PDF...', 15);
+  atualizarEtapa(`Lendo arquivo ${ehPDF(file) ? 'PDF' : 'Markdown'}...`, 15);
 
   try {
-    // Converter para base64
-    const base64 = await fileParaBase64(file);
+    let body;
+    if (ehPDF(file)) {
+      const base64 = await fileParaBase64(file);
+      body = { funcao: 'extrair_questoes_pdf', dados: { pdf_base64: base64 } };
+    } else {
+      const texto = await fileParaTexto(file);
+      body = { funcao: 'extrair_questoes_pdf', dados: { md_texto: texto } };
+    }
+
     atualizarEtapa('Enviando para análise da IA...', 35);
 
     // Iniciar animação de progresso enquanto aguarda
@@ -368,9 +383,7 @@ async function processarArquivo(file) {
       [92, 'Finalizando estruturação...'],
     ]);
 
-    const resp = await sb.functions.invoke('gemini', {
-      body: { funcao: 'extrair_questoes_pdf', dados: { pdf_base64: base64 } },
-    });
+    const resp = await sb.functions.invoke('gemini', { body });
 
     clearTimeout(animTimer);
     atualizarEtapa('Concluído!', 100);
@@ -399,12 +412,18 @@ async function processarArquivo(file) {
 function fileParaBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = e => {
-      const dataUrl = e.target.result;
-      resolve(dataUrl.split(',')[1]); // remove "data:application/pdf;base64,"
-    };
+    reader.onload = e => resolve(e.target.result.split(',')[1]);
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+function fileParaTexto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsText(file, 'UTF-8');
   });
 }
 
