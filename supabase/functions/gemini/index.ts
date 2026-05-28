@@ -175,6 +175,70 @@ REGRAS FINAIS:
 5. Responda APENAS com JSON válido: { "questoes": [...], "total": <N> }
    Sem texto antes ou depois, sem markdown.`;
 
+const PROMPT_EXTRACAO_PAS = `
+Você está analisando uma prova no formato PAS (Programa de Avaliação Seriada — CEBRASPE/UnB).
+
+═══════════════════════════════════
+ESTRUTURA DO PAS
+═══════════════════════════════════
+Layout em 2 COLUNAS. Dividido em PARTES e SEÇÕES por disciplina.
+Cada seção tem BLOCOS: um texto-base + seus itens numerados.
+• Texto-base: título em negrito/caixa + parágrafos, tabelas ou imagens
+• Itens numerados sequencialmente (1, 2, 3... até o final da prova)
+• Instruções do bloco: "julgue os itens X a Y e assinale a opção correta no item Z, que é do tipo C"
+
+TIPOS DE ITEM:
+• Tipo A ("julgue"): afirmação para julgar CERTO/ERRADO — sem alternativas
+• Tipo C (dito explicitamente "tipo C"): EXATAMENTE 4 alternativas Ⓐ Ⓑ Ⓒ Ⓓ = A B C D
+• Tipo B (dito explicitamente "tipo B"): resposta numérica — caixa em branco
+• Tipo D (dito explicitamente "tipo D"): resposta dissertativa — linhas em branco
+
+═══════════════════════════════════
+REGRA CRÍTICA: AGRUPAMENTO
+═══════════════════════════════════
+Cada BLOCO (1 texto-base + seus itens) = 1 entrada no JSON com tipo "PAS".
+NÃO crie uma entrada por item — crie UMA entrada por bloco/texto-base.
+
+═══════════════════════════════════
+SCHEMA JSON — uma entrada por bloco
+═══════════════════════════════════
+{
+  "numero": <número do PRIMEIRO item do bloco — int>,
+  "tipo": "PAS",
+  "disciplina": "bio" | "quim" | "fis" | "matematica" | "linguagens" | "humanas" | "inter",
+  "tema": "<tema principal do texto-base>",
+  "nivel": "basico" | "intermediario" | "avancado",
+  "texto_base": {
+    "titulo": "<título do texto-base ou null>",
+    "paragrafos": ["<parágrafo 1>", "..."]
+  },
+  "enunciado": null,
+  "alternativas": {
+    "pas_itens": [
+      {
+        "numero": <número do item — int>,
+        "tipo": "A" | "C" | "B" | "D",
+        "enunciado": "<texto completo do item>",
+        "alternativas": { "A": "...", "B": "...", "C": "...", "D": "..." } | null,
+        "gabarito": null
+      }
+    ]
+  },
+  "gabarito": null,
+  "explicacao": ""
+}
+
+═══════════════════════════════════
+INSTRUÇÕES ADICIONAIS
+═══════════════════════════════════
+1. Extraia TODOS os blocos de TODAS as partes/disciplinas
+2. Para figuras/imagens: [Figura: descrição breve]
+3. Para tabelas: extraia o conteúdo estruturado em texto
+4. Equações e fórmulas: LaTeX inline \\(...\\), bloco \\[...\\]
+5. Tipo B/D: extraia o enunciado, gabarito: null
+6. O gabarito NUNCA aparece na prova — sempre null
+7. Responda APENAS com JSON: { "questoes": [...], "total": <N> }`;
+
 // ── HANDLER PRINCIPAL ───────────────────────────────────────
 Deno.serve(async (req) => {
   // CORS preflight
@@ -361,6 +425,9 @@ async function extrairQuestoesPDF(key: string, dados: any) {
 
   const isMD = !!md_texto;
 
+  const formato = dados.formato || 'auto'; // 'pas' | 'enem' | 'auto'
+  const promptExtracao = formato === 'pas' ? PROMPT_EXTRACAO_PAS : PROMPT_EXTRACAO_QUESTOES;
+
   // Verificar tamanho do PDF
   if (pdf_base64) {
     const tamanhoMB = (pdf_base64.length * 3 / 4) / (1024 * 1024);
@@ -371,7 +438,7 @@ async function extrairQuestoesPDF(key: string, dados: any) {
 
   // Para MD: usar chamarGemini (texto puro, sem inlineData)
   if (isMD) {
-    const prompt = `Analise o conteúdo Markdown abaixo de uma prova de Ciências da Natureza e extraia TODAS as questões.\n\nCONTEÚDO DO ARQUIVO:\n\`\`\`\n${md_texto}\n\`\`\`\n\n${PROMPT_EXTRACAO_QUESTOES}`;
+    const prompt = `Analise o conteúdo Markdown abaixo de uma prova de Ciências da Natureza e extraia TODAS as questões.\n\nCONTEÚDO DO ARQUIVO:\n\`\`\`\n${md_texto}\n\`\`\`\n\n${promptExtracao}`;
 
     const texto = await chamarGemini(key, prompt, 2, 8192, true, 0.1);
     const resultado = parsearJSON(texto);
@@ -383,7 +450,7 @@ async function extrairQuestoesPDF(key: string, dados: any) {
   const PDF_MODEL = 'gemini-1.5-flash';
   const PDF_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${PDF_MODEL}:generateContent`;
 
-  const prompt = `Analise este PDF de prova de Ciências da Natureza e extraia TODAS as questões.\n\n${PROMPT_EXTRACAO_QUESTOES}`;
+  const prompt = `Analise este PDF de prova de Ciências da Natureza e extraia TODAS as questões.\n\n${promptExtracao}`;
 
   let ultimoErro = '';
 

@@ -161,6 +161,23 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 .pas-digit-select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface3);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;outline:none;cursor:pointer;text-align:center;width:70px}
 .pas-digit-select:focus{border-color:rgba(201,168,76,0.4)}
 
+/* PAS CARD */
+.pas-card-preview{background:rgba(255,255,255,0.02);border-left:3px solid var(--ouro);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:var(--text-muted);line-height:1.65;margin-bottom:14px}
+.pas-card-preview strong{color:var(--text);display:block;margin-bottom:4px;font-size:13px}
+.pas-itens-lista{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.pas-item-preview{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-muted);line-height:1.5}
+.pas-item-num{min-width:28px;font-weight:700;color:var(--text-muted)}
+.pas-tipo-badge{padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.pas-tipo-A{background:rgba(59,130,246,0.15);color:#93c5fd}
+.pas-tipo-C{background:rgba(201,168,76,0.15);color:var(--ouro)}
+.pas-tipo-B{background:rgba(168,85,247,0.15);color:#d8b4fe}
+.pas-tipo-D{background:rgba(34,197,94,0.15);color:#86efac}
+.pas-summary{font-size:11px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+/* FORMAT SELECTOR */
+.fmt-selector{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.fmt-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.fmt-btn:hover{border-color:rgba(201,168,76,0.3);color:var(--ouro)}
+.fmt-btn.ativo{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.1);color:var(--ouro)}
 @media(max-width:600px){main{padding:20px 12px 60px}.form-row{flex-direction:column}.q-card-header{flex-direction:column;align-items:flex-start}.manual-row{flex-direction:column}}
 </style>
 <link rel="stylesheet" href="css/ds.css">
@@ -205,6 +222,11 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
       <div class="upload-title">Arraste o arquivo aqui ou clique para selecionar</div>
       <div class="upload-sub">A IA lerá o arquivo e identificará cada questão,<br>tipo, alternativas, gabarito e disciplina automaticamente.</div>
       <span class="upload-limit">PDF até 15 MB · Markdown (.md) até 2 MB</span>
+      <div class="fmt-selector" onclick="event.stopPropagation()">
+        <button class="fmt-btn ativo" id="fmt-auto" onclick="setFormato('auto')">🔍 Auto-detectar</button>
+        <button class="fmt-btn" id="fmt-enem"  onclick="setFormato('enem')">📄 ENEM/Vestibular</button>
+        <button class="fmt-btn" id="fmt-pas"   onclick="setFormato('pas')">🎓 PAS/UnB</button>
+      </div>
     </div>
 
     <!-- PROCESSANDO -->
@@ -302,6 +324,14 @@ const sb = CN_CONFIG.createSupabaseClient();
 let userAtual = null;
 let questoesExtraidas = [];
 let salvasCount = 0;
+let formatoAtual = 'auto';
+
+function setFormato(fmt) {
+  formatoAtual = fmt;
+  ['auto','enem','pas'].forEach(f => {
+    document.getElementById('fmt-' + f)?.classList.toggle('ativo', f === fmt);
+  });
+}
 
 const DISC_LABEL = { bio:'🧬 Biologia', quim:'⚗️ Química', fis:'⚡ Física', inter:'🔬 Inter.' };
 const NIVEL_LABEL = { basico:'Fácil', intermediario:'Intermediário', avancado:'Difícil' };
@@ -385,10 +415,10 @@ async function processarArquivo(file) {
     let body;
     if (ehPDF(file)) {
       const base64 = await fileParaBase64(file);
-      body = { funcao: 'extrair_questoes_pdf', dados: { pdf_base64: base64 } };
+      body = { funcao: 'extrair_questoes_pdf', dados: { pdf_base64: base64, formato: formatoAtual } };
     } else {
       const texto = await fileParaTexto(file);
-      body = { funcao: 'extrair_questoes_pdf', dados: { md_texto: texto } };
+      body = { funcao: 'extrair_questoes_pdf', dados: { md_texto: texto, formato: formatoAtual } };
     }
 
     atualizarEtapa('Enviando para análise da IA...', 35);
@@ -472,7 +502,154 @@ function renderizarQuestoes(questoes) {
   questoes.forEach((q, idx) => grid.appendChild(criarCard(q, idx)));
 }
 
+function criarCardPAS(q, idx) {
+  const card = document.createElement('div');
+  card.className = 'q-card';
+  card.id = `card-${idx}`;
+
+  const disc = q.disciplina || 'inter';
+  const discLabel = DISC_LABEL[disc] || disc;
+  const pasItens = q.alternativas?.pas_itens || [];
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'q-card-header';
+  header.innerHTML = `
+    <span class="q-num">PAS · ${q.numero || idx + 1}</span>
+    <span style="font-size:12px;color:var(--text-muted)">${discLabel}</span>
+    <div class="q-card-selects" style="margin-left:auto">
+      <select class="q-select" id="disc-${idx}">
+        <option value="bio" ${disc==='bio'?'selected':''}>🧬 Biologia</option>
+        <option value="quim" ${disc==='quim'?'selected':''}>⚗️ Química</option>
+        <option value="fis" ${disc==='fis'?'selected':''}>⚡ Física</option>
+        <option value="inter" ${disc==='inter'||!['bio','quim','fis'].includes(disc)?'selected':''}>🔬 Inter.</option>
+        <option value="matematica" ${disc==='matematica'?'selected':''}>📐 Mat.</option>
+        <option value="linguagens" ${disc==='linguagens'?'selected':''}>📝 Ling.</option>
+        <option value="humanas" ${disc==='humanas'?'selected':''}>📚 Hum.</option>
+      </select>
+      <select class="q-select" id="nivel-${idx}">
+        <option value="basico" ${q.nivel==='basico'?'selected':''}>Fácil</option>
+        <option value="intermediario" ${q.nivel==='intermediario'||!q.nivel?'selected':''}>Intermediário</option>
+        <option value="avancado" ${q.nivel==='avancado'?'selected':''}>Difícil</option>
+      </select>
+    </div>`;
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'q-card-body';
+
+  // Tema
+  body.innerHTML = `
+    <span class="field-label">Tema</span>
+    <input class="field-input" id="tema-${idx}" value="${escapar(q.tema || '')}" placeholder="Tema principal">`;
+
+  // Texto base preview
+  const tb = q.texto_base;
+  const tbTitulo = tb?.titulo || '';
+  const tbTexto = (tb?.paragrafos || []).join(' ').slice(0, 200);
+  body.innerHTML += `
+    <div class="pas-card-preview" style="margin-top:12px">
+      ${tbTitulo ? `<strong>${escapar(tbTitulo)}</strong>` : ''}
+      <span>${escapar(tbTexto)}${tbTexto.length >= 200 ? '...' : ''}</span>
+    </div>`;
+
+  // Lista de itens
+  const contA = pasItens.filter(i => i.tipo === 'A').length;
+  const contC = pasItens.filter(i => i.tipo === 'C').length;
+  const contB = pasItens.filter(i => i.tipo === 'B').length;
+  const contD = pasItens.filter(i => i.tipo === 'D').length;
+
+  let itensHtml = `<span class="field-label">Itens (${pasItens.length})</span><div class="pas-itens-lista">`;
+  pasItens.forEach(item => {
+    const enuncPreview = (item.enunciado || '').slice(0, 120);
+    itensHtml += `
+      <div class="pas-item-preview">
+        <span class="pas-item-num">${item.numero || '?'}</span>
+        <span class="pas-tipo-badge pas-tipo-${item.tipo}">${item.tipo}</span>
+        <span>${escapar(enuncPreview)}${enuncPreview.length >= 120 ? '...' : ''}</span>
+      </div>`;
+  });
+  itensHtml += `</div>`;
+  itensHtml += `<div class="pas-summary">`;
+  if (contA) itensHtml += `<span style="margin-right:10px">Tipo A: ${contA}</span>`;
+  if (contC) itensHtml += `<span style="margin-right:10px">Tipo C: ${contC}</span>`;
+  if (contB) itensHtml += `<span style="margin-right:10px">Tipo B: ${contB}</span>`;
+  if (contD) itensHtml += `<span style="margin-right:10px">Tipo D: ${contD}</span>`;
+  itensHtml += `<span style="color:var(--amber)">⚠️ Gabariots preenchidos na Fila de Revisão</span></div>`;
+  body.innerHTML += itensHtml;
+
+  card.appendChild(header);
+  card.appendChild(body);
+
+  // Footer — PAS pode sempre ser salvo (gabarito null é esperado)
+  const footer = document.createElement('div');
+  footer.className = 'q-card-footer';
+  footer.innerHTML = `
+    <span class="q-status" id="status-${idx}">${pasItens.length} itens prontos para salvar</span>
+    <button class="btn-salvar-q" id="btn-${idx}" onclick="salvarQuestaoPAS(${idx})">
+      Salvar como pendente
+    </button>`;
+  card.appendChild(footer);
+
+  return card;
+}
+
+async function salvarQuestaoPAS(idx) {
+  const btn   = document.getElementById(`btn-${idx}`);
+  const card  = document.getElementById(`card-${idx}`);
+  const status = document.getElementById(`status-${idx}`);
+  if (!btn || btn.classList.contains('salvo')) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvando...';
+
+  try {
+    const q      = questoesExtraidas[idx];
+    const disc   = document.getElementById(`disc-${idx}`)?.value || q.disciplina || 'inter';
+    const nivel  = document.getElementById(`nivel-${idx}`)?.value || q.nivel || 'intermediario';
+    const tema   = document.getElementById(`tema-${idx}`)?.value?.trim() || q.tema || 'Sem tema';
+
+    const { error } = await sb.from('questoes_banco').insert({
+      origem:     'manual',
+      disciplina: disc,
+      tema,
+      subtema:    null,
+      tipo:       'PAS',
+      nivel,
+      enunciado:  null,
+      texto_base: q.texto_base,
+      alternativas: q.alternativas,
+      gabarito:   null,
+      explicacao: '',
+      steps:      null,
+      elementos_visuais: null,
+      status:     'pendente',
+      gerada_para: null,
+    });
+    if (error) throw error;
+
+    btn.textContent = '✓ Salvo';
+    btn.classList.add('salvo');
+    btn.disabled = true;
+    card.classList.add('salvo');
+    status.textContent = '✓ Salvo como pendente';
+    status.className = 'q-status ok';
+    salvasCount++;
+    document.getElementById('resSalvas').textContent = salvasCount;
+
+  } catch (e) {
+    console.error('Erro ao salvar PAS:', e);
+    btn.textContent = '✕ Erro';
+    btn.disabled = false;
+    status.textContent = 'Falha ao salvar';
+    status.className = 'q-status err';
+    card.classList.add('erro-card');
+  }
+}
+
 function criarCard(q, idx) {
+  if (q.tipo === 'PAS') return criarCardPAS(q, idx);
+
   const card = document.createElement('div');
   card.className = 'q-card';
   card.id = `card-${idx}`;
