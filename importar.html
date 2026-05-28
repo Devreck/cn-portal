@@ -8,6 +8,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      packages: {'[+]': ['amsmath', 'amssymb', 'mhchem']}
+    },
+    svg: { fontCache: 'global' },
+    options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 <style>
 :root{
   --bg:#02060f;--surface:#080e1a;--surface2:#0d1526;--surface3:#111d35;
@@ -203,6 +215,12 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 .tipo-pas-a,.tipo-pas-c,.tipo-pas-b,.tipo-pas-d{padding-left:22px;border-left:3px solid transparent}
 .upload-zone-sm{padding:24px 20px}
 .upload-zone-sm .upload-title{font-size:14px}
+/* IMAGE PASTE */
+.img-previews{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.img-thumb{position:relative;width:72px;height:56px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface2);flex-shrink:0}
+.img-thumb img{width:100%;height:100%;object-fit:cover}
+.img-thumb-remove{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;padding:1px 5px;line-height:1.5}
+.img-paste-hint{font-size:11px;color:var(--text-muted);margin-top:4px;opacity:0.6}
 @media(max-width:600px){main{padding:20px 12px 60px}.form-row{flex-direction:column}.q-card-header{flex-direction:column;align-items:flex-start}.manual-row{flex-direction:column}.planilha-tipo-row{grid-template-columns:120px 1fr;}.planilha-tipo-row>:last-child{display:none}}
 </style>
 <link rel="stylesheet" href="css/ds.css">
@@ -325,10 +343,13 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 
         <span class="field-label" style="margin-top:10px;display:block">Texto-base / Contexto <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></span>
         <textarea class="field-textarea" id="m-textobase" rows="3" placeholder="Texto introdutório compartilhado, tabela descrita em texto, enunciado de situação-problema..."></textarea>
+        <div id="preview-m-textobase" class="img-previews"></div>
 
         <div id="m-enunciado-wrap">
         <span class="field-label" style="margin-top:14px;display:block">Enunciado</span>
         <textarea class="field-textarea" id="m-enunciado" rows="4" placeholder="Digite o enunciado completo da questão..."></textarea>
+        <div id="preview-m-enunciado" class="img-previews"></div>
+        <span class="img-paste-hint">💡 Cole uma imagem com Ctrl+V em qualquer campo de texto</span>
         </div>
 
         <!-- Container dinâmico: alternativas + gabarito -->
@@ -720,7 +741,7 @@ function criarCardPAS(q, idx) {
   body.innerHTML += `
     <div class="pas-card-preview" style="margin-top:12px">
       ${tbTitulo ? `<strong>${escapar(tbTitulo)}</strong>` : ''}
-      <span>${escapar(tbTexto)}${tbTexto.length >= 200 ? '...' : ''}</span>
+      <span>${renderText(tbTexto)}${tbTexto.length >= 200 ? '...' : ''}</span>
     </div>`;
 
   // Lista de itens
@@ -736,7 +757,7 @@ function criarCardPAS(q, idx) {
       <div class="pas-item-preview">
         <span class="pas-item-num">${item.numero || '?'}</span>
         <span class="pas-tipo-badge pas-tipo-${item.tipo}">${item.tipo}</span>
-        <span>${escapar(enuncPreview)}${enuncPreview.length >= 120 ? '...' : ''}</span>
+        <span>${renderText(enuncPreview)}${enuncPreview.length >= 120 ? '...' : ''}</span>
       </div>`;
   });
   itensHtml += `</div>`;
@@ -761,6 +782,7 @@ function criarCardPAS(q, idx) {
     </button>`;
   card.appendChild(footer);
 
+  typeset(card);
   return card;
 }
 
@@ -894,6 +916,7 @@ function criarCard(q, idx) {
   // Renderizar alternativas/gabarito conforme tipo
   renderizarAlternativas(idx, q);
 
+  typeset(card);
   return card;
 }
 
@@ -955,6 +978,7 @@ function renderizarAlternativas(idx, q) {
 
   // Atualizar estado do botão
   atualizarBotaoSalvar(idx, gabAtual);
+  typeset(container);
 }
 
 function onTipoChange(idx) {
@@ -1179,7 +1203,8 @@ function renderizarManualAlts() {
         <div class="alt-row" id="m-altrow-${l}">
           <div class="alt-letra-badge">${l}</div>
           <textarea id="m-alt-${l}" rows="2" placeholder="Alternativa ${l}"></textarea>
-        </div>`;
+        </div>
+        <div id="preview-m-alt-${l}" class="img-previews"></div>`;
     });
     html += `</div>`;
     html += `<div class="gab-section">
@@ -1261,10 +1286,11 @@ function renderizarPASItem(idx) {
       camposDinamicos += `
         <div class="alt-row ${isGab ? 'is-gab' : ''}" id="pas-altrow-${idx}-${l}">
           <div class="alt-letra-badge">${l}</div>
-          <textarea rows="2" placeholder="Alternativa ${l}"
+          <textarea id="pas-alt-${idx}-${l}" rows="2" placeholder="Alternativa ${l}"
             oninput="pasItens[${idx}].alternativas = pasItens[${idx}].alternativas||{}; pasItens[${idx}].alternativas['${l}']=this.value"
           >${escapar(alts[l] || '')}</textarea>
-        </div>`;
+        </div>
+        <div id="preview-pas-alt-${idx}-${l}" class="img-previews"></div>`;
     });
     camposDinamicos += `</div>
       <span class="field-label" style="margin-top:10px;display:block">Gabarito</span>
@@ -1327,9 +1353,10 @@ function renderizarPASItem(idx) {
       <button class="btn-remover-item" onclick="removerItemPAS(${idx})">✕</button>
     </div>
     <span class="field-label">Enunciado do item</span>
-    <textarea class="field-textarea" rows="3" placeholder="Enunciado do item ${n}..."
+    <textarea class="field-textarea" id="pas-enunc-${idx}" rows="3" placeholder="Enunciado do item ${n}..."
       oninput="pasItens[${idx}].enunciado=this.value.trim(); atualizarBotaoManualPAS()"
     >${escapar(item.enunciado || '')}</textarea>
+    <div id="preview-pas-enunc-${idx}" class="img-previews"></div>
     ${camposDinamicos}
   </div>`;
 }
@@ -1613,6 +1640,91 @@ function esconderAlertaManual() {
 function escapar(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+function renderText(str) {
+  const parts = String(str || '').split(/(\[img:[^\]]+\])/g);
+  return parts.map(part => {
+    const m = part.match(/^\[img:([^\]]+)\]$/);
+    if (m) return `<img src="${m[1]}" style="max-width:100%;max-height:280px;border-radius:8px;margin:6px 0;display:block" loading="lazy">`;
+    return escapar(part);
+  }).join('');
+}
+
+function typeset(el) {
+  if (window.MathJax?.typesetPromise) MathJax.typesetPromise([el]).catch(console.warn);
+}
+
+// ── IMAGE UPLOAD ──────────────────────────────────────────────
+async function uploadImagem(file) {
+  const ext = file.type.split('/')[1]?.replace('jpeg','jpg') || 'png';
+  const nome = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const { error } = await sb.storage.from('questoes-imagens').upload(nome, file, {
+    contentType: file.type, upsert: false
+  });
+  if (error) {
+    if (error.message?.includes('Bucket not found') || error.statusCode === 400) {
+      throw new Error('Bucket "questoes-imagens" não encontrado. Crie-o em Supabase Storage → New bucket → "questoes-imagens" (público).');
+    }
+    throw new Error(error.message);
+  }
+  const { data } = sb.storage.from('questoes-imagens').getPublicUrl(nome);
+  return data.publicUrl;
+}
+
+async function handleImagePaste(textarea, file) {
+  if (!file) return;
+  const start = textarea.selectionStart, end = textarea.selectionEnd;
+  const before = textarea.value.slice(0, start);
+  const after  = textarea.value.slice(end);
+  const placeholder = '[⏳ enviando...]';
+  textarea.value = before + placeholder + after;
+  textarea.disabled = true;
+  try {
+    const url = await uploadImagem(file);
+    textarea.value = textarea.value.replace(placeholder, `[img:${url}]`);
+    atualizarPreviewImagens(textarea.id);
+  } catch (err) {
+    textarea.value = before + after;
+    mostrarAlertaManualErr(err.message || 'Erro ao enviar imagem.');
+  } finally {
+    textarea.disabled = false;
+    textarea.focus();
+  }
+}
+
+function atualizarPreviewImagens(taId) {
+  const ta = document.getElementById(taId);
+  const container = document.getElementById('preview-' + taId);
+  if (!ta || !container) return;
+  const matches = [...ta.value.matchAll(/\[img:([^\]]+)\]/g)];
+  if (!matches.length) { container.innerHTML = ''; return; }
+  container.innerHTML = matches.map(m =>
+    `<div class="img-thumb">
+       <img src="${m[1]}" alt="imagem">
+       <button class="img-thumb-remove" onclick="removerImagem('${taId}','${m[0].replace(/'/g,"\\'")}')">✕</button>
+     </div>`
+  ).join('');
+}
+
+function removerImagem(taId, placeholder) {
+  const ta = document.getElementById(taId);
+  if (!ta) return;
+  ta.value = ta.value.replace(placeholder, '');
+  atualizarPreviewImagens(taId);
+}
+
+// Global paste listener for manual form textareas
+document.addEventListener('paste', (e) => {
+  const ta = e.target;
+  if (ta.tagName !== 'TEXTAREA') return;
+  const manual = document.getElementById('secao-manual');
+  if (!manual?.contains(ta)) return;
+  const imgItem = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith('image/'));
+  if (!imgItem) return;
+  e.preventDefault();
+  handleImagePaste(ta, imgItem.getAsFile());
+});
+
 function mostrarAlerta(msg) {
   document.getElementById('alertaErroMsg').textContent = msg;
   document.getElementById('alertaErro').classList.add('show');
