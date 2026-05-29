@@ -28,6 +28,7 @@
   };
 </script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script src="https://unpkg.com/mathlive/dist/mathlive.min.js" defer></script>
 <script src="js/engine/visual-renderer.js"></script>
 <!-- Questões -->
 <script src="js/questoes/bio.js"></script>
@@ -298,6 +299,55 @@ mjx-container[display="false"] {
 }
 .modal-step-body mjx-container{color:var(--text) !important}
 .modal-step-body mjx-container[display="true"]{display:block !important;margin:8px auto !important;text-align:center !important}
+
+/* ── EDITOR DE QUESTÃO ─────────────────────────────────────────────────── */
+.modal-editor{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-editor.show{opacity:1;pointer-events:all}
+.modal-editor-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:min(780px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;transform:translateY(16px);transition:transform 0.2s}
+.modal-editor.show .modal-editor-card{transform:translateY(0)}
+.modal-editor-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-editor-header h3{font-size:16px;font-weight:700;color:var(--text)}
+.modal-editor-header button{background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-editor-header button:hover{color:var(--text)}
+.modal-editor-body{padding:20px 24px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
+.modal-editor-footer{padding:16px 24px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:10px;justify-content:flex-end}
+.ed-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.ed-group{display:flex;flex-direction:column;gap:6px}
+.ed-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px}
+.ed-input,.ed-select,.ed-textarea{background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;transition:border .15s;font-family:inherit;width:100%}
+.ed-input:focus,.ed-select:focus,.ed-textarea:focus{border-color:var(--azul-light)}
+.ed-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.ed-textarea-wrap{position:relative}
+.ed-textarea-wrap .ed-sigma{position:absolute;bottom:8px;right:8px;background:var(--surface3);border:1px solid var(--border);color:var(--ouro);border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer;font-weight:700}
+.ed-textarea-wrap .ed-sigma:hover{background:var(--azul-mid);color:#fff}
+.ed-alt-row{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start}
+.ed-alt-letra{width:28px;height:32px;background:var(--surface3);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:5px;flex-shrink:0}
+.ed-gab-btns{display:flex;gap:8px;flex-wrap:wrap}
+.ed-gab-btn{padding:8px 18px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.ed-gab-btn.ativo{border-color:var(--ouro);background:rgba(201,168,76,.15);color:var(--ouro)}
+.ed-status-row{display:flex;gap:8px;flex-wrap:wrap}
+.ed-status-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.ed-status-btn.ativo-pendente{border-color:var(--amber);background:var(--amber-bg);color:var(--amber)}
+.ed-status-btn.ativo-aprovada{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.ed-status-btn.ativo-rejeitada{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.ed-section-title{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.btn-salvar-ed{background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));color:#fff;border:none;border-radius:12px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn-salvar-ed:hover{opacity:.85}
+.btn-cancelar-ed{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);border-radius:12px;padding:10px 20px;font-size:14px;cursor:pointer}
+.btn-cancelar-ed:hover{color:var(--text)}
+.ed-img-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.ed-img-thumb{position:relative}
+.ed-img-thumb img{width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
+.ed-img-thumb button{position:absolute;top:-6px;right:-6px;background:var(--red);border:none;color:#fff;width:18px;height:18px;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* Equation popup (painel) */
+.eq-popup-painel{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.eq-popup-painel.show{opacity:1;pointer-events:all}
+.eq-popup-painel-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:min(520px,94vw);padding:20px;display:flex;flex-direction:column;gap:14px}
+.eq-popup-painel-card math-field{border:1px solid var(--border);border-radius:8px;padding:8px;font-size:18px;background:var(--surface2);color:var(--text);--keyboard-zindex:9200;width:100%;min-height:48px;display:block}
+.eq-preview-painel{min-height:40px;padding:8px;background:var(--surface2);border-radius:8px;text-align:center;font-size:16px}
+.eq-modo-btns-p{display:flex;gap:8px}
+.eq-modo-btn-p{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.eq-modo-btn-p.ativo{border-color:var(--ouro);background:rgba(201,168,76,.12);color:var(--ouro)}
 
 </style>
 <link rel="stylesheet" href="css/ds.css">
@@ -1631,7 +1681,7 @@ async function carregarBancoPendentes() {
         <div class="qp-acoes" style="margin-top:12px">
           <button class="btn-aprovar" onclick="moderarQuestao('${q.id}','aprovada')">✅ Aprovar</button>
           <button class="btn-rejeitar" onclick="moderarQuestao('${q.id}','rejeitada')">❌ Rejeitar</button>
-          <button class="btn-editar" onclick="alert('Editor em breve!')">✏️ Editar</button>
+          <button class="btn-editar" onclick="abrirEditorQuestao('${q.id}')">✏️ Editar</button>
         </div>
       </div>`;
     }).join('');
@@ -2450,6 +2500,349 @@ async function gerarTodosTemas() {
 }
 
 
+// ── EDITOR DE QUESTÃO ────────────────────────────────────────────────────────
+let _edQuestaoId = null;
+let _edTipo      = null;
+let _eqTargetEdP = null;
+let _eqModoP     = 'inline';
+let _eqCurStartP = 0, _eqCurEndP = 0;
+
+async function abrirEditorQuestao(qId) {
+  document.getElementById('edQId').textContent = '#' + qId;
+  _edQuestaoId = qId;
+
+  // Buscar dados frescos do Supabase
+  const { data: q, error } = await sb.from('questoes_banco').select('*').eq('id', qId).single();
+  if (error || !q) { alert('Erro ao carregar questão: ' + (error?.message || '?')); return; }
+
+  _edTipo = q.tipo;
+  const body = document.getElementById('modalEditorBody');
+  body.innerHTML = _edRenderForm(q);
+
+  // Configurar image paste em todos os textareas do editor
+  body.querySelectorAll('textarea[data-ed]').forEach(ta => {
+    ta.addEventListener('paste', e => _edImagePaste(e, ta));
+  });
+
+  // Preview de imagens existentes
+  ['enunciado','explicacao','textobase','alt_A','alt_B','alt_C','alt_D','alt_E'].forEach(id => {
+    const ta = document.getElementById('ed_' + id);
+    if (ta) _edAtualizarImgPreview(id);
+  });
+
+  document.getElementById('modalEditor').classList.add('show');
+  setTimeout(() => renderizarMathPainel(body), 100);
+}
+
+function _edRenderForm(q) {
+  const isC   = q.tipo === 'C';
+  const isA   = q.tipo === 'A';
+  const isPAS = q.tipo === 'PAS';
+
+  const textoBaseVal = Array.isArray(q.texto_base?.paragrafos)
+    ? q.texto_base.paragrafos.join('\n\n')
+    : (q.texto_base?.texto || '');
+
+  const optDisc = ['bio','quim','fis'].map(d =>
+    `<option value="${d}" ${q.disciplina===d?'selected':''}>${d.toUpperCase()}</option>`).join('');
+  const optNivel = ['basico','intermediario','avancado'].map(n =>
+    `<option value="${n}" ${q.nivel===n?'selected':''}>${n.charAt(0).toUpperCase()+n.slice(1)}</option>`).join('');
+
+  const gabBtns = isC
+    ? ['A','B','C','D','E'].map(l => `<button type="button" class="ed-gab-btn${q.gabarito===l?' ativo':''}" onclick="setEdGab('${l}')" id="edGab_${l}">${l}</button>`).join('')
+    : `<button type="button" class="ed-gab-btn${q.gabarito==='CERTO'?' ativo':''}" onclick="setEdGab('CERTO')" id="edGab_CERTO">✅ CERTO</button>
+       <button type="button" class="ed-gab-btn${q.gabarito==='ERRADO'?' ativo':''}" onclick="setEdGab('ERRADO')" id="edGab_ERRADO">❌ ERRADO</button>`;
+
+  const altsHtml = isC ? `
+    <div class="ed-section-title">Alternativas</div>
+    ${['A','B','C','D','E'].map(l => `
+      <div class="ed-alt-row">
+        <div class="ed-alt-letra">${l}</div>
+        <div class="ed-textarea-wrap" style="flex:1">
+          <textarea class="ed-textarea" id="ed_alt_${l}" data-ed="alt_${l}" rows="2"
+            placeholder="Alternativa ${l}...">${_esc(q.alternativas?.[l]||'')}</textarea>
+          <button class="ed-sigma" title="Inserir equação" onclick="abrirEqPainel('ed_alt_${l}')">∑</button>
+        </div>
+      </div>
+      <div class="ed-img-preview" id="ed_img_alt_${l}"></div>
+    `).join('')}
+  ` : '';
+
+  const statusBtns = ['pendente','aprovada','rejeitada'].map(s => {
+    const cls = s === q.status ? ` ativo-${s}` : '';
+    const lbl = s === 'pendente' ? '🕐 Pendente' : s === 'aprovada' ? '✅ Aprovada' : '❌ Rejeitada';
+    return `<button type="button" class="ed-status-btn${cls}" onclick="setEdStatus('${s}')" id="edStatus_${s}">${lbl}</button>`;
+  }).join('');
+
+  return `
+    <input type="hidden" id="ed_tipo" value="${q.tipo}">
+    <input type="hidden" id="ed_gabarito" value="${_esc(q.gabarito||'')}">
+    <input type="hidden" id="ed_status" value="${_esc(q.status||'pendente')}">
+
+    <div class="ed-section-title">Informações gerais</div>
+    <div class="ed-row">
+      <div class="ed-group">
+        <label class="ed-label">Disciplina</label>
+        <select class="ed-select" id="ed_disciplina">${optDisc}</select>
+      </div>
+      <div class="ed-group">
+        <label class="ed-label">Tipo</label>
+        <input class="ed-input" value="${q.tipo}" readonly style="opacity:.6;cursor:default">
+      </div>
+      <div class="ed-group">
+        <label class="ed-label">Nível</label>
+        <select class="ed-select" id="ed_nivel">${optNivel}</select>
+      </div>
+    </div>
+    <div class="ed-group">
+      <label class="ed-label">Tema / Habilidade</label>
+      <input class="ed-input" id="ed_tema" value="${_esc(q.tema||'')}" placeholder="ex: Cinética Química">
+    </div>
+
+    <div class="ed-section-title">Texto-base (opcional)</div>
+    <div class="ed-group">
+      <label class="ed-label">Título do texto-base</label>
+      <input class="ed-input" id="ed_textobase_titulo" value="${_esc(q.texto_base?.titulo||'')}" placeholder="Título do texto-base...">
+    </div>
+    <div class="ed-group">
+      <label class="ed-label">Corpo do texto-base</label>
+      <div class="ed-textarea-wrap">
+        <textarea class="ed-textarea" id="ed_textobase" data-ed="textobase" rows="4"
+          placeholder="Cole ou escreva o texto-base aqui. Ctrl+V para imagens.">${_esc(textoBaseVal)}</textarea>
+        <button class="ed-sigma" title="Inserir equação" onclick="abrirEqPainel('ed_textobase')">∑</button>
+      </div>
+      <div class="ed-img-preview" id="ed_img_textobase"></div>
+    </div>
+
+    <div class="ed-section-title">Enunciado</div>
+    <div class="ed-textarea-wrap">
+      <textarea class="ed-textarea" id="ed_enunciado" data-ed="enunciado" rows="5"
+        placeholder="Escreva o enunciado da questão. Ctrl+V para colar imagens.">${_esc(q.enunciado||'')}</textarea>
+      <button class="ed-sigma" title="Inserir equação" onclick="abrirEqPainel('ed_enunciado')">∑</button>
+    </div>
+    <div class="ed-img-preview" id="ed_img_enunciado"></div>
+
+    ${altsHtml}
+
+    <div class="ed-section-title">Gabarito</div>
+    <div class="ed-gab-btns" id="edGabBtns">${gabBtns}</div>
+
+    <div class="ed-section-title">Explicação / Comentário</div>
+    <div class="ed-textarea-wrap">
+      <textarea class="ed-textarea" id="ed_explicacao" data-ed="explicacao" rows="4"
+        placeholder="Explicação da resposta correta...">${_esc(q.explicacao||'')}</textarea>
+      <button class="ed-sigma" title="Inserir equação" onclick="abrirEqPainel('ed_explicacao')">∑</button>
+    </div>
+    <div class="ed-img-preview" id="ed_img_explicacao"></div>
+
+    <div class="ed-section-title">Status</div>
+    <div class="ed-status-row" id="edStatusBtns">${statusBtns}</div>
+  `;
+}
+
+function _esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setEdGab(val) {
+  document.getElementById('ed_gabarito').value = val;
+  document.querySelectorAll('.ed-gab-btn').forEach(b => b.classList.remove('ativo'));
+  const btn = document.getElementById('edGab_' + val);
+  if (btn) btn.classList.add('ativo');
+}
+
+function setEdStatus(val) {
+  document.getElementById('ed_status').value = val;
+  document.querySelectorAll('.ed-status-btn').forEach(b =>
+    b.className = 'ed-status-btn');
+  const btn = document.getElementById('edStatus_' + val);
+  if (btn) btn.classList.add('ativo-' + val);
+}
+
+function fecharEditorQuestao(e) {
+  if (e && e.target !== document.getElementById('modalEditor')) return;
+  document.getElementById('modalEditor').classList.remove('show');
+  _edQuestaoId = null;
+}
+
+async function salvarEdicaoQuestao() {
+  const btn = document.getElementById('btnSalvarEdicao');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  try {
+    const tipo       = document.getElementById('ed_tipo').value;
+    const disciplina = document.getElementById('ed_disciplina').value;
+    const nivel      = document.getElementById('ed_nivel').value;
+    const tema       = document.getElementById('ed_tema').value.trim();
+    const gabarito   = document.getElementById('ed_gabarito').value;
+    const status     = document.getElementById('ed_status').value;
+    const enunciado  = document.getElementById('ed_enunciado').value.trim();
+    const explicacao = document.getElementById('ed_explicacao').value.trim();
+
+    // Texto-base
+    const tbTitulo = document.getElementById('ed_textobase_titulo').value.trim();
+    const tbCorpo  = document.getElementById('ed_textobase').value.trim();
+    const textBase = (tbTitulo || tbCorpo)
+      ? { titulo: tbTitulo, paragrafos: tbCorpo.split(/\n{2,}/).map(p => p.trim()).filter(Boolean) }
+      : null;
+
+    // Alternativas (só para tipo C)
+    let alternativas = null;
+    if (tipo === 'C') {
+      alternativas = {};
+      ['A','B','C','D','E'].forEach(l => {
+        const ta = document.getElementById('ed_alt_' + l);
+        if (ta) alternativas[l] = ta.value.trim();
+      });
+    }
+
+    if (!enunciado)  { alert('O enunciado não pode estar vazio.'); btn.disabled=false; btn.textContent='💾 Salvar Alterações'; return; }
+    if (!gabarito)   { alert('Selecione o gabarito antes de salvar.'); btn.disabled=false; btn.textContent='💾 Salvar Alterações'; return; }
+
+    const payload = {
+      disciplina, nivel, tema, enunciado, explicacao, gabarito, status,
+      texto_base: textBase,
+      ...(alternativas ? { alternativas } : {}),
+      revisada_por: userAtual?.id ?? null,
+      revisada_em: new Date().toISOString(),
+    };
+
+    const { error } = await sb.from('questoes_banco').update(payload).eq('id', _edQuestaoId);
+    if (error) throw error;
+
+    document.getElementById('modalEditor').classList.remove('show');
+
+    // Atualizar o card na fila de pendentes se estiver lá
+    const card = document.getElementById('qp-' + _edQuestaoId);
+    if (card) {
+      // Se status mudou de pendente, remover da fila
+      if (status !== 'pendente') {
+        card.remove();
+        const restantes = document.querySelectorAll('.questao-pendente').length;
+        document.getElementById('badgePendentes').textContent = restantes;
+        if (restantes === 0) {
+          document.getElementById('filaPendentes').innerHTML =
+            '<div style="text-align:center;color:var(--text-muted);padding:40px;font-size:14px">✅ Nenhuma questão pendente.</div>';
+        }
+      } else {
+        // Recarregar fila para mostrar dados atualizados
+        await carregarBancoPendentes();
+      }
+    }
+
+    _edQuestaoId = null;
+  } catch(e) {
+    alert('Erro ao salvar: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Salvar Alterações';
+  }
+}
+
+// ── Upload de imagem via paste no editor ──
+async function _edImagePaste(e, ta) {
+  const items = Array.from(e.clipboardData?.items || []);
+  const img = items.find(i => i.type.startsWith('image/'));
+  if (!img) return;
+  e.preventDefault();
+
+  const file = img.getAsFile();
+  const ext  = file.type.split('/')[1] || 'png';
+  const path = `ed/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+  try {
+    const { error: upErr } = await sb.storage.from('questoes-imagens').upload(path, file, { contentType: file.type, upsert: false });
+    if (upErr) throw upErr;
+    const { data: urlData } = sb.storage.from('questoes-imagens').getPublicUrl(path);
+    const url = urlData.publicUrl;
+
+    const marker = `[img:${url}]`;
+    const start  = ta.selectionStart;
+    const end    = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + marker + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + marker.length;
+
+    _edAtualizarImgPreview(ta.dataset.ed);
+  } catch(err) {
+    console.warn('Erro ao fazer upload de imagem:', err);
+    alert('Erro no upload da imagem: ' + err.message);
+  }
+}
+
+function _edAtualizarImgPreview(taId) {
+  const ta = document.getElementById('ed_' + taId);
+  const container = document.getElementById('ed_img_' + taId.replace('alt_','alt_'));
+  if (!ta || !container) return;
+  const urls = [...ta.value.matchAll(/\[img:(https?:\/\/[^\]]+)\]/g)].map(m => m[1]);
+  container.innerHTML = urls.map(u => `
+    <div class="ed-img-thumb">
+      <img src="${u}" alt="">
+      <button onclick="_edRemoverImg('${taId}','${u}')" title="Remover imagem">✕</button>
+    </div>
+  `).join('');
+}
+
+function _edRemoverImg(taId, url) {
+  const ta = document.getElementById('ed_' + taId);
+  if (!ta) return;
+  ta.value = ta.value.replace(`[img:${url}]`, '');
+  _edAtualizarImgPreview(taId);
+}
+
+// ── Equation editor (painel) ──
+function abrirEqPainel(targetId) {
+  const ta = document.getElementById(targetId);
+  if (!ta) return;
+  _eqTargetEdP = targetId;
+  _eqCurStartP = ta.selectionStart;
+  _eqCurEndP   = ta.selectionEnd;
+  const sel = ta.value.slice(_eqCurStartP, _eqCurEndP).replace(/^\$+|\$+$/g,'').trim();
+  const mf  = document.getElementById('eqFieldPainel');
+  if (mf) mf.value = sel;
+  document.getElementById('eqPreviewPainel').innerHTML = '';
+  setEqModoPainel('inline');
+  document.getElementById('eqPopupPainel').classList.add('show');
+  setTimeout(() => mf?.focus(), 50);
+  if (mf) mf.addEventListener('input', _eqPreviewPainel, { once: false });
+}
+
+function fecharEqPainel() {
+  document.getElementById('eqPopupPainel').classList.remove('show');
+  const mf = document.getElementById('eqFieldPainel');
+  if (mf) mf.removeEventListener('input', _eqPreviewPainel);
+  _eqTargetEdP = null;
+}
+
+function setEqModoPainel(modo) {
+  _eqModoP = modo;
+  document.getElementById('eqModoInlineP').classList.toggle('ativo', modo === 'inline');
+  document.getElementById('eqModoBlockP').classList.toggle('ativo', modo === 'block');
+}
+
+function _eqPreviewPainel() {
+  const mf  = document.getElementById('eqFieldPainel');
+  const prv = document.getElementById('eqPreviewPainel');
+  if (!mf || !prv) return;
+  const latex = mf.value.trim();
+  prv.innerHTML = _eqModoP === 'block' ? `$$${latex}$$` : `$${latex}$`;
+  if (window.MathJax?.typesetPromise) MathJax.typesetPromise([prv]).catch(()=>{});
+}
+
+function inserirEqPainel() {
+  const mf     = document.getElementById('eqFieldPainel');
+  const ta     = document.getElementById(_eqTargetEdP);
+  if (!mf || !ta) { fecharEqPainel(); return; }
+  const latex  = mf.value.trim();
+  if (!latex)  { fecharEqPainel(); return; }
+  const delim  = _eqModoP === 'block' ? `$$${latex}$$` : `$${latex}$`;
+  ta.value     = ta.value.slice(0, _eqCurStartP) + delim + ta.value.slice(_eqCurEndP);
+  ta.selectionStart = ta.selectionEnd = _eqCurStartP + delim.length;
+  ta.focus();
+  _edAtualizarImgPreview(ta.dataset.ed);
+  fecharEqPainel();
+}
+
 async function excluirBadgeUnica(badgeRowId, imagemUrl) {
   if (!confirm('Remover esta badge do aluno? Essa ação não pode ser desfeita.')) return;
   try {
@@ -2470,6 +2863,43 @@ async function excluirBadgeUnica(badgeRowId, imagemUrl) {
 }
 
 </script>
+
+<!-- ── MODAL EDITOR DE QUESTÃO ── -->
+<div class="modal-editor" id="modalEditor" onclick="fecharEditorQuestao(event)">
+  <div class="modal-editor-card" id="modalEditorCard">
+    <div class="modal-editor-header">
+      <h3>✏️ Editar Questão <span id="edQId" style="font-size:11px;font-weight:400;color:var(--text-muted)"></span></h3>
+      <button onclick="fecharEditorQuestao()">✕</button>
+    </div>
+    <div class="modal-editor-body" id="modalEditorBody">
+      <!-- preenchido por JS -->
+    </div>
+    <div class="modal-editor-footer">
+      <button class="btn-cancelar-ed" onclick="fecharEditorQuestao()">Cancelar</button>
+      <button class="btn-salvar-ed" id="btnSalvarEdicao" onclick="salvarEdicaoQuestao()">💾 Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- Equation popup (painel) -->
+<div class="eq-popup-painel" id="eqPopupPainel">
+  <div class="eq-popup-painel-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-weight:700;font-size:14px">∑ Editor de Equação</span>
+      <button onclick="fecharEqPainel()" style="background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px">✕</button>
+    </div>
+    <div class="eq-modo-btns-p">
+      <button class="eq-modo-btn-p ativo" id="eqModoInlineP" onclick="setEqModoPainel('inline')">Inline  $...$</button>
+      <button class="eq-modo-btn-p" id="eqModoBlockP" onclick="setEqModoPainel('block')">Bloco  $$...$$</button>
+    </div>
+    <math-field id="eqFieldPainel" style="width:100%"></math-field>
+    <div class="eq-preview-painel" id="eqPreviewPainel"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="fecharEqPainel()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">Cancelar</button>
+      <button onclick="inserirEqPainel()" style="background:var(--azul-light);color:#fff;border:none;border-radius:8px;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:700">Inserir</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── MODAL QUESTÃO ── -->
 <div class="modal-questao" id="modalQuestao" onclick="fecharModalQuestao(event)">

@@ -1170,6 +1170,34 @@ function montarMapaQuestoesIA() {
   });
 }
 
+function fmtTxt(txt) {
+  if (!txt) return '';
+  let s = String(txt);
+  // Corrige letras circuladas do ENEM dentro de comandos LaTeX (ex: \Ⓐrac → \frac)
+  s = s.replace(/\\Ⓐrac/g, '\\frac');
+  s = s.replace(/\\([Ⓐ-Ⓩⓐ-ⓩ])([a-z]*)/g, (_, _c, r) => r ? '\\' + r : '');
+  // Se não há nenhum comando LaTeX, retorna sem alterar
+  if (!/\\[a-zA-Z]{2,}/.test(s)) return s;
+  // Sem delimitadores → envolve tudo como bloco inline
+  if (!/[$]|\\[\(\[]/.test(s)) return '$' + s.trim() + '$';
+  // Misto: envolve LaTeX avulso fora dos delimitadores existentes
+  const mathRx = /(\$\$[\s\S]*?\$\$|\$[^\n$]*?\$|\\\([^)]*\\\)|\\\[[\s\S]*?\\\])/g;
+  const partes = []; let ult = 0, mc;
+  while ((mc = mathRx.exec(s)) !== null) {
+    if (mc.index > ult) partes.push([false, s.slice(ult, mc.index)]);
+    partes.push([true, mc[0]]);
+    ult = mc.index + mc[0].length;
+  }
+  if (ult < s.length) partes.push([false, s.slice(ult)]);
+  return partes.map(([eMath, parte]) => {
+    if (eMath) return parte;
+    return parte
+      .replace(/(\\[a-zA-Z]{2,}(?:\{(?:[^{}]|\{[^{}]*\})*\}|[_^]\w+|\s)*)+/g,
+        m => '$' + m.trim() + '$')
+      .replace(/\\ /g, ' ');
+  }).join('');
+}
+
 function textoIA(texto) {
   const seguro = String(texto || '')
     .replace(/&/g, '&amp;')
@@ -1181,7 +1209,7 @@ function textoIA(texto) {
 function setIAOutput(tipo, texto) {
   const out = document.getElementById('iaOutput');
   out.className = `ia-output show ${tipo || ''}`;
-  out.innerHTML = textoIA(texto);
+  out.innerHTML = textoIA(fmtTxt(texto));
   if (window.MathJax?.typesetPromise) {
     MathJax.typesetPromise([out]).catch(e => console.warn('MathJax IA:', e));
   }

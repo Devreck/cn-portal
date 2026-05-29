@@ -585,7 +585,11 @@ REGRAS DE FORMATO:
 - Sem JSON, sem markdown extra além de **negrito**
 `;
 
-  const explicacao = await chamarGemini(key, prompt, 3, 1024, false, 0.75);
+  const explicacaoBruta = await chamarGemini(key, prompt, 3, 1024, false, 0.75);
+  const explicacao = explicacaoBruta
+    .replace(/\s*\(\d+\s*words?\)[^]*$/im, '')
+    .replace(/\\\s*$/, '')
+    .trim();
   return json({ sucesso: true, explicacao });
 }
 
@@ -651,7 +655,12 @@ Máximo 150 palavras. Use exemplos do cotidiano quando possível.
 Use **negrito** para fórmulas e conceitos-chave.
 `;
 
-  const resposta = await chamarGemini(key, prompt);
+  const respostaBruta = await chamarGemini(key, prompt);
+  // Remove Gemini self-annotation artifacts (e.g. "(65 words) * \")
+  const resposta = respostaBruta
+    .replace(/\s*\(\d+\s*words?\)[^]*$/im, '')
+    .replace(/\\\s*$/, '')
+    .trim();
   return json({ sucesso: true, resposta });
 }
 

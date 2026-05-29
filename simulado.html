@@ -507,7 +507,7 @@ function renderizarSimulado() {
             }).join('')}
           </div>
         </div>
-        <div class="texto-corpo">${primeiro.texto_contexto || ''}</div>
+        <div class="texto-corpo">${fmtTxt(primeiro.texto_contexto || '')}</div>
       </div>
     `;
 
@@ -540,6 +540,47 @@ function renderizarSimulado() {
   renderizarMath(container);
 
   atualizarProgresso();
+}
+
+/**
+ * Normaliza texto com LaTeX para renderização correta pelo MathJax.
+ * Corrige artefatos de extração de PDF (letras circulares do ENEM) e
+ * adiciona delimitadores $...$ onde estão faltando.
+ */
+function fmtTxt(txt) {
+  if (!txt) return '';
+  let s = String(txt);
+
+  // 1. Corrigir letras circulares Ⓐ-Ⓩ dentro de comandos LaTeX (artefato de PDF ENEM)
+  //    Ex: \Ⓐrac{1}{2} → \frac{1}{2}
+  s = s.replace(/\\Ⓐrac/g, '\\frac');
+  s = s.replace(/\\([Ⓐ-Ⓩⓐ-ⓩ])([a-z]*)/g, (_, _c, r) => r ? '\\' + r : '');
+
+  // 2. Se não há LaTeX, retornar como está
+  if (!/\\[a-zA-Z]{2,}/.test(s)) return s;
+
+  // 3. Se não há NENHUM delimitador matemático, envolver em $$ ... $$
+  if (!/[$]|\\[\(\[]/.test(s)) return '$$' + s.trim() + '$$';
+
+  // 4. Conteúdo misto (tem delimitadores em partes, mas LaTeX solto em outras):
+  //    Separar seções já delimitadas e envolver LaTeX solto com $...$
+  const mathRx = /(\$\$[\s\S]*?\$\$|\$[^\n$]*?\$|\\\([^)]*\\\)|\\\[[\s\S]*?\\\])/g;
+  const partes = []; let ult = 0, mc;
+  while ((mc = mathRx.exec(s)) !== null) {
+    if (mc.index > ult) partes.push([false, s.slice(ult, mc.index)]);
+    partes.push([true, mc[0]]);
+    ult = mc.index + mc[0].length;
+  }
+  if (ult < s.length) partes.push([false, s.slice(ult)]);
+
+  return partes.map(([eMath, parte]) => {
+    if (eMath) return parte;
+    // Envolver clusters LaTeX soltos em $...$
+    return parte
+      .replace(/(\\[a-zA-Z]{2,}(?:\{(?:[^{}]|\{[^{}]*\})*\}|[_^]\w+|\s)*)+/g,
+        m => '$' + m.trim() + '$')
+      .replace(/\\ /g, ' '); // backslash-espaço fora de math → espaço simples
+  }).join('');
 }
 
 async function renderizarMath(elemento) {
@@ -587,13 +628,13 @@ function htmlQuestaoC(q, num) {
         </div>
       </div>
       ${htmlVisualSimulado(q, num)}
-      <p class="sim-enunciado">${q.enunciado}</p>
+      <p class="sim-enunciado">${fmtTxt(q.enunciado)}</p>
       <div class="sim-alts" id="salts-${q.id}">
         ${alts.map(l => `
           <button class="sim-alt" id="salt-${q.id}-${l}"
             onclick="responderSimC('${q.id}','${l}')">
             <span class="sim-letra">${l}</span>
-            <span>${q.alternativas[l]}</span>
+            <span>${fmtTxt(q.alternativas[l])}</span>
           </button>
         `).join('')}
       </div>
@@ -613,7 +654,7 @@ function htmlQuestaoA(q, num) {
         </div>
       </div>
       ${htmlVisualSimulado(q, num)}
-      <p class="sim-enunciado">${q.enunciado}</p>
+      <p class="sim-enunciado">${fmtTxt(q.enunciado)}</p>
       <div class="sim-ce-btns" id="salts-${q.id}">
         <button class="sim-ce-btn" id="salt-${q.id}-CERTO"
           onclick="responderSimA('${q.id}','CERTO')">Certo</button>
@@ -856,7 +897,7 @@ function verGabarito() {
     // Mostrar explicação
     const correta = r?.correta;
     gab.className = `sim-gabarito show ${correta ? 'acerto' : 'erro'}`;
-    gab.innerHTML = `<strong>${correta ? 'Correto' : `Incorreto — Gabarito: ${q.gabarito}`}</strong><br>${q.explicacao}`;
+    gab.innerHTML = `<strong>${correta ? 'Correto' : `Incorreto — Gabarito: ${q.gabarito}`}</strong><br>${fmtTxt(q.explicacao)}`;
 
     // Atualizar navbar
     marcarRespondida(q.id);
@@ -892,7 +933,7 @@ function revelarGabaritoProfessor() {
     }
 
     gab.className = 'sim-gabarito show acerto';
-    gab.innerHTML = `<strong>Gabarito: ${q.gabarito}</strong><br>${q.explicacao}`;
+    gab.innerHTML = `<strong>Gabarito: ${q.gabarito}</strong><br>${fmtTxt(q.explicacao)}`;
   });
 
   document.querySelectorAll('.nav-sim').forEach(btn => btn.classList.add('correta'));
