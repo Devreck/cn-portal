@@ -1244,16 +1244,24 @@ Antes de responder, verifique internamente:
 `;
 
   let ultimo = '';
+  let ultimoErro = '';
   for (let i = 0; i < 3; i++) {
-    const p = i === 0 ? prompt : `${prompt}\n\nATENÇÃO: Tentativa anterior retornou JSON inválido. Responda APENAS com JSON completo e válido.`;
-    ultimo = await chamarGemini(key, p, 3, 8192, true, 0.65);
-    const resultado = parsearJSON(ultimo);
-    if (resultado?.itens?.length) {
-      return json({ resultado });
+    try {
+      const p = i === 0 ? prompt : `${prompt}\n\nATENÇÃO: Tentativa anterior retornou JSON inválido. Responda APENAS com JSON completo e válido.`;
+      ultimo = await chamarGemini(key, p, 2, 8192, true, 0.65);
+      const resultado = parsearJSON(ultimo);
+      if (resultado?.itens?.length) {
+        return json({ resultado });
+      }
+      ultimoErro = `JSON inválido (tentativa ${i + 1})`;
+    } catch (err: any) {
+      ultimoErro = err.message || 'Erro desconhecido';
+      console.error(`PAS tentativa ${i + 1} falhou:`, ultimoErro);
+      if (i < 2) await new Promise(r => setTimeout(r, 2000 * (i + 1)));
     }
   }
 
-  return json({ error: 'Não foi possível gerar o conjunto PAS após 3 tentativas', detalhe: ultimo.slice(0, 300) }, 500);
+  return json({ error: 'Não foi possível gerar o conjunto PAS após 3 tentativas', detalhe: ultimoErro }, 500);
 }
 
 function json(data: any, status = 200) {

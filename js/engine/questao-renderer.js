@@ -1430,9 +1430,12 @@ const QuestaoRenderer = {
         },
       });
 
-      if (resp.error || resp.data?.error) throw new Error(resp.data?.detalhe || 'Erro na geração PAS');
+      if (resp.error || resp.data?.error) {
+        const detalhe = resp.data?.detalhe || resp.data?.error || resp.error?.message || 'Erro desconhecido';
+        throw new Error(detalhe);
+      }
       const resultado = resp.data?.resultado;
-      if (!resultado?.itens?.length) throw new Error('IA não retornou itens PAS');
+      if (!resultado?.itens?.length) throw new Error('IA não retornou itens PAS válidos');
 
       // Salvar e adicionar cada item
       const itensHtml = [];
@@ -1489,7 +1492,8 @@ const QuestaoRenderer = {
 
     } catch (e) {
       console.error('Erro ao gerar PAS:', e);
-      container.innerHTML = '<div class="ia-erro">❌ Não foi possível gerar o conjunto PAS. Tente novamente.</div>';
+      const msg = e?.message || 'Erro desconhecido';
+      container.innerHTML = `<div class="ia-erro">❌ Não foi possível gerar o conjunto PAS.<br><small style="opacity:.7;font-size:11px">${msg}</small><br><br>Tente novamente.</div>`;
     }
   },
 
