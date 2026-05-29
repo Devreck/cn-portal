@@ -28,7 +28,7 @@
   };
 </script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-<script src="https://unpkg.com/mathlive/dist/mathlive.min.js" defer></script>
+<!-- MathLive removido: editor de equações usa textarea nativa com toolbar visual -->
 <script src="js/engine/visual-renderer.js"></script>
 <!-- Questões -->
 <script src="js/questoes/bio.js"></script>
@@ -349,7 +349,10 @@ mjx-container[display="false"] {
 .eq-popup-painel{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .eq-popup-painel.show{opacity:1;pointer-events:all}
 .eq-popup-painel-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:min(520px,94vw);padding:20px;display:flex;flex-direction:column;gap:14px}
-.eq-popup-painel-card math-field{border:1px solid var(--border);border-radius:8px;padding:8px;font-size:18px;background:var(--surface2);color:var(--text);--keyboard-zindex:9200;width:100%;min-height:48px;display:block}
+#eqFieldPainel{border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-family:'Courier New',Courier,monospace;background:var(--surface2);color:var(--text);width:100%;min-height:56px;resize:vertical;outline:none;line-height:1.6;transition:border .15s}
+#eqFieldPainel:focus{border-color:var(--azul-light)}
+.ed-ta{background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;transition:border .15s;font-family:inherit;width:100%;resize:vertical;min-height:56px;line-height:1.5}
+.ed-ta:focus{border-color:var(--azul-light)}
 .eq-preview-painel{min-height:40px;padding:8px;background:var(--surface2);border-radius:8px;text-align:center;font-size:16px}
 .eq-modo-btns-p{display:flex;gap:8px}
 .eq-modo-btn-p{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
@@ -712,7 +715,12 @@ mjx-container[display="false"] {
 
   <!-- ── BANCO — FILA ── -->
   <div class="page" id="page-banco">
-    <div class="page-title">🤖 Fila de Revisão</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="page-title" style="margin-bottom:0">🤖 Fila de Revisão</div>
+      <button onclick="novaQuestaoManual()" style="background:var(--azul-mid);border:none;color:#fff;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+        ✏️ Nova Questão Manual
+      </button>
+    </div>
     <div class="page-sub">Questões geradas pela IA aguardando sua aprovação</div>
 
     <!-- ── Geração manual (tema livre) ── -->
@@ -2534,8 +2542,31 @@ let _eqTargetEdP = null;
 let _eqModoP     = 'inline';
 let _eqCurStartP = 0, _eqCurEndP = 0;
 
+function _edAbrirModal(q, titulo, subtitulo) {
+  document.querySelector('#modalEditor .modal-editor-header h3').innerHTML = titulo;
+  document.getElementById('edQId').textContent = subtitulo || '';
+  const body = document.getElementById('modalEditorBody');
+  body.innerHTML = _edRenderForm(q);
+
+  // Configurar image paste em TODOS os textareas
+  body.querySelectorAll('textarea').forEach(ta => {
+    ta.addEventListener('paste', e => _edImagePaste(e, ta));
+  });
+
+  // Preview de imagens existentes em todos os campos
+  ['enunciado','explicacao','textobase','comando','alt_A','alt_B','alt_C','alt_D','alt_E'].forEach(id => {
+    const ta = document.getElementById('ed_' + id);
+    if (ta) _edAtualizarImgPreview(id);
+  });
+
+  const saveBtn = document.getElementById('btnSalvarEdicao');
+  saveBtn.textContent = _edQuestaoId === null ? '💾 Criar Questão' : '💾 Salvar Alterações';
+
+  document.getElementById('modalEditor').classList.add('show');
+  setTimeout(() => renderizarMathPainel(body), 100);
+}
+
 async function abrirEditorQuestao(qId) {
-  document.getElementById('edQId').textContent = '#' + qId;
   _edQuestaoId = qId;
 
   // Buscar dados frescos do Supabase
@@ -2543,57 +2574,38 @@ async function abrirEditorQuestao(qId) {
   if (error || !q) { alert('Erro ao carregar questão: ' + (error?.message || '?')); return; }
 
   _edTipo = q.tipo;
-  const body = document.getElementById('modalEditorBody');
-  body.innerHTML = _edRenderForm(q);
+  _edAbrirModal(q, '✏️ Editar Questão', '#' + qId);
+}
 
-  // Configurar image paste em todos os textareas do editor
-  body.querySelectorAll('textarea[data-ed]').forEach(ta => {
-    ta.addEventListener('paste', e => _edImagePaste(e, ta));
-  });
-
-  // Preview de imagens existentes
-  ['enunciado','explicacao','textobase','alt_A','alt_B','alt_C','alt_D','alt_E'].forEach(id => {
-    const ta = document.getElementById('ed_' + id);
-    if (ta) _edAtualizarImgPreview(id);
-  });
-
-  document.getElementById('modalEditor').classList.add('show');
-  setTimeout(() => renderizarMathPainel(body), 100);
+function novaQuestaoManual() {
+  _edQuestaoId = null;
+  _edTipo = 'C';
+  const q = {
+    tipo: 'C', disciplina: 'bio', nivel: 'intermediario',
+    tema: '', enunciado: '', explicacao: '', gabarito: '',
+    status: 'pendente', texto_base: null, alternativas: null, comando: ''
+  };
+  _edAbrirModal(q, '➕ Nova Questão Manual', '');
 }
 
 function _edRenderForm(q) {
-  const isC   = q.tipo === 'C';
-  const isA   = q.tipo === 'A';
-  const isPAS = q.tipo === 'PAS';
-
   const textoBaseVal = Array.isArray(q.texto_base?.paragrafos)
     ? q.texto_base.paragrafos.join('\n\n')
     : (q.texto_base?.texto || '');
 
-  const optDisc = ['bio','quim','fis'].map(d =>
-    `<option value="${d}" ${q.disciplina===d?'selected':''}>${d.toUpperCase()}</option>`).join('');
+  const optDisc = ['bio','quim','fis','inter'].map(d =>
+    `<option value="${d}" ${q.disciplina===d?'selected':''}>${{bio:'Biologia',quim:'Química',fis:'Física',inter:'Interdisciplinar'}[d]||d}</option>`).join('');
   const optNivel = ['basico','intermediario','avancado'].map(n =>
     `<option value="${n}" ${q.nivel===n?'selected':''}>${n.charAt(0).toUpperCase()+n.slice(1)}</option>`).join('');
+  const optTipo = ['C','A','B','D'].map(t =>
+    `<option value="${t}" ${q.tipo===t?'selected':''}>Tipo ${t} — ${{C:'Múltipla Escolha',A:'Certo/Errado',B:'CDU (Cálculo)',D:'Dissertativa'}[t]||t}</option>`).join('');
 
-  const gabBtns = isC
-    ? ['A','B','C','D','E'].map(l => `<button type="button" class="ed-gab-btn${q.gabarito===l?' ativo':''}" onclick="setEdGab('${l}')" id="edGab_${l}">${l}</button>`).join('')
-    : `<button type="button" class="ed-gab-btn${q.gabarito==='CERTO'?' ativo':''}" onclick="setEdGab('CERTO')" id="edGab_CERTO">✅ CERTO</button>
-       <button type="button" class="ed-gab-btn${q.gabarito==='ERRADO'?' ativo':''}" onclick="setEdGab('ERRADO')" id="edGab_ERRADO">❌ ERRADO</button>`;
-
-  const altsHtml = isC ? `
-    <div class="ed-section-title">Alternativas</div>
-    ${['A','B','C','D','E'].map(l => `
-      <div class="ed-alt-row">
-        <div class="ed-alt-letra">${l}</div>
-        <div class="ed-textarea-wrap" style="flex:1">
-          <textarea class="ed-textarea" id="ed_alt_${l}" data-ed="alt_${l}" rows="2"
-            placeholder="Alternativa ${l}...">${_esc(q.alternativas?.[l]||'')}</textarea>
-          <button class="ed-sigma" title="Inserir equação" onclick="abrirEqPainel('ed_alt_${l}')">∑</button>
-        </div>
-      </div>
-      <div class="ed-img-preview" id="ed_img_alt_${l}"></div>
-    `).join('')}
-  ` : '';
+  // Gabarito: todos os botões sempre visíveis + campo livre
+  const gabLetras = ['A','B','C','D','E'].map(l =>
+    `<button type="button" class="ed-gab-btn${q.gabarito===l?' ativo':''}" onclick="setEdGab('${l}')" id="edGab_${l}">${l}</button>`).join('');
+  const gabCE = `
+    <button type="button" class="ed-gab-btn${q.gabarito==='CERTO'?' ativo':''}" onclick="setEdGab('CERTO')" id="edGab_CERTO">✅ CERTO</button>
+    <button type="button" class="ed-gab-btn${q.gabarito==='ERRADO'?' ativo':''}" onclick="setEdGab('ERRADO')" id="edGab_ERRADO">❌ ERRADO</button>`;
 
   const statusBtns = ['pendente','aprovada','rejeitada'].map(s => {
     const cls = s === q.status ? ` ativo-${s}` : '';
@@ -2602,8 +2614,6 @@ function _edRenderForm(q) {
   }).join('');
 
   return `
-    <input type="hidden" id="ed_tipo" value="${q.tipo}">
-    <input type="hidden" id="ed_gabarito" value="${_esc(q.gabarito||'')}">
     <input type="hidden" id="ed_status" value="${_esc(q.status||'pendente')}">
 
     <div class="ed-section-title">Informações gerais</div>
@@ -2614,7 +2624,7 @@ function _edRenderForm(q) {
       </div>
       <div class="ed-group">
         <label class="ed-label">Tipo</label>
-        <input class="ed-input" value="${q.tipo}" readonly style="opacity:.6;cursor:default">
+        <select class="ed-select" id="ed_tipo">${optTipo}</select>
       </div>
       <div class="ed-group">
         <label class="ed-label">Nível</label>
@@ -2626,10 +2636,10 @@ function _edRenderForm(q) {
       <input class="ed-input" id="ed_tema" value="${_esc(q.tema||'')}" placeholder="ex: Cinética Química">
     </div>
 
-    <div class="ed-section-title">Texto-base (opcional)</div>
+    <div class="ed-section-title">Texto-base <small style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">(opcional)</small></div>
     <div class="ed-group">
       <label class="ed-label">Título do texto-base</label>
-      <input class="ed-input" id="ed_textobase_titulo" value="${_esc(q.texto_base?.titulo||'')}" placeholder="Título do texto-base...">
+      <input class="ed-input" id="ed_textobase_titulo" value="${_esc(q.texto_base?.titulo||'')}" placeholder="ex: TEXTO I — Equilíbrio Químico">
     </div>
     <div class="ed-group">
       <label class="ed-label">Corpo do texto-base</label>
@@ -2650,17 +2660,33 @@ function _edRenderForm(q) {
     <div class="ed-img-preview" id="ed_img_enunciado"></div>
 
     <div class="ed-section-title">Comando <small style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">(instrução ao aluno — opcional)</small></div>
-    <div class="ed-field">
-      <label class="ed-label">Comando <small style="font-weight:400;color:var(--text-muted)">(instrução ao aluno)</small></label>
-      <textarea class="ed-ta" id="ed_comando" rows="2" placeholder='Ex: "Assinale a alternativa correta." ou "Julgue a afirmação:"'>${_esc(q.comando||'')}</textarea>
+    <div class="ed-textarea-wrap">
+      <textarea class="ed-textarea" id="ed_comando" data-ed="comando" rows="2"
+        placeholder='Ex: "Assinale a alternativa correta." ou "Julgue a afirmação:"'>${_esc(q.comando||'')}</textarea>
+      <button class="ed-sigma" title="Inserir equação" onclick="abrirEqPainel('ed_comando')">∑</button>
     </div>
+    <div class="ed-img-preview" id="ed_img_comando"></div>
 
-    ${altsHtml}
+    <div class="ed-section-title">Alternativas <small style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">(Tipo C — preencha A a E; outros tipos deixe em branco)</small></div>
+    ${['A','B','C','D','E'].map(l => `
+      <div class="ed-alt-row">
+        <div class="ed-alt-letra">${l}</div>
+        <div class="ed-textarea-wrap" style="flex:1">
+          <textarea class="ed-textarea" id="ed_alt_${l}" data-ed="alt_${l}" rows="2"
+            placeholder="Alternativa ${l}...">${_esc(q.alternativas?.[l]||'')}</textarea>
+          <button class="ed-sigma" title="Inserir equação" onclick="abrirEqPainel('ed_alt_${l}')">∑</button>
+        </div>
+      </div>
+      <div class="ed-img-preview" id="ed_img_alt_${l}"></div>
+    `).join('')}
 
     <div class="ed-section-title">Gabarito</div>
-    <div class="ed-gab-btns" id="edGabBtns">${gabBtns}</div>
+    <div class="ed-gab-btns" style="margin-bottom:8px">${gabLetras}${gabCE}</div>
+    <input class="ed-input" id="ed_gabarito" value="${_esc(q.gabarito||'')}"
+      placeholder="Ou digitar livremente: número inteiro (Tipo B), critérios (Tipo D), etc."
+      oninput="document.querySelectorAll('.ed-gab-btn').forEach(b=>b.classList.remove('ativo'));const v=this.value.trim().toUpperCase();const b=document.getElementById('edGab_'+v);if(b)b.classList.add('ativo')">
 
-    <div class="ed-section-title">Explicação / Comentário</div>
+    <div class="ed-section-title">Explicação / Resolução</div>
     <div class="ed-textarea-wrap">
       <textarea class="ed-textarea" id="ed_explicacao" data-ed="explicacao" rows="4"
         placeholder="Explicação da resposta correta...">${_esc(q.explicacao||'')}</textarea>
@@ -2678,7 +2704,8 @@ function _esc(s) {
 }
 
 function setEdGab(val) {
-  document.getElementById('ed_gabarito').value = val;
+  const inp = document.getElementById('ed_gabarito');
+  if (inp) inp.value = val;
   document.querySelectorAll('.ed-gab-btn').forEach(b => b.classList.remove('ativo'));
   const btn = document.getElementById('edGab_' + val);
   if (btn) btn.classList.add('ativo');
@@ -2699,7 +2726,8 @@ function fecharEditorQuestao(e) {
 }
 
 async function salvarEdicaoQuestao() {
-  const btn = document.getElementById('btnSalvarEdicao');
+  const btn     = document.getElementById('btnSalvarEdicao');
+  const isCriar = (_edQuestaoId === null);
   btn.disabled = true;
   btn.textContent = 'Salvando...';
 
@@ -2708,10 +2736,11 @@ async function salvarEdicaoQuestao() {
     const disciplina = document.getElementById('ed_disciplina').value;
     const nivel      = document.getElementById('ed_nivel').value;
     const tema       = document.getElementById('ed_tema').value.trim();
-    const gabarito   = document.getElementById('ed_gabarito').value;
+    const gabarito   = document.getElementById('ed_gabarito').value.trim();
     const status     = document.getElementById('ed_status').value;
     const enunciado  = document.getElementById('ed_enunciado').value.trim();
     const explicacao = document.getElementById('ed_explicacao').value.trim();
+    const comando    = document.getElementById('ed_comando')?.value?.trim() || null;
 
     // Texto-base
     const tbTitulo = document.getElementById('ed_textobase_titulo').value.trim();
@@ -2720,59 +2749,69 @@ async function salvarEdicaoQuestao() {
       ? { titulo: tbTitulo, paragrafos: tbCorpo.split(/\n{2,}/).map(p => p.trim()).filter(Boolean) }
       : null;
 
-    // Alternativas (só para tipo C)
-    let alternativas = null;
-    if (tipo === 'C') {
-      alternativas = {};
-      ['A','B','C','D','E'].forEach(l => {
-        const ta = document.getElementById('ed_alt_' + l);
-        if (ta) alternativas[l] = ta.value.trim();
-      });
+    // Alternativas: coletar sempre, mas só salvar se alguma foi preenchida
+    const altsRaw = {};
+    ['A','B','C','D','E'].forEach(l => {
+      const ta = document.getElementById('ed_alt_' + l);
+      if (ta) altsRaw[l] = ta.value.trim();
+    });
+    const temAlternativas = Object.values(altsRaw).some(v => v);
+    const alternativas = temAlternativas ? altsRaw : null;
+
+    if (!enunciado) {
+      alert('O enunciado não pode estar vazio.');
+      btn.disabled = false; btn.textContent = isCriar ? '💾 Criar Questão' : '💾 Salvar Alterações';
+      return;
     }
 
-    if (!enunciado)  { alert('O enunciado não pode estar vazio.'); btn.disabled=false; btn.textContent='💾 Salvar Alterações'; return; }
-    if (!gabarito)   { alert('Selecione o gabarito antes de salvar.'); btn.disabled=false; btn.textContent='💾 Salvar Alterações'; return; }
-
-    const comando = document.getElementById('ed_comando')?.value?.trim() || null;
-
     const payload = {
-      disciplina, nivel, tema, enunciado, explicacao, gabarito, status,
-      comando,
+      tipo, disciplina, nivel, tema, enunciado, explicacao, gabarito: gabarito || null,
+      status, comando,
       texto_base: textBase,
-      ...(alternativas ? { alternativas } : {}),
+      alternativas,
       revisada_por: userAtual?.id ?? null,
       revisada_em: new Date().toISOString(),
     };
 
-    const { error } = await sb.from('questoes_banco').update(payload).eq('id', _edQuestaoId);
-    if (error) throw error;
+    if (isCriar) {
+      // Criar nova questão
+      payload.origem = 'manual';
+      payload.gerada_para = null;
+      const { data: nova, error } = await sb.from('questoes_banco').insert(payload).select('id').single();
+      if (error) throw error;
+      document.getElementById('modalEditor').classList.remove('show');
+      _edQuestaoId = null;
+      // Recarregar fila para mostrar a nova questão
+      await carregarBancoPendentes();
+    } else {
+      // Atualizar questão existente
+      const { error } = await sb.from('questoes_banco').update(payload).eq('id', _edQuestaoId);
+      if (error) throw error;
 
-    document.getElementById('modalEditor').classList.remove('show');
+      document.getElementById('modalEditor').classList.remove('show');
 
-    // Atualizar o card na fila de pendentes se estiver lá
-    const card = document.getElementById('qp-' + _edQuestaoId);
-    if (card) {
-      // Se status mudou de pendente, remover da fila
-      if (status !== 'pendente') {
-        card.remove();
-        const restantes = document.querySelectorAll('.questao-pendente').length;
-        document.getElementById('badgePendentes').textContent = restantes;
-        if (restantes === 0) {
-          document.getElementById('filaPendentes').innerHTML =
-            '<div style="text-align:center;color:var(--text-muted);padding:40px;font-size:14px">✅ Nenhuma questão pendente.</div>';
+      // Atualizar card na fila de pendentes
+      const card = document.getElementById('qp-' + _edQuestaoId);
+      if (card) {
+        if (status !== 'pendente') {
+          card.remove();
+          const restantes = document.querySelectorAll('.questao-pendente').length;
+          document.getElementById('badgePendentes').textContent = restantes;
+          if (restantes === 0) {
+            document.getElementById('filaPendentes').innerHTML =
+              '<div style="text-align:center;color:var(--text-muted);padding:40px;font-size:14px">✅ Nenhuma questão pendente.</div>';
+          }
+        } else {
+          await carregarBancoPendentes();
         }
-      } else {
-        // Recarregar fila para mostrar dados atualizados
-        await carregarBancoPendentes();
       }
+      _edQuestaoId = null;
     }
-
-    _edQuestaoId = null;
   } catch(e) {
     alert('Erro ao salvar: ' + e.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = '💾 Salvar Alterações';
+    btn.textContent = isCriar ? '💾 Criar Questão' : '💾 Salvar Alterações';
   }
 }
 
@@ -2799,7 +2838,9 @@ async function _edImagePaste(e, ta) {
     ta.value = ta.value.slice(0, start) + marker + ta.value.slice(end);
     ta.selectionStart = ta.selectionEnd = start + marker.length;
 
-    _edAtualizarImgPreview(ta.dataset.ed);
+    // Derivar o taId do data-ed ou do id do elemento (ex: "ed_enunciado" → "enunciado")
+    const taId = ta.dataset?.ed || ta.id?.replace(/^ed_/, '') || null;
+    if (taId) _edAtualizarImgPreview(taId);
   } catch(err) {
     console.warn('Erro ao fazer upload de imagem:', err);
     alert('Erro no upload da imagem: ' + err.message);
@@ -2828,10 +2869,18 @@ function _edRemoverImg(taId, url) {
 
 // ── Inserir snippet pela toolbar (painel) ─────────────────────
 function eqInsertPainel(latex) {
-  const mf = document.getElementById('eqFieldPainel');
-  if (!mf) return;
-  mf.insert(latex, { selectionMode: 'placeholder', feedback: false });
-  mf.focus();
+  const ta = document.getElementById('eqFieldPainel');
+  if (!ta) return;
+  // Posicionar cursor no primeiro placeholder (#?) ou dentro do primeiro {}
+  const firstPh = latex.indexOf('#?');
+  const clean   = latex.replace(/#\?/g, '');
+  const start   = ta.selectionStart;
+  const end     = ta.selectionEnd;
+  ta.value = ta.value.slice(0, start) + clean + ta.value.slice(end);
+  // Posicionar cursor: no lugar do primeiro #? se havia, ou dentro do {}
+  let curPos = start + (firstPh >= 0 ? firstPh : clean.length);
+  ta.selectionStart = ta.selectionEnd = curPos;
+  ta.focus();
   _eqPreviewPainel();
 }
 
@@ -2937,7 +2986,7 @@ async function excluirBadgeUnica(badgeRowId, imagemUrl) {
       <button class="eq-modo-btn-p ativo" id="eqModoInlineP" onclick="setEqModoPainel('inline')">Inline  $...$</button>
       <button class="eq-modo-btn-p" id="eqModoBlockP" onclick="setEqModoPainel('block')">Bloco  $$...$$</button>
     </div>
-    <math-field id="eqFieldPainel" style="width:100%"></math-field>
+    <textarea id="eqFieldPainel" rows="2" spellcheck="false" placeholder="Digite LaTeX ou use os botões abaixo…" style="width:100%"></textarea>
     <!-- Visual toolbar -->
     <div class="eq-toolbar-p">
       <div class="eq-toolbar-section-p">
