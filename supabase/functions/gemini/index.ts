@@ -674,8 +674,8 @@ ${abordagem[nivel] || abordagem[1]}
 ════════════════════════════════════════════
 REGRAS DE QUALIDADE — OBRIGATÓRIAS:
 ════════════════════════════════════════════
-1. SÍNTESE: 150–250 palavras no total. Seja didático e direto — cubra o arcabouço
-   teórico necessário sem enrolação. Cada parágrafo deve ensinar algo novo.
+1. Explique passo a passo, de forma coerente e sucinta. Cubra o arcabouço teórico
+   necessário sem enrolação — cada parágrafo deve ensinar algo novo e útil.
 2. Use **negrito** apenas para o conceito-chave e a resposta correta.
 3. Use MathJax para toda matemática: \\(...\\) inline e \\[...\\] para cálculos em bloco.
    - Vírgula decimal: {,} (ex: \\(5{,}0\\,\\mathrm{A}\\))
@@ -1129,12 +1129,11 @@ REGRAS OBRIGATÓRIAS:
 1. Explique POR QUE o gabarito está correto — não apenas qual é.
 2. Para Tipo C: explique brevemente por que cada alternativa errada está errada.
 3. Para Tipo A: explique o conceito correto e onde está o erro (se ERRADO) ou por que a afirmação é precisa.
-4. Use linguagem clara, científica e didática. Seja sintético — vá direto ao ponto.
+4. Use linguagem clara, científica e didática. Explique passo a passo, de forma
+   coerente e sucinta — sem enrolação, sem repetir o enunciado.
 5. Use LaTeX com \\(...\\) para expressões matemáticas inline. Não use $..$.
-6. Comprimento: 2–4 frases (60–120 palavras). Inclua o conceito-chave e o raciocínio
-   correto, mas sem repetir o enunciado nem listar cada alternativa individualmente.
-7. Responda APENAS o texto da explicação — nenhum JSON, nenhum prefixo, nenhum título.
-8. Termine com ponto final.`;
+6. Responda APENAS o texto da explicação — nenhum JSON, nenhum prefixo, nenhum título.
+7. Termine com ponto final.`;
 
   for (let i = 0; i < 3; i++) {
     try {
