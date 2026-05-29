@@ -288,6 +288,8 @@ Deno.serve(async (req) => {
         return await corrigirDissertativa(GEMINI_KEY, dados);
       case 'gerar_questoes_pas':
         return await gerarQuestoesPAS(GEMINI_KEY, dados);
+      case 'regenerar_explicacao':
+        return await regenerarExplicacao(GEMINI_KEY, dados);
       default:
         return json({ error: `Função desconhecida: ${funcao}` }, 400);
     }
@@ -1100,10 +1102,64 @@ Responda diretamente o texto do feedback (sem JSON, sem markdown extra).
   return json({ feedback: limpo });
 }
 
+// ── FUNÇÃO: REGENERAR EXPLICAÇÃO ─────────────────────────────
+async function regenerarExplicacao(key: string, dados: any) {
+  const { disciplina, tipo, tema, enunciado, alternativas, gabarito, steps_resumo } = dados;
+  const discLabel = { bio: 'Biologia', quim: 'Química', fis: 'Física', inter: 'Ciências da Natureza' }[disciplina] || disciplina;
+
+  const altsText = alternativas
+    ? Object.entries(alternativas).map(([l, t]) => `${l}) ${t}`).join('\n')
+    : null;
+
+  const stepsText = Array.isArray(steps_resumo) && steps_resumo.length
+    ? steps_resumo.map((s: any, i: number) =>
+        `Passo ${i+1} — ${s.titulo || ''}: ${s.explicacao || ''} ${(s.linhas_latex||[]).join(' | ')}`
+      ).join('\n')
+    : null;
+
+  const prompt = `Você é professor de ${discLabel} do Ensino Médio (AV4 Marista — Biossensores, Genética, Eletroquímica, Termodinâmica).
+
+Escreva a EXPLICAÇÃO COMPLETA para a questão abaixo.
+
+TEMA: ${tema}
+TIPO: ${tipo === 'A' ? 'Tipo A (Certo ou Errado)' : tipo === 'C' ? 'Tipo C (Múltipla Escolha)' : `Tipo ${tipo}`}
+ENUNCIADO: ${enunciado}
+${altsText ? `ALTERNATIVAS:\n${altsText}` : ''}
+GABARITO: ${gabarito}
+${stepsText ? `RESOLUÇÃO PASSO A PASSO (já dada — use como base):\n${stepsText}` : ''}
+
+REGRAS OBRIGATÓRIAS:
+1. Explique POR QUE o gabarito está correto — não apenas qual é.
+2. Para Tipo C: explique brevemente por que cada alternativa errada está errada.
+3. Para Tipo A: explique o conceito correto e onde está o erro (se ERRADO) ou por que a afirmação é precisa.
+4. Use linguagem clara, científica, com rigor técnico.
+5. Use LaTeX com \\(...\\) para expressões matemáticas inline. Não use $..$.
+6. Comprimento: 3–6 frases completas (120–350 palavras). Seja completo, não truncar.
+7. Responda APENAS o texto da explicação — nenhum JSON, nenhum prefixo, nenhum título.
+8. Termine com ponto final.`;
+
+  for (let i = 0; i < 3; i++) {
+    try {
+      const texto = await chamarGemini(key, prompt, 1, 2048, false, 0.4);
+      const limpo = texto.trim();
+      if (limpo && limpo.length > 60) {
+        return json({ explicacao: limpo });
+      }
+    } catch (e: any) {
+      console.error(`regenerarExplicacao tentativa ${i+1}:`, e.message);
+      if (i < 2) await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+  return json({ error: 'Não foi possível gerar a explicação' }, 500);
+}
+
 // ── FUNÇÃO: GERAR QUESTÕES PAS ───────────────────────────────
 async function gerarQuestoesPAS(key: string, dados: any) {
   const { disciplina, tema, tipos, nivel, n_itens } = dados;
   const n = n_itens || tipos?.length || 3;
+
+  // Buscar chunks da base de conhecimento (mesmo que ENEM)
+  const chunks = await buscarChunksConhecimento(disciplina, tema);
 
   const descNivel = {
     basico: 'Fácil (conceito direto)',
@@ -1151,6 +1207,13 @@ async function gerarQuestoesPAS(key: string, dados: any) {
 
   const disciplinaLabel = { bio: 'Biologia', quim: 'Química', fis: 'Física', inter: 'Ciências da Natureza (interdisciplinar)' }[disciplina] || disciplina;
 
+  const blocoConhecimento = chunks.length
+    ? `════════════════════════════════════
+TRECHOS VALIDADOS DA BASE DO PROFESSOR (use como base científica — fatos, fórmulas, conceitos)
+════════════════════════════════════
+${chunks.map((c, i) => `TRECHO ${i + 1}:\n${c}`).join('\n\n')}`
+    : '';
+
   const prompt = `
 ${CONTEXTO_PROVA}
 
@@ -1161,6 +1224,8 @@ TAREFA: Gere um bloco de itens no formato PAS 3 (CEBRASPE/UnB) para revisão da 
 TEMA: "${tema}" — ${disciplinaLabel}
 NÚMERO DE ITENS: ${n}
 NÍVEL: ${descNivel}
+
+${blocoConhecimento}
 
 ════════════════════════════════════
 COMO FUNCIONA UM BLOCO PAS

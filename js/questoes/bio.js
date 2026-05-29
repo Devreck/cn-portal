@@ -320,7 +320,7 @@ const QUESTOES_BIO = [
     E: '9/16'
   },
   gabarito: 'C',
-  explicacao: 'P(aa) = 1/4; P(ii) = 1/4. Como os loci são independentes, P = 1/4 × 1/4 = 1/16.',
+  explicacao: 'O gabarito correto é a alternativa C, pois, de acordo com a Segunda Lei de Mendel, a herança da anemia falciforme e do sistema ABO ocorre de forma independente por estarem localizados em cromossomos homólogos diferentes. No cruzamento entre os genótipos para a anemia falciforme (\\(Aa \\times Aa\\)), a probabilidade de gerar um descendente homozigoto recessivo com a doença clínica (\\(aa\\)) é de \\(1/4\\), enquanto no cruzamento para o grupo sanguíneo (\\(I^Ai \\times I^Bi\\)), a chance de obter um indivíduo com sangue tipo O (\\(ii\\)) também é de \\(1/4\\). Multiplicando-se essas probabilidades de eventos independentes (\\(1/4 \\times 1/4\\)), obtemos a probabilidade conjunta exata de \\(1/16\\). As alternativas A (\\(1/4\\)) e B (\\(1/8\\)) estão incorretas porque representam, respectivamente, a probabilidade isolada de apenas uma das características ou um erro de cálculo que desconsidera a segregação independente dos dois locos gênicos. Por fim, as alternativas D (\\(3/16\\)) e E (\\(9/16\\)) estão incorretas por indicarem proporções fenotípicas associadas a outras combinações que envolvem alelos dominantes na progênie, divergindo do fenótipo duplo recessivo solicitado pelo enunciado.',
   steps: [
     {
       titulo: 'Calcular P(anemia falciforme) — locus da betaglobina',
