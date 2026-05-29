@@ -602,59 +602,48 @@ async function tutorErro(key: string, dados: any) {
 
   const abordagem: Record<number, string> = {
     1: `
-ABORDAGEM — EXPLICAÇÃO COMPLETA (primeira tentativa):
+ABORDAGEM — Explicação direta e sintética (primeira tentativa):
 
-Estruture sua resposta em 4 blocos claramente separados:
+Use 3 parágrafos curtos:
 
-**1. O que a questão está testando**
-Identifique o conceito central de ${temaLabel}. Explique em 2-3 frases o que o aluno precisaria saber para responder certo. Não resuma o enunciado — vá direto ao princípio.
+**1. O conceito**
+1–2 frases explicando o princípio de ${temaLabel} necessário para resolver a questão. Vá direto ao núcleo teórico.
 
-**2. Por que a resposta "${respostaDesc}" está errada**
-Explique o raciocínio que leva ao erro — o que parece fazer sentido nessa escolha mas está conceitualmente equivocado. Seja específico: qual confusão conceitual, qual detalhe ignorado, qual inversão de lógica.
+**2. Por que "${respostaDesc}" está errada**
+1–2 frases específicas: qual confusão conceitual ou erro de raciocínio leva a essa escolha.
 
-**3. Por que a resposta correta (${gabarito}) é a certa**
-${temAlts ? `Mostre por que cada alternativa está certa ou errada em uma linha cada. Destaque a alternativa ${gabarito} com mais detalhe.` : `Demonstre o raciocínio correto passo a passo. Se houver cálculo, mostre com LaTeX.`}
-
-**4. Regra para fixar**
-Uma frase objetiva que o aluno pode repetir mentalmente em provas para não errar de novo nesse conceito.
+**3. Por que ${gabarito} é correto**
+${temAlts ? `1 frase por alternativa (errada = erro em uma linha; correta = por que é a única certa). Se houver cálculo, mostre de forma compacta com LaTeX.` : `Demonstre o raciocínio correto de forma concisa. Se houver cálculo, mostre com LaTeX.`}
 `,
 
     2: `
-ABORDAGEM — NOVA TENTATIVA COM ÂNGULO DIFERENTE (segunda explicação):
-O aluno já recebeu a explicação direta e não entendeu. NÃO repita a mesma estrutura da primeira explicação.
+ABORDAGEM — Ângulo diferente com analogia (segunda explicação):
+O aluno não entendeu na primeira tentativa. Use uma analogia do cotidiano.
 
-Estruture assim:
+**1. Analogia**
+2–3 frases com uma analogia concreta que reproduza o mesmo princípio conceitual.
 
-**1. Analogia do dia a dia**
-Antes de mencionar a questão, crie uma analogia concreta e vívida do cotidiano (pode ser tecnologia, culinária, esporte, biologia intuitiva — qualquer coisa tangível) que reproduza EXATAMENTE o mesmo princípio conceitual. Desenvolva bem a analogia: 4-6 frases.
+**2. O erro visto pela analogia**
+1–2 frases mostrando onde o raciocínio que levou a "${respostaDesc}" diverge.
 
-**2. Onde o raciocínio do aluno diverge**
-Usando a analogia, mostre em que ponto o pensamento que levou a escolher "${respostaDesc}" faz sentido — e por que esse caminho leva ao lugar errado. Seja empático: o erro faz sentido superficialmente, mas...
-
-**3. A resposta correta pela lente da analogia**
-Conecte a analogia à alternativa correta (${gabarito}). Mostre que agora faz sentido intuitivo. Se houver cálculo, mostre os passos com LaTeX.
-
-**4. A diferença em uma linha**
-Destile a diferença entre o que o aluno pensou e o que é correto em uma frase direta.
+**3. A resposta correta pela mesma analogia**
+Conecte a analogia à alternativa ${gabarito}. Se houver cálculo, mostre de forma compacta.
 `,
 
     3: `
-ABORDAGEM — DO ZERO (terceira explicação, o aluno ainda não entendeu):
-Ignore temporariamente a questão. Comece do fundamento mais básico possível.
+ABORDAGEM — Do zero, fundamento básico (terceira explicação):
+Parta do conceito mais fundamental de ${temaLabel}, como se o aluno nunca tivesse visto.
 
-Estruture assim:
+**1. Definição essencial**
+2–3 frases simples, sem jargão, definindo o conceito-chave.
 
-**1. Definição do zero**
-Defina o conceito-chave de ${temaLabel} como se o aluno nunca tivesse visto. Use a linguagem mais simples possível. Sem jargão técnico nas primeiras frases. 4-6 frases.
+**2. Exemplo mínimo**
+Um exemplo concreto com números simples e LaTeX se necessário.
 
-**2. O exemplo mais simples que existe**
-Use um exemplo concreto, numérico ou visual, com os números mais simples possíveis (inteiros, redondos). Mostre o raciocínio do zero, com LaTeX se necessário.
+**3. Aplicação à questão**
+Mostre que a resposta ${gabarito} é a única possível. ${temAlts ? `Uma frase por alternativa errada.` : `Cálculo completo e compacto.`}
 
-**3. Agora a questão faz sentido**
-Volte ao enunciado com esse fundamento em mente. Mostre que a resposta correta (${gabarito}) é a única possível. ${temAlts ? `Explique em uma frase por que cada alternativa errada não se sustenta.` : `Mostre o cálculo completo.`}
-
-**4. Memorize isso**
-Uma regra-chave de 1-2 linhas, tão simples que o aluno consegue repetir de memória na hora da prova.
+**Regra para fixar:** uma linha que o aluno memoriza para a prova.
 `,
   };
 
@@ -685,18 +674,16 @@ ${abordagem[nivel] || abordagem[1]}
 ════════════════════════════════════════════
 REGRAS DE QUALIDADE — OBRIGATÓRIAS:
 ════════════════════════════════════════════
-1. Seja COMPLETO. Esta explicação será salva permanentemente no banco — escreva como um professor
-   experiente que quer que o aluno realmente entenda, não como quem quer ser breve.
-   Mínimo absoluto: 400 palavras. Sem máximo — use o espaço que o conceito exige.
-2. Use **negrito** para conceitos, termos técnicos e a resposta correta.
+1. SÍNTESE: 150–250 palavras no total. Seja didático e direto — cubra o arcabouço
+   teórico necessário sem enrolação. Cada parágrafo deve ensinar algo novo.
+2. Use **negrito** apenas para o conceito-chave e a resposta correta.
 3. Use MathJax para toda matemática: \\(...\\) inline e \\[...\\] para cálculos em bloco.
    - Vírgula decimal: {,} (ex: \\(5{,}0\\,\\mathrm{A}\\))
    - Use \\frac{}{}, \\cdot, \\text{}, \\mathrm{} para unidades
-   - NÃO fragmente \\begin{aligned}...\\end{aligned} — escreva o bloco inteiro inline no texto.
 4. Linguagem em português, direta, sem ser condescendente.
-5. NÃO comece com "Claro!", "Ótima pergunta!", "Com certeza!" ou elogios vazios.
+5. NÃO comece com "Claro!", "Ótima pergunta!" ou elogios vazios.
 6. NÃO reproduza o enunciado completo da questão.
-7. NÃO escreva bastidores como "(65 words)" ou metadados da IA.
+7. NÃO escreva metadados da IA ("(65 words)", contagens, comentários internos).
 8. Escreva apenas o texto da explicação — sem JSON, sem markdown além de **negrito** e títulos de seção.
 `;
 
@@ -1142,9 +1129,10 @@ REGRAS OBRIGATÓRIAS:
 1. Explique POR QUE o gabarito está correto — não apenas qual é.
 2. Para Tipo C: explique brevemente por que cada alternativa errada está errada.
 3. Para Tipo A: explique o conceito correto e onde está o erro (se ERRADO) ou por que a afirmação é precisa.
-4. Use linguagem clara, científica, com rigor técnico.
+4. Use linguagem clara, científica e didática. Seja sintético — vá direto ao ponto.
 5. Use LaTeX com \\(...\\) para expressões matemáticas inline. Não use $..$.
-6. Comprimento: 3–6 frases completas (120–350 palavras). Seja completo, não truncar.
+6. Comprimento: 2–4 frases (60–120 palavras). Inclua o conceito-chave e o raciocínio
+   correto, mas sem repetir o enunciado nem listar cada alternativa individualmente.
 7. Responda APENAS o texto da explicação — nenhum JSON, nenhum prefixo, nenhum título.
 8. Termine com ponto final.`;
 
