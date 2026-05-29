@@ -40,12 +40,18 @@ circuitos elétricos simples e associação de resistores em série.
 PADRÃO DE MATEMÁTICA PROFISSIONAL:
 - Em respostas textuais, use MathJax com \\(...\\) para expressões inline e \\[...\\] para blocos.
 - Em JSON de questão, campos textuais como enunciado e explicacao podem usar \\(...\\) e \\[...\\].
-- Em steps de questão, "linhas_latex" e "destaque_latex" devem conter apenas LaTeX puro, sem delimitadores.
-- Prefira \\begin{aligned}...\\end{aligned}, \\frac{}, \\cdot, \\text{}, \\mathrm{}, unidades em \\text{} e símbolos LaTeX.
+- Em steps de questão, "linhas_latex" e "destaque_latex" devem conter apenas LaTeX puro, sem delimitadores \\[, \\], $$.
+- REGRA CRÍTICA para "linhas_latex": cada entrada do array DEVE ser uma expressão COMPLETA e autossuficiente.
+  ✔ CORRETO — bloco aligned inteiro em UMA entrada:
+    "linhas_latex": ["\\begin{aligned}\nP &= \\frac{1}{4} \\times \\frac{1}{4} \\\\\\\\ &= \\frac{1}{16}\n\\end{aligned}"]
+  ✗ ERRADO — aligned fragmentado em entradas separadas (causa erros de renderização):
+    "linhas_latex": ["\\begin{aligned}", "P &= ...", "\\end{aligned}"]
+- Prefira \\begin{aligned}...\\end{aligned} para múltiplas linhas, \\frac{}, \\cdot, \\text{}, \\mathrm{}, unidades em \\text{}.
 - Evite notação pobre como V², P = V^2/R em texto corrido, ou contas longas em uma única linha.
 `;
 
 // ── SCHEMAS DE VALIDAÇÃO ────────────────────────────────────
+// ENEM: sempre 5 alternativas (A-E)
 const SCHEMA_QUESTAO_C = `
 {
   "disciplina": "bio|quim|fis|inter",
@@ -75,7 +81,7 @@ const SCHEMA_QUESTAO_C = `
   "enunciado": "string",
   "alternativas": {
     "A": "string",
-    "B": "string", 
+    "B": "string",
     "C": "string",
     "D": "string",
     "E": "string"
@@ -311,7 +317,7 @@ async function gerarQuestao(key: string, dados: any) {
   // ── Tipo da questão ──
   let descTipo: string;
   if (tipo === 'A') {
-    descTipo = 'Tipo A (Certo ou Errado) — afirmativa com pegadinha conceitual sutil';
+    descTipo = 'Tipo A (Certo ou Errado) — afirmativa com pegadinha conceitual sutil. "alternativas" = null. "gabarito" = "CERTO" ou "ERRADO".';
   } else if (tipo === 'B') {
     descTipo = `Tipo B (CDU — Centena Dezena Unidade) — resposta numérica inteira entre 0 e 999.
 O aluno preenche três caixas separadas: Centena (C), Dezena (D), Unidade (U).
@@ -322,9 +328,17 @@ REGRAS OBRIGATÓRIAS PARA TIPO B:
 • Inclua steps de resolução detalhados mostrando como se chega ao valor inteiro.
 • Se o resultado natural tiver unidade (ex: 150 J, 320 W), oriente no enunciado a encontrar o valor numérico sem unidade.`;
   } else if (subtipo === 'teorica') {
-    descTipo = 'Tipo C (Múltipla Escolha) CONCEITUAL — 5 alternativas, SEM cálculo numérico; foco em interpretação, comparação de conceitos ou análise de situações';
+    descTipo = `Tipo C (Múltipla Escolha) CONCEITUAL — estilo ENEM.
+• EXATAMENTE 5 alternativas: A, B, C, D, E — SEM exceção.
+• SEM cálculo numérico; foco em interpretação, comparação de conceitos, análise de situações.
+• A questão deve ser AUTOSSUFICIENTE: contexto + enunciado + alternativas completos por si só.
+• Alternativas erradas: erros conceituais reais e plausíveis que alunos tipicamente cometem.`;
   } else {
-    descTipo = 'Tipo C (Múltipla Escolha) COM CÁLCULO — 5 alternativas; o aluno precisa calcular o valor correto; inclua steps de resolução detalhados';
+    descTipo = `Tipo C (Múltipla Escolha) COM CÁLCULO — estilo ENEM.
+• EXATAMENTE 5 alternativas: A, B, C, D, E — SEM exceção.
+• O aluno precisa calcular o valor correto; inclua steps de resolução detalhados.
+• A questão deve ser AUTOSSUFICIENTE com seu próprio contexto e dados numéricos.
+• Alternativas erradas: erros típicos de conta (fator 10x, inversão de fórmula, unidade errada).`;
   }
 
   // ── Interdisciplinaridade: só quando o aluno escolheu tema secundário ──
@@ -522,83 +536,169 @@ async function extrairQuestoesPDF(key: string, dados: any) {
   return json({ error: 'Não foi possível extrair as questões do PDF', detalhe: ultimoErro }, 422);
 }
 
-// ── FUNÇÃO 3 (antiga 2): TUTOR POR ERRO ─────────────────────
+// ── FUNÇÃO 3: TUTOR POR ERRO ─────────────────────────────────
 async function tutorErro(key: string, dados: any) {
   const {
     enunciado,
+    comando,
+    texto_base,
+    tema,
+    subtema,
+    tipo          = 'C',
     resposta_aluno,
-    resposta_aluno_texto,  // texto completo da alternativa escolhida (Tipo C)
+    resposta_aluno_texto,
     gabarito,
     explicacao_original,
+    steps_original,
     disciplina,
-    alternativas,          // { A: "...", B: "...", C: "...", D: "...", E: "..." }
-    nivel = 1,             // 1 = primária, 2 = secundária, 3 = terciária
+    alternativas,
+    nivel         = 1,
   } = dados;
 
-  // ── Seção de alternativas (só para Tipo C) ──
+  // ── Montar bloco do texto-base ──────────────────────────────
+  let blocoContexto = '';
+  if (texto_base) {
+    const titulo = texto_base.titulo || texto_base.title || '';
+    const paras  = Array.isArray(texto_base.paragrafos)
+      ? texto_base.paragrafos
+      : texto_base.texto ? [texto_base.texto] : typeof texto_base === 'string' ? [texto_base] : [];
+    if (titulo || paras.length > 0) {
+      blocoContexto = `\nTEXTO-BASE DA QUESTÃO:\n${titulo ? titulo + '\n' : ''}${paras.join('\n')}\n`;
+    }
+  }
+
+  // ── Montar bloco de alternativas ────────────────────────────
   const letras = ['A','B','C','D','E'].filter(l => alternativas?.[l] != null);
   const temAlts = letras.length > 0;
-
   const secaoAlternativas = temAlts
     ? `\nALTERNATIVAS:\n${letras.map(l =>
-        `  ${l}) ${alternativas[l]}${l === gabarito ? '  ← CORRETA' : ''}`
+        `  ${l}) ${alternativas[l]}${l === gabarito ? '  ← CORRETA' : l === resposta_aluno ? '  ← ALUNO ESCOLHEU' : ''}`
       ).join('\n')}\n`
     : '';
 
+  // ── Montar bloco de steps (quando há resolução original) ────
+  let blocoSteps = '';
+  if (Array.isArray(steps_original) && steps_original.length > 0) {
+    blocoSteps = `\nRESOLUÇÃO ORIGINAL DA QUESTÃO (use como referência, não repita igual):\n` +
+      steps_original.map((s: any, i: number) =>
+        `  Passo ${i+1} — ${s.titulo || ''}: ${s.explicacao || ''}`
+      ).join('\n') + '\n';
+  }
+
   const respostaDesc = resposta_aluno_texto
     ? `${resposta_aluno}: "${resposta_aluno_texto}"`
-    : resposta_aluno;
+    : (resposta_aluno || '?');
 
-  // ── Abordagem diferente por nível ──
-  const instrucao: Record<number, string> = {
-    1: `Explique de forma clara e direta:
-• Por que a resposta "${respostaDesc}" está errada — identifique o equívoco conceitual específico
-${temAlts ? '• Analise CADA alternativa: uma linha por alternativa dizendo por que está certa ou errada\n' : ''}• Qual o conceito correto, com exemplo do cotidiano
-• Uma dica objetiva para não cometer esse erro de novo`,
+  const discLabel: Record<string, string> = {
+    bio: 'Biologia', quim: 'Química', fis: 'Física', inter: 'Ciências da Natureza',
+  };
+  const discNome = discLabel[disciplina] || disciplina || 'Ciências da Natureza';
+  const temaLabel = tema ? `${tema}${subtema ? ' — ' + subtema : ''}` : discNome;
 
-    2: `O aluno já recebeu uma explicação direta e ainda não entendeu. Use uma abordagem COMPLETAMENTE DIFERENTE:
-• Comece por uma analogia ou metáfora do dia a dia que explique o conceito intuitivamente
-• Mostre POR QUE faz sentido pensar como o aluno pensou — e onde exatamente o raciocínio desvia
-${temAlts ? '• Compare diretamente a alternativa escolhida com a correta, explicando a diferença conceitual\n' : ''}• Reformule o conceito central sem jargão técnico`,
+  // ── Abordagem por nível ─────────────────────────────────────
+  const nivelLabel = ['', 'primeira', 'segunda', 'terceira'][nivel] || 'primeira';
 
-    3: `O aluno tentou duas vezes. Volte ao FUNDAMENTO MAIS BÁSICO possível:
-• Ignore a questão por um momento — defina o conceito-chave do zero, como se o aluno nunca tivesse visto
-• Use a situação mais simples e concreta que consiga imaginar
-• Só então conecte esse fundamento à questão e mostre por que a resposta correta é inevitável
-${temAlts ? '• Explique a alternativa correta com uma frase cristalina, sem ambiguidade\n' : ''}• Encerre com uma regra mental de uma linha para fixar`,
+  const abordagem: Record<number, string> = {
+    1: `
+ABORDAGEM — EXPLICAÇÃO COMPLETA (primeira tentativa):
+
+Estruture sua resposta em 4 blocos claramente separados:
+
+**1. O que a questão está testando**
+Identifique o conceito central de ${temaLabel}. Explique em 2-3 frases o que o aluno precisaria saber para responder certo. Não resuma o enunciado — vá direto ao princípio.
+
+**2. Por que a resposta "${respostaDesc}" está errada**
+Explique o raciocínio que leva ao erro — o que parece fazer sentido nessa escolha mas está conceitualmente equivocado. Seja específico: qual confusão conceitual, qual detalhe ignorado, qual inversão de lógica.
+
+**3. Por que a resposta correta (${gabarito}) é a certa**
+${temAlts ? `Mostre por que cada alternativa está certa ou errada em uma linha cada. Destaque a alternativa ${gabarito} com mais detalhe.` : `Demonstre o raciocínio correto passo a passo. Se houver cálculo, mostre com LaTeX.`}
+
+**4. Regra para fixar**
+Uma frase objetiva que o aluno pode repetir mentalmente em provas para não errar de novo nesse conceito.
+`,
+
+    2: `
+ABORDAGEM — NOVA TENTATIVA COM ÂNGULO DIFERENTE (segunda explicação):
+O aluno já recebeu a explicação direta e não entendeu. NÃO repita a mesma estrutura da primeira explicação.
+
+Estruture assim:
+
+**1. Analogia do dia a dia**
+Antes de mencionar a questão, crie uma analogia concreta e vívida do cotidiano (pode ser tecnologia, culinária, esporte, biologia intuitiva — qualquer coisa tangível) que reproduza EXATAMENTE o mesmo princípio conceitual. Desenvolva bem a analogia: 4-6 frases.
+
+**2. Onde o raciocínio do aluno diverge**
+Usando a analogia, mostre em que ponto o pensamento que levou a escolher "${respostaDesc}" faz sentido — e por que esse caminho leva ao lugar errado. Seja empático: o erro faz sentido superficialmente, mas...
+
+**3. A resposta correta pela lente da analogia**
+Conecte a analogia à alternativa correta (${gabarito}). Mostre que agora faz sentido intuitivo. Se houver cálculo, mostre os passos com LaTeX.
+
+**4. A diferença em uma linha**
+Destile a diferença entre o que o aluno pensou e o que é correto em uma frase direta.
+`,
+
+    3: `
+ABORDAGEM — DO ZERO (terceira explicação, o aluno ainda não entendeu):
+Ignore temporariamente a questão. Comece do fundamento mais básico possível.
+
+Estruture assim:
+
+**1. Definição do zero**
+Defina o conceito-chave de ${temaLabel} como se o aluno nunca tivesse visto. Use a linguagem mais simples possível. Sem jargão técnico nas primeiras frases. 4-6 frases.
+
+**2. O exemplo mais simples que existe**
+Use um exemplo concreto, numérico ou visual, com os números mais simples possíveis (inteiros, redondos). Mostre o raciocínio do zero, com LaTeX se necessário.
+
+**3. Agora a questão faz sentido**
+Volte ao enunciado com esse fundamento em mente. Mostre que a resposta correta (${gabarito}) é a única possível. ${temAlts ? `Explique em uma frase por que cada alternativa errada não se sustenta.` : `Mostre o cálculo completo.`}
+
+**4. Memorize isso**
+Uma regra-chave de 1-2 linhas, tão simples que o aluno consegue repetir de memória na hora da prova.
+`,
   };
 
-  const nivelLabel = ['', 'primeira', 'segunda', 'terceira'][nivel] || 'primeira';
   const avisoNivel = nivel > 1
-    ? `\nEsta é a ${nivelLabel} explicação para esta questão. Use uma abordagem completamente diferente das anteriores — não repita metáforas, exemplos ou estrutura já usados.\n`
+    ? `IMPORTANTE: Esta é a ${nivelLabel} explicação para essa questão. O aluno NÃO entendeu as anteriores. Use uma abordagem radicalmente diferente — nova analogia, novo exemplo, nova estrutura. Não repita nada do que já foi dito antes.\n`
     : '';
 
   const prompt = `
 ${CONTEXTO_PROVA}
 
-TAREFA: Um aluno errou uma questão. Gere uma explicação personalizada (nível ${nivel}/3).
+════════════════════════════════════════════
+TAREFA: Um aluno errou uma questão e pediu ajuda. Gere uma explicação detalhada e útil.
+════════════════════════════════════════════
 ${avisoNivel}
-QUESTÃO:
-${enunciado}
+DISCIPLINA: ${discNome} | TEMA: ${temaLabel} | TIPO: ${tipo}
+${blocoContexto}
+ENUNCIADO DA QUESTÃO:
+${enunciado}${comando ? '\n' + comando : ''}
 ${secaoAlternativas}
 RESPOSTA DO ALUNO: ${respostaDesc}
 RESPOSTA CORRETA: ${gabarito}
-EXPLICAÇÃO ORIGINAL DA QUESTÃO: ${explicacao_original}
 
-COMO EXPLICAR NESTE NÍVEL:
-${instrucao[nivel] || instrucao[1]}
+EXPLICAÇÃO ORIGINAL (para referência — não copie, use como base para sua explicação):
+${explicacao_original || '(não disponível)'}
+${blocoSteps}
+${abordagem[nivel] || abordagem[1]}
 
-REGRAS DE FORMATO:
-- Linguagem encorajadora, direta e em português
-- Máximo 280 palavras
-- Use **negrito** para conceitos-chave e fórmulas
-- Use MathJax (\\(...\\) inline, \\[...\\] em bloco) para matemática
-- Não reproduza a questão inteira
-- Não use frases como "como mencionado antes" ou "conforme explicado"
-- Sem JSON, sem markdown extra além de **negrito**
+════════════════════════════════════════════
+REGRAS DE QUALIDADE — OBRIGATÓRIAS:
+════════════════════════════════════════════
+1. Seja COMPLETO. Esta explicação será salva permanentemente no banco — escreva como um professor
+   experiente que quer que o aluno realmente entenda, não como quem quer ser breve.
+   Mínimo absoluto: 400 palavras. Sem máximo — use o espaço que o conceito exige.
+2. Use **negrito** para conceitos, termos técnicos e a resposta correta.
+3. Use MathJax para toda matemática: \\(...\\) inline e \\[...\\] para cálculos em bloco.
+   - Vírgula decimal: {,} (ex: \\(5{,}0\\,\\mathrm{A}\\))
+   - Use \\frac{}{}, \\cdot, \\text{}, \\mathrm{} para unidades
+   - NÃO fragmente \\begin{aligned}...\\end{aligned} — escreva o bloco inteiro inline no texto.
+4. Linguagem em português, direta, sem ser condescendente.
+5. NÃO comece com "Claro!", "Ótima pergunta!", "Com certeza!" ou elogios vazios.
+6. NÃO reproduza o enunciado completo da questão.
+7. NÃO escreva bastidores como "(65 words)" ou metadados da IA.
+8. Escreva apenas o texto da explicação — sem JSON, sem markdown além de **negrito** e títulos de seção.
 `;
 
-  const explicacaoBruta = await chamarGemini(key, prompt, 3, 1024, false, 0.75);
+  const explicacaoBruta = await chamarGemini(key, prompt, 3, 4096, false, 0.6);
   const explicacao = explicacaoBruta
     .replace(/\s*\(\d+\s*words?\)[^]*$/im, '')
     .replace(/\\\s*$/, '')
@@ -1011,69 +1111,136 @@ async function gerarQuestoesPAS(key: string, dados: any) {
     avancado: 'Difícil (integração de conceitos)',
   }[nivel] || nivel;
 
+  // Numeração dos itens para o bloco de instruções (PAS numera sequencialmente no exame)
+  const numBase = 1;
+  const nums: number[] = (tipos as string[]).map((_: string, i: number) => numBase + i);
+  const tiposA: number[] = nums.filter((_: number, i: number) => (tipos as string[])[i] === 'A');
+  const tiposB: number[] = nums.filter((_: number, i: number) => (tipos as string[])[i] === 'B');
+  const tiposC: number[] = nums.filter((_: number, i: number) => (tipos as string[])[i] === 'C');
+  const tiposD: number[] = nums.filter((_: number, i: number) => (tipos as string[])[i] === 'D');
+
+  // Instrução do bloco no estilo PAS real
+  const partesInstrucao: string[] = [];
+  if (tiposA.length > 0) {
+    const label = tiposA.length === 1 ? `o item ${tiposA[0]}` : `os itens ${tiposA.slice(0,-1).join(', ')} e ${tiposA.at(-1)}`;
+    partesInstrucao.push(`julgue ${label}`);
+  }
+  if (tiposB.length > 0) {
+    tiposB.forEach((num: number) => partesInstrucao.push(`faça o que se pede no item ${num}, que é do tipo B`));
+  }
+  if (tiposC.length > 0) {
+    tiposC.forEach((num: number) => partesInstrucao.push(`assinale a opção correta no item ${num}, que é do tipo C`));
+  }
+  if (tiposD.length > 0) {
+    tiposD.forEach((num: number) => partesInstrucao.push(`responda ao item ${num}, que é do tipo D`));
+  }
+  const instrucaoBloco = partesInstrucao.length > 0
+    ? `Com base no texto acima, ${partesInstrucao.join('; ')}.`
+    : '';
+
   // Descrever cada tipo para o prompt
   const descTipos = (tipos as string[]).map((t, i) => {
     switch(t) {
-      case 'A': return `Item ${i+1}: Tipo A — Certo ou Errado. Uma afirmação sobre o texto para o aluno julgar. Inclua pegadinha conceitual sutil.`;
-      case 'B': return `Item ${i+1}: Tipo B (CDU) — resposta numérica inteira entre 0 e 999. O aluno preenche Centena, Dezena e Unidade. "alternativas" deve ser null. "gabarito" deve ser o número inteiro (ex: "42"). O enunciado deve guiar o aluno a encontrar um inteiro nesse intervalo. Inclua steps de resolução.`;
-      case 'C': return `Item ${i+1}: Tipo C — Múltipla Escolha CONCEITUAL. 5 alternativas (A-E). Interpretação, análise, comparação.`;
-      case 'D': return `Item ${i+1}: Tipo D — Dissertativa TEÓRICA. O aluno escreve uma resposta textual. Sem cálculo. O campo "gabarito" deve conter os critérios de avaliação.`;
-      default:  return `Item ${i+1}: Tipo C — Múltipla Escolha.`;
+      case 'A': return `Item ${nums[i]}: Tipo A (Certo ou Errado) — afirmação direta para o aluno julgar CERTO ou ERRADO. Deve explorar uma distinção conceitual real, não trivial. "alternativas" = null. "gabarito" = "CERTO" ou "ERRADO".`;
+      case 'B': return `Item ${nums[i]}: Tipo B (CDU — Centena Dezena Unidade) — cálculo cujo resultado é um número inteiro entre 0 e 999. O enunciado deve pedir um valor determinado. "alternativas" = null. "gabarito" = apenas o número inteiro (ex: "42", "350"). Inclua steps detalhados de resolução.`;
+      case 'C': return `Item ${nums[i]}: Tipo C (Múltipla Escolha) — EXATAMENTE 4 alternativas: Ⓐ Ⓑ Ⓒ Ⓓ (campos "A", "B", "C", "D" — SEM campo "E"). Pode ser conceitual ou de cálculo. "gabarito" = "A", "B", "C" ou "D". Alternativas erradas devem ser plausíveis.`;
+      case 'D': return `Item ${nums[i]}: Tipo D (Dissertativa) — o aluno escreve ou calcula a resposta em espaço próprio. Pode ser conceitual (explique, argumente, compare) ou de cálculo (determine, calcule, obtenha). "alternativas" = null. "gabarito" contém os critérios de avaliação e/ou o valor esperado.`;
+      default:  return `Item ${nums[i]}: Tipo C — 4 alternativas (A-D).`;
     }
   }).join('\n');
 
-  const tiposComAlts = tipos.filter((t: string) => t === 'B' || t === 'C');
-  const tiposSemAlts = tipos.filter((t: string) => t === 'A' || t === 'D');
+  const disciplinaLabel = { bio: 'Biologia', quim: 'Química', fis: 'Física', inter: 'Ciências da Natureza (interdisciplinar)' }[disciplina] || disciplina;
 
   const prompt = `
 ${CONTEXTO_PROVA}
 
 ═══════════════════════════════════════════
-TAREFA: Gere um conjunto de itens no formato PAS (UnB-adaptado) para revisão.
+TAREFA: Gere um bloco de itens no formato PAS 3 (CEBRASPE/UnB) para revisão da AV4 Marista.
 ═══════════════════════════════════════════
 
-TEMA: "${tema}" — disciplina: ${disciplina}
+TEMA: "${tema}" — ${disciplinaLabel}
 NÚMERO DE ITENS: ${n}
 NÍVEL: ${descNivel}
 
-ESTRUTURA DO CONJUNTO:
-Um texto-base contextualizado + ${n} itens vinculados a ele.
+════════════════════════════════════
+COMO FUNCIONA UM BLOCO PAS
+════════════════════════════════════
+Cada bloco do PAS tem:
+  1. Um TEXTO-BASE contextualizado (trecho de texto científico, literário ou de divulgação,
+     com dados numéricos embutidos quando necessário para itens de cálculo).
+     O texto deve ter título no padrão "TEXTO I — Subtítulo" e terminar com atribuição de fonte
+     (ex: "Adaptado de: Autoria. Título. Local: Editora, Ano.")
+  2. Uma INSTRUÇÃO DE BLOCO no estilo PAS (ex: "Com base no texto acima, julgue os itens 1 e 2
+     e assinale a opção correta no item 3, que é do tipo C.") — inclua esse texto no campo
+     "instrucao_bloco" do JSON.
+  3. Os ITENS numerados sequencialmente, cada um com seu tipo declarado.
 
-DESCRIÇÃO DE CADA ITEM:
+════════════════════════════════════
+TIPOS DE ITEM — DEFINIÇÕES EXATAS
+════════════════════════════════════
 ${descTipos}
 
-REGRAS:
-1. O texto-base deve ter 3-5 parágrafos, ser fluido, contextualizado e conter TODOS os dados numéricos necessários para os itens de cálculo.
-2. Todos os itens devem depender do texto-base — não devem ser resolúveis sem ele.
-3. Itens Tipo D devem ser estritamente teóricos (conceituais, argumentativos) — NUNCA pedem cálculo.
-4. Use LaTeX com \\(...\\) para expressões inline em todos os campos textuais.
-5. Dados numéricos nos textos: use notação LaTeX ex: \\(V = 220\\,\\mathrm{V}\\), \\(I = 5{,}0\\,\\mathrm{A}\\).
-6. Responda APENAS com JSON válido, sem markdown, sem texto fora do JSON.
-7. Para Tipo B e C, alternativas erradas devem ser plausíveis (erros reais de raciocínio).
-8. Para Tipo D, o campo "gabarito" contém os critérios de avaliação (não a resposta completa), e "alternativas" é null.
-9. Para Tipo A, "alternativas" é null e "gabarito" é "CERTO" ou "ERRADO".
+════════════════════════════════════
+INSTRUÇÃO DE BLOCO A USAR
+════════════════════════════════════
+${instrucaoBloco || '(gere instrução adequada ao conjunto de itens)'}
 
-SCHEMA OBRIGATÓRIO:
+════════════════════════════════════
+REGRAS DE ELABORAÇÃO
+════════════════════════════════════
+1. O texto-base deve ter 3-5 parágrafos densos, com linguagem técnica/científica, e TODOS os dados
+   numéricos necessários para itens de cálculo devem estar NELE (não no enunciado do item).
+2. Todos os itens devem se referir explicitamente ao texto-base — não são resolúveis sem ele.
+3. Tipo C: EXATAMENTE 4 alternativas (A, B, C, D). NÃO gere alternativa E.
+4. Tipo B: o resultado DEVE ser inteiro ≥ 0 e ≤ 999. Especifique isso no enunciado do item.
+5. Tipo D: pode pedir explicação, comparação, argumentação OU cálculo/determinação — ambos são válidos.
+6. Use LaTeX com \\(...\\) para expressões inline e \\[...\\] para blocos de cálculo.
+   Vírgula decimal: {,} (ex: \\(5{,}0\\,\\mathrm{A}\\)). Milhar: espaço fino (ex: \\(18\\,000\\)).
+7. Fonte do texto-base: invente uma atribuição plausível (autor, obra, ano) — não use uma real.
+8. Responda APENAS com JSON válido, sem markdown, sem texto fora do JSON.
+
+════════════════════════════════════
+SCHEMA OBRIGATÓRIO (JSON)
+════════════════════════════════════
 {
   "texto_base": {
-    "titulo": "string — título breve do texto (ex: TEXTO I — Tema)",
-    "paragrafos": ["string", "string", "string"]
+    "titulo": "string — ex: TEXTO I — Equilíbrio Químico em Processos Industriais",
+    "paragrafos": ["parágrafo 1", "parágrafo 2", "..."],
+    "fonte": "string — ex: Adaptado de: SILVA, J. Química Industrial. São Paulo: Editora X, 2023."
   },
+  "instrucao_bloco": "string — instrução no estilo PAS, ex: Com base no texto acima, julgue os itens 1 e 2...",
   "itens": [
     {
       "tipo": "A|B|C|D",
       "nivel": "basico|intermediario|avancado",
       "tema": "string",
-      "enunciado": "string — contexto/situação do item",
-      "comando": "string — instrução ao aluno (ex: 'Assinale a alternativa correta.' ou 'Julgue a afirmação:' ou 'Explique, com base no texto,')",
-      "alternativas": {"A":"...","B":"...","C":"...","D":"...","E":"..."} | null,
-      "gabarito": "A|B|C|D|E|CERTO|ERRADO|string com critérios",
-      "explicacao": "string — explicação completa com LaTeX"
+      "enunciado": "string — contexto ou situação específica do item (pode ser vazio se o texto-base já basta)",
+      "comando": "string — instrução ao aluno (ex: 'Julgue a afirmação a seguir.', 'Assinale a alternativa correta.', 'Determine o valor de...', 'Explique, com base no texto,')",
+      "alternativas": {"A":"...","B":"...","C":"...","D":"..."} | null,
+      "gabarito": "A|B|C|D|CERTO|ERRADO|número inteiro|critérios de avaliação",
+      "explicacao": "string — resolução ou justificativa completa com LaTeX",
+      "steps": [
+        {
+          "titulo": "string",
+          "hint": "string curto",
+          "explicacao": "string",
+          "linhas_latex": ["LaTeX puro"],
+          "destaque_latex": "LaTeX puro do resultado"
+        }
+      ]
     }
   ]
 }
 
-Antes de responder, verifique: o texto-base contém todos os dados para os itens de cálculo? O LaTeX está sintaticamente correto?
+ATENÇÃO: steps só é necessário para itens Tipo B e Tipo D de cálculo.
+Para Tipo A, C e D conceitual, steps pode ser [] ou omitido.
+
+Antes de responder, verifique internamente:
+✔ Tipo C tem exatamente 4 alternativas (A/B/C/D), sem E?
+✔ Tipo B resulta em inteiro 0-999?
+✔ O texto-base contém todos os dados para os itens?
+✔ O LaTeX está sintaticamente correto?
+✔ "instrucao_bloco" está no estilo PAS?
 `;
 
   let ultimo = '';

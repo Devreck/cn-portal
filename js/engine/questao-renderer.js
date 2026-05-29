@@ -388,6 +388,9 @@ const QuestaoRenderer = {
     const alts = ['A','B','C','D','E'];
 
     const altSource = q._altExibicao || q.alternativas;
+    // PAS: 4 alternatives (no E); ENEM: 5 alternatives
+    const nAlts = Object.keys(altSource || {}).filter(k => altSource[k] != null).length;
+    const tipoLabel = nAlts <= 4 ? 'Múltipla Escolha (PAS — 4 opções)' : 'Múltipla Escolha';
     const alternativasHtml = alts
       .filter(letra => altSource[letra] != null)
       .map(letra => `
@@ -410,7 +413,7 @@ const QuestaoRenderer = {
         <div class="questao-header">
           <div class="questao-meta">
             <span class="q-num">Questão ${num}</span>
-            <span class="q-tipo tipo-c">Múltipla Escolha</span>
+            <span class="q-tipo tipo-c">${tipoLabel}</span>
             <span class="q-nivel">${nivelEmoji[q.nivel]} ${q.nivel.charAt(0).toUpperCase()+q.nivel.slice(1)}</span>
             <span class="q-tema" id="tema-${q.id}" style="display:none">${q.tema}</span>
           </div>
@@ -648,20 +651,58 @@ const QuestaoRenderer = {
   htmlSteps(steps) {
     // Gera HTML dos steps com equações em align*/equation* para renderização profissional
     return steps.map((s, i) => {
-      // Limpa e prepara linhas_latex
-      const latexLines = (s.linhas_latex || [])
-        .map(l => {
-          let clean = l.trim();
-          // Remove delimitadores residuais se a IA os enviou por engano
-          clean = clean.replace(/^\\\[|\\\]$/g, '').replace(/^\$\$|\$\$$/g, '').trim();
-          // Se já contém um display block que não aceita ser envolvido em \[, deixamos sem.
-          // Atenção: \begin{aligned} PRECISA do \[ \], mas \begin{align} e \begin{align*} NÃO!
+
+      // ── Pré-processo: reagrupa linhas_latex que formam um único bloco aligned ──
+      // A IA às vezes fragmenta \begin{aligned} ... \end{aligned} em entradas separadas.
+      // Se renderizadas individualmente em \[...\], geram "Missing \end{aligned}" e "Misplaced &".
+      const rawLines = (s.linhas_latex || []).map(l =>
+        l.trim().replace(/^\\\[|\\\]$/g, '').replace(/^\$\$|\$\$$/g, '').trim()
+      ).filter(Boolean);
+
+      const blocosConsolidados = [];
+      let buffer = [];
+      let dentroAligned = false;
+
+      for (const linha of rawLines) {
+        if (!dentroAligned && linha.includes('\\begin{aligned}')) {
+          // Verifica se a mesma entrada também fecha o bloco
+          if (linha.includes('\\end{aligned}')) {
+            blocosConsolidados.push(linha); // bloco completo numa linha só
+          } else {
+            dentroAligned = true;
+            buffer = [linha];
+          }
+        } else if (dentroAligned) {
+          buffer.push(linha);
+          if (linha.includes('\\end{aligned}')) {
+            dentroAligned = false;
+            blocosConsolidados.push(buffer.join('\n'));
+            buffer = [];
+          }
+        } else if (!dentroAligned && linha.includes('&')) {
+          // Linha solta com & (alinhamento): envolve em aligned automaticamente
+          blocosConsolidados.push(`\\begin{aligned}\n${linha}\n\\end{aligned}`);
+        } else {
+          blocosConsolidados.push(linha);
+        }
+      }
+      // Flush: bloco aligned incompleto (IA esqueceu \end{aligned})
+      if (buffer.length > 0) {
+        buffer.push('\\end{aligned}');
+        blocosConsolidados.push(buffer.join('\n'));
+      }
+
+      // ── Renderiza cada bloco consolidado ──
+      const latexLines = blocosConsolidados.map(clean => {
+          // \begin{align} e \begin{equation} NÃO devem ser envolvidos em \[...\]
           if (
-            clean.startsWith('\\begin{align}') && !clean.startsWith('\\begin{aligned}') ||
+            (clean.startsWith('\\begin{align}') && !clean.startsWith('\\begin{aligned}')) ||
+            clean.startsWith('\\begin{align*}') ||
             clean.startsWith('\\begin{equation}')
           ) {
             return `<div class="step-latex-line">${clean}</div>`;
           }
+          // Tudo o mais (incluindo \begin{aligned}) entra em \[...\]
           return `<div class="step-latex-line">\\[${clean}\\]</div>`;
         })
         .join('');
@@ -1189,13 +1230,19 @@ const QuestaoRenderer = {
           body: {
             funcao: 'tutor_erro',
             dados: {
-              enunciado:           q.enunciado,
-              resposta_aluno:      respostaLetra,
+              enunciado:            q.enunciado,
+              comando:              q.comando || null,
+              texto_base:           q.texto_base || null,
+              tema:                 q.tema || null,
+              subtema:              q.subtema || null,
+              tipo:                 q.tipo || 'C',
+              resposta_aluno:       respostaLetra,
               resposta_aluno_texto: respostaTexto,
-              gabarito:            q.gabarito,
-              explicacao_original: q.explicacao,
-              disciplina:          this.estado.disciplina,
-              alternativas:        q.alternativas || null,
+              gabarito:             q.gabarito,
+              explicacao_original:  q.explicacao,
+              steps_original:       q.steps || null,
+              disciplina:           this.estado.disciplina,
+              alternativas:         q.alternativas || null,
               nivel,
             },
           },
@@ -1211,11 +1258,26 @@ const QuestaoRenderer = {
         await this._salvarExplicacaoTutor(qId, nivel, texto);
       }
 
-      // 3. Renderizar
+      // 3. Renderizar — transformação mínima para não quebrar MathJax
+      // REGRA: nunca dividir texto por \n antes do MathJax rodar.
+      // \[...\] e \(...\) precisam estar em nós de texto contínuos.
+      // Só fazemos: **Título sozinho na linha** → <h4>, **negrito** → <strong>.
+      const formatarTutorTexto = (raw) => {
+        return raw
+          // **Título em linha própria** → <h4> (preserva o restante da linha intacto)
+          .replace(/^\*\*(.+?)\*\*\s*$/gm, '<h4 class="ia-secao">$1</h4>')
+          // **negrito** inline
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // INTENCIONALMENTE sem split por \n nem replace \n→<br>:
+        // isso quebraria \[ ... \] multilinha antes do MathJax processar.
+        // CSS white-space: pre-line no .ia-texto cuida das quebras de linha.
+      };
+
+      const nivelLabels = { 1: 'Tutor IA', 2: 'Tutor IA · Segundo ângulo', 3: 'Tutor IA · Fundamento base' };
       div.innerHTML = `
         <div class="ia-card">
-          <div class="ia-header">🤖 Tutor IA${nivel > 1 ? ` · Explicação ${nivel}` : ''}</div>
-          <div class="ia-texto">${texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+          <div class="ia-header">🤖 ${nivelLabels[nivel] || 'Tutor IA'}</div>
+          <div class="ia-texto">${formatarTutorTexto(texto)}</div>
         </div>`;
       if (window.MathJax?.typesetPromise) {
         MathJax.typesetPromise([div]).catch(e => console.warn('MathJax Tutor IA:', e));
@@ -1395,16 +1457,20 @@ const QuestaoRenderer = {
 
       // Render com texto-base agrupado se houver
       const tb = resultado.texto_base;
+      const instrucaoBloco = resultado.instrucao_bloco || '';
       let html = '';
       if (tb) {
         const titulo = tb.titulo || tb.title || '';
         const paras  = Array.isArray(tb.paragrafos) ? tb.paragrafos : tb.texto ? [tb.texto] : [];
+        const fonte  = tb.fonte || '';
         html += `
           <div class="grupo-questoes-wrapper">
             <div class="grupo-texto-base-header">
               ${titulo ? `<div class="grupo-texto-base-titulo">${titulo}</div>` : ''}
               <div class="grupo-texto-base-corpo">${paras.map(p => `<p>${this._fmtTxt ? this._fmtTxt(String(p)) : p}</p>`).join('')}</div>
+              ${fonte ? `<div class="grupo-texto-base-fonte">${fonte}</div>` : ''}
             </div>
+            ${instrucaoBloco ? `<div class="grupo-instrucao-bloco">${instrucaoBloco}</div>` : ''}
             <div class="grupo-itens">${itensHtml.join('')}</div>
           </div>`;
       } else {
