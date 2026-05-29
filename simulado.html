@@ -564,7 +564,7 @@ function fmtTxt(txt) {
 
   // 4. Conteúdo misto (tem delimitadores em partes, mas LaTeX solto em outras):
   //    Separar seções já delimitadas e envolver LaTeX solto com $...$
-  const mathRx = /(\$\$[\s\S]*?\$\$|\$[^\n$]*?\$|\\\([^)]*\\\)|\\\[[\s\S]*?\\\])/g;
+  const mathRx = /(\$\$[\s\S]*?\$\$|\$[^\n$]*?\$|\\\((?:[^\\]|\\.)*?\\\)|\\\[(?:[^\\]|\\.)*?\\\])/g;
   const partes = []; let ult = 0, mc;
   while ((mc = mathRx.exec(s)) !== null) {
     if (mc.index > ult) partes.push([false, s.slice(ult, mc.index)]);

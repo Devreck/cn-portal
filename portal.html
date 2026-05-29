@@ -1181,7 +1181,7 @@ function fmtTxt(txt) {
   // Sem delimitadores → envolve tudo como bloco inline
   if (!/[$]|\\[\(\[]/.test(s)) return '$' + s.trim() + '$';
   // Misto: envolve LaTeX avulso fora dos delimitadores existentes
-  const mathRx = /(\$\$[\s\S]*?\$\$|\$[^\n$]*?\$|\\\([^)]*\\\)|\\\[[\s\S]*?\\\])/g;
+  const mathRx = /(\$\$[\s\S]*?\$\$|\$[^\n$]*?\$|\\\((?:[^\\]|\\.)*?\\\)|\\\[(?:[^\\]|\\.)*?\\\])/g;
   const partes = []; let ult = 0, mc;
   while ((mc = mathRx.exec(s)) !== null) {
     if (mc.index > ult) partes.push([false, s.slice(ult, mc.index)]);

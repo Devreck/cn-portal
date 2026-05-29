@@ -755,6 +755,8 @@ const SIMULADO_TEXTOS_FORMATO_PROVA = {
 
   Do ponto de vista biológico, o ritmo cardíaco normal depende de células especializadas e de canais iônicos de membrana. Alterações hereditárias em proteínas de canais podem modificar a excitabilidade cardíaca. Em algumas famílias, síndromes arrítmicas seguem padrão autossômico dominante, isto é, o alelo alterado em apenas uma cópia já pode ser suficiente para produzir o fenótipo clínico.
 
+  O capacitor armazena \(E = 150\ \mathrm{J}\) sob tensão de descarga \(V = 1500\ \mathrm{V}\) e libera essa energia em \(\Delta t = 10\ \mathrm{ms}\). A constante de Faraday é \(F = 96500\ \mathrm{C\ mol^{-1}}\).
+
   Com base no texto, nas relações \(E=\frac{1}{2}QV\), \(P=\frac{E}{\Delta t}\), nos princípios da condução iônica e na genética mendeliana, julgue os itens e assinale as alternativas propostas.
   `,
 
@@ -779,6 +781,8 @@ const SIMULADO_TEXTOS_FORMATO_PROVA = {
 
   No dimensionamento econômico, a energia armazenada em watt-hora e quilowatt-hora também é relevante, pois esta é a unidade usual de cobrança em estações de recarga. Portanto, o mesmo sistema exige raciocínio integrado entre eletroquímica, corrente elétrica, energia e custo.
 
+  Durante a recarga, a fonte impõe corrente de \(I = 50\ \mathrm{A}\) por \(t = 4\ \mathrm{h}\). A estação de recarga cobra uma tarifa de R\$~1{,}20 por kWh consumido.
+
   Considere \(F=96500\ \mathrm{C\ mol^{-1}}\), \(M(Li)=7\ \mathrm{g\ mol^{-1}}\) e as informações do texto para responder aos itens.
   `,
 
@@ -790,6 +794,8 @@ const SIMULADO_TEXTOS_FORMATO_PROVA = {
   A ação enzimática não altera a variação de entalpia global da reação, mas oferece rota alternativa de menor energia de ativação. Em diagramas de energia, isso aparece como redução do pico associado ao estado de transição, sem modificar os níveis energéticos inicial e final. Assim, a enzima acelera a chegada ao equilíbrio, mas não muda a constante de equilíbrio termodinâmica.
 
   No interior do biorreator, a fermentação pode ser modelada, de forma simplificada, por um equilíbrio entre glicose, etanol e dióxido de carbono. A análise de \(K_c\) exige comparar concentrações no equilíbrio com os coeficientes estequiométricos. Ao mesmo tempo, como as células transgênicas se multiplicam por brotamento, a estabilidade genética da linhagem produtora é um ponto essencial para a produtividade industrial.
+
+  Os dados experimentais disponíveis são: \(E_a = 180\ \mathrm{kJ\ mol^{-1}}\) sem enzima, \(E_a = 40\ \mathrm{kJ\ mol^{-1}}\) com celulase e \(\Delta H = -50\ \mathrm{kJ\ mol^{-1}}\). O biorreator de \(1{,}0\ \mathrm{L}\) partiu de \(C_0(\text{glicose}) = 3{,}0\ \mathrm{mol\ L^{-1}}\); no equilíbrio, \([\text{glicose}] = 1{,}0\ \mathrm{mol\ L^{-1}}\).
 
   Utilize o texto para relacionar transgenia, catálise, energia de ativação, entalpia e equilíbrio químico.
   `,
@@ -815,6 +821,8 @@ const SIMULADO_TEXTOS_FORMATO_PROVA = {
 
   O cortisol exerce efeitos em diferentes tecidos, como metabolismo energético, resposta imune e regulação cardiovascular. Alterações hereditárias em vias endócrinas podem seguir padrões mendelianos, inclusive autossômicos dominantes em algumas síndromes. O contexto permite integrar catálise enzimática, potência elétrica, autonomia de baterias, pleiotropia hormonal e probabilidade genética.
 
+  Dados do dispositivo: bateria de \(300\ \mathrm{mAh}\) a \(3{,}7\ \mathrm{V}\); sensor com consumo contínuo de \(P = 1{,}0\ \mathrm{mW}\); circuito interno: \(V = 0{,}5\ \mathrm{V}\), \(I = 2{,}0\ \mathrm{mA}\), \(R_{\text{int}} = 250\ \Omega\).
+
   Com base no texto, julgue os itens e resolva as situações propostas.
   `,
 
@@ -827,6 +835,8 @@ const SIMULADO_TEXTOS_FORMATO_PROVA = {
 
   A radiação ionizante exige controle rigoroso porque pode induzir danos no DNA. Alterações germinativas em genes supressores tumorais, como aqueles envolvidos em reparo, apoptose e regulação do ciclo celular, podem elevar o risco de múltiplos tumores. Quando um único gene influencia várias manifestações fenotípicas, caracteriza-se pleiotropia. Algumas síndromes hereditárias associadas a predisposição tumoral seguem padrão autossômico dominante.
 
+  O gerador opera a \(V = 40\ \mathrm{kV}\) e \(I = 25000\ \mathrm{A}\), com rendimento global de 33 %.
+
   Considere esse cenário para integrar potência elétrica, rendimento, energia e genética molecular.
   `,
 
@@ -838,6 +848,8 @@ const SIMULADO_TEXTOS_FORMATO_PROVA = {
   A interpretação de \(K_c\) indica se, em determinada condição, predominam as formas encapsuladas ou liberadas. Quando o pH muda, a concentração de \(H^+\) não precisa aparecer explicitamente na equação simplificada para que a protonação de grupos funcionais perturbe a estabilidade do sistema. O princípio de Le Chatelier ajuda a prever o efeito macroscópico dessa perturbação.
 
   Em escala industrial, nanopartículas e proteínas terapêuticas podem ser produzidas em biorreatores com controle térmico e sensores enzimáticos. Resistores aquecedores dissipam energia por efeito Joule, enquanto células geneticamente modificadas podem expressar proteínas humanas de interesse médico. O sistema, portanto, envolve equilíbrio químico, potência elétrica, catálise, biotecnologia e organismos geneticamente modificados.
+
+  Dados do sistema integrado: resistor aquecedor \(R = 500\ \Omega\), \(V = 50\ \mathrm{V}\); biossensor: \(I = 0{,}5\ \mathrm{mA}\), \(R = 2000\ \Omega\); glicose-oxidase: \(\Delta H = -80\ \mathrm{kJ\ mol^{-1}}\), \(E_a = 60\ \mathrm{kJ\ mol^{-1}}\) (com enzima).
 
   Com base nesse texto, responda aos itens propostos.
   `,
@@ -872,7 +884,7 @@ const SIMULADO_ENUNCIADOS_FORMATO_PROVA = {
   sim_t5_02: 'Julgue a afirmação: para a dissolução exotérmica do dióxido de carbono, o aumento de temperatura reduz a tendência de dissolução e diminui o valor de \\(K_c\\).',
   sim_t5_03: 'No modelo poligênico apresentado no Texto V, assinale a proporção esperada de descendentes \\(AABBCC\\) no cruzamento \\(AaBbCc\\times AaBbCc\\).',
   sim_t5_04: 'Julgue a proposição: resistência ao branqueamento controlada por múltiplos genes aditivos representa herança poligênica, e não epistasia simples.',
-  sim_t5_05: 'Como o pH é uma escala logarítmica, assinale a variação aproximada de \\([H^+]\\) quando o pH oceânico diminui de \\(8{,}2\\) para \\(7{,}8\\).',
+  sim_t5_05: 'Como o pH é uma escala logarítmica, assinale a variação aproximada de \\([\\text{H}^+]\\) quando o pH oceânico diminui de \\(8{,}2\\) para \\(7{,}8\\). Dado: \\(10^{0{,}4}\\approx2{,}5\\).',
 
   sim_t6_01: 'No circuito interno do biossensor descrito no Texto VI, assinale a potência dissipada por um resistor de \\(250\\ \\Omega\\) percorrido por \\(2{,}0\\ \\mathrm{mA}\\).',
   sim_t6_02: 'Julgue a afirmação: a enzima imobilizada no sensor reduz a energia de ativação, não é consumida globalmente e não altera a variação de entalpia.',
@@ -890,7 +902,7 @@ const SIMULADO_ENUNCIADOS_FORMATO_PROVA = {
   sim_t8_02: 'Julgue a afirmação: em pH sanguíneo, um \\(K_c\\) muito menor que 1 indica predomínio da forma encapsulada do fármaco.',
   sim_t8_03: 'No biorreator do Texto VIII, assinale a energia dissipada por um resistor de \\(500\\ \\Omega\\) submetido a \\(50\\ \\mathrm{V}\\) durante duas horas.',
   sim_t8_04: 'Julgue a proposição: células bacterianas que recebem gene humano para expressar proteína terapêutica são organismos geneticamente modificados.',
-  sim_t8_05: 'No sistema integrado de nanopartículas, biossensor e enzima, assinale a afirmativa incorreta a partir dos dados físico-químicos fornecidos.',
+  sim_t8_05: 'No sistema integrado de nanopartículas e biossensor (\\(I=0{,}5\\ \\mathrm{mA}\\); \\(R=2000\\ \\Omega\\); \\(\\Delta H=-80\\ \\mathrm{kJ/mol}\\); \\(E_a=60\\ \\mathrm{kJ/mol}\\) com enzima), assinale a afirmativa INCORRETA.',
 };
 
 QUESTOES_SIMULADO.forEach((q) => {
