@@ -1457,7 +1457,9 @@ const QuestaoRenderer = {
           status: 'pendente',
         };
 
-        const { data: salvo } = await sb.from('questoes_banco').insert(questaoBanco).select('id').single().catch(() => ({ data: null }));
+        let salvo = null;
+        try { const r = await sb.from('questoes_banco').insert(questaoBanco).select('id').single(); salvo = r.data; } catch (_) {}
+
         q.id = salvo?.id ? `banco_${salvo.id}` : `ia_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
         this.estado.questoes.push(q);
         const num = this.estado.questoes.length;
