@@ -701,9 +701,12 @@ REGRAS DE QUALIDADE — OBRIGATÓRIAS:
 `;
 
   const explicacaoBruta = await chamarGemini(key, prompt, 3, 4096, false, 0.6);
+  // Remover apenas metadados de contagem no FINAL do texto (última linha com "(N words)" isolado)
+  // Não usar [^]* pois truncaria tudo ao encontrar "(400 words)" mencionado no meio do texto.
   const explicacao = explicacaoBruta
-    .replace(/\s*\(\d+\s*words?\)[^]*$/im, '')
-    .replace(/\\\s*$/, '')
+    .replace(/\n\s*\(\d+\s*words?\)\s*$/i, '')   // "(N words)" em linha própria no fim
+    .replace(/\s+\(\d+\s*palavras?\)\s*$/i, '')  // "(N palavras)" no fim
+    .replace(/\\\s*$/, '')                        // backslash solto no fim
     .trim();
   return json({ sucesso: true, explicacao });
 }

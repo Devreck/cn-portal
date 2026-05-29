@@ -1221,7 +1221,13 @@ const QuestaoRenderer = {
       // 1. Tentar buscar explicação já salva no banco
       let texto = await this._buscarExplicacaoTutor(qId, nivel);
 
-      // 2. Não existe ainda — gerar pela IA e salvar
+      // Validar cache: resposta incompleta (< 400 chars ou sem ponto final) → regenerar
+      if (texto && this._tutorRespostaIncompleta(texto)) {
+        await this._deletarExplicacaoTutor(qId, nivel);
+        texto = null;
+      }
+
+      // 2. Não existe ainda (ou foi apagada por ser ruim) — gerar pela IA e salvar
       if (!texto) {
         const respostaLetra = this.estado.respostas[qId]?.resposta || '?';
         const respostaTexto = q.alternativas?.[respostaLetra] || null;
@@ -1254,7 +1260,7 @@ const QuestaoRenderer = {
         texto = resp.data?.explicacao;
         if (!texto) throw new Error('IA não retornou explicação');
 
-        // Salvar para compartilhar com outros alunos
+        // Salvar para compartilhar com outros alunos (upsert — sobrescreve eventual resposta ruim)
         await this._salvarExplicacaoTutor(qId, nivel, texto);
       }
 
@@ -1305,6 +1311,16 @@ const QuestaoRenderer = {
     }
   },
 
+  // Verifica se uma resposta do tutor está incompleta
+  _tutorRespostaIncompleta(texto) {
+    if (!texto || typeof texto !== 'string') return true;
+    const t = texto.trim();
+    if (t.length < 400) return true;
+    // Não termina com pontuação adequada → truncada
+    if (!/[.!?*"\])]$/.test(t)) return true;
+    return false;
+  },
+
   // Busca explicação salva para uma questão+nível
   async _buscarExplicacaoTutor(qId, nivel) {
     if (!this.estado.userId || typeof sb === 'undefined') return null;
@@ -1319,17 +1335,25 @@ const QuestaoRenderer = {
     } catch { return null; }
   },
 
-  // Salva explicação gerada (ignora conflito — outro aluno pode ter salvo ao mesmo tempo)
+  // Remove explicação ruim do cache para forçar regeneração
+  async _deletarExplicacaoTutor(qId, nivel) {
+    if (!this.estado.userId || typeof sb === 'undefined') return;
+    try {
+      await sb.from('explicacoes_tutor')
+        .delete()
+        .eq('questao_id', qId)
+        .eq('nivel', nivel);
+    } catch { /* silencioso */ }
+  },
+
+  // Salva explicação gerada (upsert — sobrescreve respostas ruins existentes)
   async _salvarExplicacaoTutor(qId, nivel, texto) {
     if (!this.estado.userId || typeof sb === 'undefined') return;
     try {
       await sb.from('explicacoes_tutor')
-        .insert({ questao_id: qId, nivel, texto });
+        .upsert({ questao_id: qId, nivel, texto }, { onConflict: 'questao_id,nivel' });
     } catch (e) {
-      // Conflito de unicidade é esperado em acesso simultâneo — silencioso
-      if (!String(e).includes('duplicate') && !String(e?.message).includes('duplicate')) {
-        console.warn('Erro ao salvar explicação tutor:', e);
-      }
+      console.warn('Erro ao salvar explicação tutor:', e);
     }
   },
 
