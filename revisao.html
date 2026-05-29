@@ -146,6 +146,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .texto-base-para:last-child{margin-bottom:0}
 .questao-comando{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;padding:10px 14px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--ouro);line-height:1.6}
 .tipo-b{background:#e8f0fe;color:#1a73e8}
+/* CDU — Centena Dezena Unidade */
+.cdu-container{margin-bottom:10px}
+.cdu-hint{font-size:12px;color:var(--text-muted);margin-bottom:12px;font-style:italic}
+.cdu-boxes{display:flex;gap:12px;align-items:flex-end;margin-bottom:16px}
+.cdu-box-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.cdu-input{width:56px;height:64px;border:2px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:32px;font-weight:700;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .15s;outline:none}
+.cdu-input:focus{border-color:var(--ouro);box-shadow:0 0 0 3px rgba(201,168,76,.15)}
+.cdu-input:disabled{opacity:.6;cursor:not-allowed}
+.cdu-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px}
+.btn-cdu-confirmar{padding:10px 24px;border-radius:10px;border:none;background:var(--azul-mid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-cdu-confirmar:hover{background:var(--azul-light)}
+.btn-cdu-confirmar:disabled{opacity:.4;cursor:not-allowed}
+.cdu-gabarito-info{margin-top:10px;font-size:13px;font-weight:600}
 .tipo-d{background:#e8f5e9;color:#2e7d32}
 .tipo-d-resposta{width:100%;min-height:120px;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;resize:vertical;background:var(--surface2);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:12px;box-sizing:border-box}
 .tipo-d-resposta:focus{outline:none;border-color:var(--ouro);box-shadow:0 0 0 2px rgba(201,168,76,.15)}

@@ -499,24 +499,8 @@ const QuestaoRenderer = {
   // ── HTML TIPO B (Cálculo · Múltipla Escolha) ─────────────
   htmlTipoB(q, num) {
     const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
-    const alts = ['A','B','C','D','E'];
-
-    const altSource = q._altExibicao || q.alternativas;
-    const alternativasHtml = alts
-      .filter(letra => altSource[letra] != null)
-      .map(letra => `
-        <button
-          class="alt-btn"
-          id="alt-${q.id}-${letra}"
-          onclick="QuestaoRenderer.responderC('${q.id}', '${letra}')"
-        >
-          <span class="alt-letra">${letra}</span>
-          <span class="alt-texto">${this._fmtTxt(altSource[letra])}</span>
-        </button>
-      `).join('');
-
     const stepsHtml = q.steps ? this.htmlSteps(q.steps) : '';
-    const textoBaseHtml     = this.htmlTextoBase(q);
+    const textoBaseHtml        = this.htmlTextoBase(q);
     const elementosVisuaisHtml = this.htmlElementosVisuais(q);
 
     return `
@@ -524,7 +508,7 @@ const QuestaoRenderer = {
         <div class="questao-header">
           <div class="questao-meta">
             <span class="q-num">Questão ${num}</span>
-            <span class="q-tipo tipo-b">Cálculo · Múltipla Escolha</span>
+            <span class="q-tipo tipo-b">Cálculo · CDU</span>
             <span class="q-nivel">${nivelEmoji[q.nivel]} ${q.nivel.charAt(0).toUpperCase()+q.nivel.slice(1)}</span>
             <span class="q-tema" id="tema-${q.id}" style="display:none">${q.tema}</span>
           </div>
@@ -536,8 +520,34 @@ const QuestaoRenderer = {
         <p class="questao-enunciado">${this._fmtTxt(q.enunciado)}</p>
         ${this.htmlComando(q)}
 
-        <div class="alternativas" id="alts-${q.id}">
-          ${alternativasHtml}
+        <div class="cdu-container" id="alts-${q.id}">
+          <div class="cdu-hint">Escreva o resultado nos quadros abaixo (Centena · Dezena · Unidade)</div>
+          <div class="cdu-boxes">
+            <div class="cdu-box-wrap">
+              <input class="cdu-input" id="cdu-c-${q.id}" type="text" inputmode="numeric"
+                maxlength="1" placeholder="0"
+                onkeydown="QuestaoRenderer._cduKey(event,'${q.id}','c')"
+                oninput="QuestaoRenderer._cduInput(event,'${q.id}','c')">
+              <span class="cdu-label">C</span>
+            </div>
+            <div class="cdu-box-wrap">
+              <input class="cdu-input" id="cdu-d-${q.id}" type="text" inputmode="numeric"
+                maxlength="1" placeholder="0"
+                onkeydown="QuestaoRenderer._cduKey(event,'${q.id}','d')"
+                oninput="QuestaoRenderer._cduInput(event,'${q.id}','d')">
+              <span class="cdu-label">D</span>
+            </div>
+            <div class="cdu-box-wrap">
+              <input class="cdu-input" id="cdu-u-${q.id}" type="text" inputmode="numeric"
+                maxlength="1" placeholder="0"
+                onkeydown="QuestaoRenderer._cduKey(event,'${q.id}','u')"
+                oninput="QuestaoRenderer._cduInput(event,'${q.id}','u')">
+              <span class="cdu-label">U</span>
+            </div>
+          </div>
+          <button class="btn-cdu-confirmar" id="btn-cdu-${q.id}" onclick="QuestaoRenderer.responderB('${q.id}')">
+            Confirmar resposta
+          </button>
         </div>
 
         <div class="questao-feedback" id="fb-${q.id}" style="display:none">
@@ -683,6 +693,73 @@ const QuestaoRenderer = {
   },
 
   // ── RESPONDER TIPO C ─────────────────────────────────────
+  // ── AUXILIARES CDU ──────────────────────────────────────────
+  _cduInput(ev, qId, casa) {
+    // Aceitar só dígito 0-9; avançar automaticamente para próxima casa
+    const val = ev.target.value.replace(/\D/g, '').slice(-1);
+    ev.target.value = val;
+    if (val) {
+      const ordem = { c: 'd', d: 'u', u: null };
+      const prox  = ordem[casa];
+      if (prox) document.getElementById(`cdu-${prox}-${qId}`)?.focus();
+    }
+  },
+
+  _cduKey(ev, qId, casa) {
+    // Backspace em campo vazio → volta para casa anterior
+    if (ev.key === 'Backspace' && !ev.target.value) {
+      const ordem = { c: null, d: 'c', u: 'd' };
+      const ant   = ordem[casa];
+      if (ant) document.getElementById(`cdu-${ant}-${qId}`)?.focus();
+    }
+    // Enter confirma
+    if (ev.key === 'Enter') this.responderB(qId);
+  },
+
+  // ── RESPONDER TIPO B (CDU) ────────────────────────────────
+  async responderB(qId) {
+    if (this.estado.respostas[qId]) return;
+
+    const q = this.estado.questoes.find(q => q.id === qId);
+    if (!q) return;
+
+    const c = parseInt(document.getElementById(`cdu-c-${qId}`)?.value || '0') || 0;
+    const d = parseInt(document.getElementById(`cdu-d-${qId}`)?.value || '0') || 0;
+    const u = parseInt(document.getElementById(`cdu-u-${qId}`)?.value || '0') || 0;
+    const resposta = c * 100 + d * 10 + u; // valor numérico do aluno
+
+    // Gabarito: aceita string "042", "42", ou número
+    const gabNum = parseInt(String(q.gabarito).replace(/\D/g, ''), 10);
+    const correta = resposta === gabNum;
+    const pontos  = this.calcularPontos('C', correta); // mesma pontuação do tipo C
+
+    // Desabilitar inputs e botão
+    ['c','d','u'].forEach(casa => {
+      const el = document.getElementById(`cdu-${casa}-${qId}`);
+      if (el) el.disabled = true;
+    });
+    const btn = document.getElementById(`btn-cdu-${qId}`);
+    if (btn) btn.disabled = true;
+
+    // Mostrar gabarito correto abaixo das caixas
+    const container = document.getElementById(`alts-${qId}`);
+    if (container) {
+      const gabStr = String(gabNum).padStart(3, '0');
+      const cor    = correta ? 'var(--green)' : 'var(--red,#e53935)';
+      const info   = document.createElement('div');
+      info.className = 'cdu-gabarito-info';
+      info.innerHTML = correta
+        ? `<span style="color:var(--green)">✅ Resposta correta: ${gabStr}</span>`
+        : `<span style="color:var(--red,#e53935)">❌ Gabarito: <strong>${gabStr}</strong> — você digitou: ${String(resposta).padStart(3,'0')}</span>`;
+      container.appendChild(info);
+    }
+
+    this.mostrarFeedback(qId, correta, pontos, String(resposta));
+    await this.salvarResposta(qId, 'B', correta, pontos, String(resposta));
+    this.atualizarNavbar(qId, correta);
+    this.atualizarProgresso();
+  },
+
   async responderC(qId, letraSelecionada) {
     if (this.estado.respostas[qId]) return; // já respondida
 
@@ -858,9 +935,24 @@ const QuestaoRenderer = {
         if (btn) {
           btn.disabled = true;
           if (l === gabExibicao) btn.classList.add('correta');
-          // Não destacar o erro no reload pois o shuffle mudou
         }
       });
+    } else if (q.tipo === 'B') {
+      // Desabilitar inputs CDU e mostrar gabarito
+      ['c','d','u'].forEach(casa => {
+        const el = document.getElementById(`cdu-${casa}-${qId}`);
+        if (el) el.disabled = true;
+      });
+      const btnCDU = document.getElementById(`btn-cdu-${qId}`);
+      if (btnCDU) btnCDU.disabled = true;
+      const container = document.getElementById(`alts-${qId}`);
+      if (container && !container.querySelector('.cdu-gabarito-info')) {
+        const gabNum = parseInt(String(q.gabarito).replace(/\D/g, ''), 10);
+        const info   = document.createElement('div');
+        info.className = 'cdu-gabarito-info';
+        info.innerHTML = `<span>Gabarito: <strong>${String(gabNum).padStart(3,'0')}</strong></span>`;
+        container.appendChild(info);
+      }
     } else {
       const btnCerto  = document.querySelector(`#alts-${qId} .ce-btn.certo`);
       const btnErrado = document.querySelector(`#alts-${qId} .ce-btn.errado`);

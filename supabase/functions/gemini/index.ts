@@ -306,12 +306,21 @@ async function gerarQuestao(key: string, dados: any) {
   } = dados;
 
   const chunksBase = await buscarChunksConhecimento(disciplina, tema, contexto_chunks);
-  const schema = tipo === 'C' ? SCHEMA_QUESTAO_C : SCHEMA_QUESTAO_A;
+  const schema = (tipo === 'C' || tipo === 'B') ? SCHEMA_QUESTAO_C : SCHEMA_QUESTAO_A;
 
   // ── Tipo da questão ──
   let descTipo: string;
   if (tipo === 'A') {
     descTipo = 'Tipo A (Certo ou Errado) — afirmativa com pegadinha conceitual sutil';
+  } else if (tipo === 'B') {
+    descTipo = `Tipo B (CDU — Centena Dezena Unidade) — resposta numérica inteira entre 0 e 999.
+O aluno preenche três caixas separadas: Centena (C), Dezena (D), Unidade (U).
+REGRAS OBRIGATÓRIAS PARA TIPO B:
+• O cálculo DEVE resultar em um número inteiro entre 0 e 999.
+• O campo "gabarito" deve conter APENAS esse número inteiro (ex: "42" ou "350"), sem unidades, sem frações.
+• "alternativas" deve ser null — NÃO gere alternativas A/B/C/D/E.
+• Inclua steps de resolução detalhados mostrando como se chega ao valor inteiro.
+• Se o resultado natural tiver unidade (ex: 150 J, 320 W), oriente no enunciado a encontrar o valor numérico sem unidade.`;
   } else if (subtipo === 'teorica') {
     descTipo = 'Tipo C (Múltipla Escolha) CONCEITUAL — 5 alternativas, SEM cálculo numérico; foco em interpretação, comparação de conceitos ou análise de situações';
   } else {
@@ -1006,7 +1015,7 @@ async function gerarQuestoesPAS(key: string, dados: any) {
   const descTipos = (tipos as string[]).map((t, i) => {
     switch(t) {
       case 'A': return `Item ${i+1}: Tipo A — Certo ou Errado. Uma afirmação sobre o texto para o aluno julgar. Inclua pegadinha conceitual sutil.`;
-      case 'B': return `Item ${i+1}: Tipo B — Múltipla Escolha com CÁLCULO numérico. 5 alternativas (A-E). O aluno precisa calcular.`;
+      case 'B': return `Item ${i+1}: Tipo B (CDU) — resposta numérica inteira entre 0 e 999. O aluno preenche Centena, Dezena e Unidade. "alternativas" deve ser null. "gabarito" deve ser o número inteiro (ex: "42"). O enunciado deve guiar o aluno a encontrar um inteiro nesse intervalo. Inclua steps de resolução.`;
       case 'C': return `Item ${i+1}: Tipo C — Múltipla Escolha CONCEITUAL. 5 alternativas (A-E). Interpretação, análise, comparação.`;
       case 'D': return `Item ${i+1}: Tipo D — Dissertativa TEÓRICA. O aluno escreve uma resposta textual. Sem cálculo. O campo "gabarito" deve conter os critérios de avaliação.`;
       default:  return `Item ${i+1}: Tipo C — Múltipla Escolha.`;
