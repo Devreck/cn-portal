@@ -319,6 +319,56 @@ const QuestaoRenderer = {
     } catch (e) { console.warn('Erro ao salvar avaliação:', e); }
   },
 
+  // ── NORMALIZAÇÃO LaTeX ────────────────────────────────────
+  // Corrige LaTeX sem delimitadores e artefatos comuns (\ frac → \frac etc.)
+  _fmtTxt(txt) {
+    if (!txt) return '';
+    let s = String(txt);
+    // Corrige "\ frac" e similares (backslash + espaço + letras) → "\frac"
+    s = s.replace(/\\ ([a-zA-Z])/g, '\\$1');
+    // Corrige letras circuladas do ENEM dentro de comandos LaTeX (\Ⓐrac → \frac)
+    s = s.replace(/\\Ⓐrac/g, '\\frac');
+    s = s.replace(/\\([Ⓐ-Ⓩⓐ-ⓩ])([a-z]*)/g, (_, _c, r) => r ? '\\' + r : '');
+    // Sem nenhum comando LaTeX → retornar como está
+    if (!/\\[a-zA-Z]{2,}/.test(s)) return s;
+    // Sem nenhum delimitador → envolver tudo como bloco inline $...$
+    if (!/[$]|\\[\(\[]/.test(s)) return '$' + s.trim() + '$';
+    // Conteúdo misto: separar seções já delimitadas e envolver LaTeX solto
+    const mathRx = /(\$\$[\s\S]*?\$\$|\$[^\n$]*?\$|\\\((?:[^\\]|\\.)*?\\\)|\\\[(?:[^\\]|\\.)*?\\\])/g;
+    const partes = []; let ult = 0, mc;
+    while ((mc = mathRx.exec(s)) !== null) {
+      if (mc.index > ult) partes.push([false, s.slice(ult, mc.index)]);
+      partes.push([true, mc[0]]);
+      ult = mc.index + mc[0].length;
+    }
+    if (ult < s.length) partes.push([false, s.slice(ult)]);
+    return partes.map(([eMath, parte]) => {
+      if (eMath) return parte;
+      return parte
+        .replace(/(\\[a-zA-Z]{2,}(?:\{(?:[^{}]|\{[^{}]*\})*\}|[_^]\w+|\s)*)+/g,
+          m => '$' + m.trim() + '$')
+        .replace(/\\ /g, ' ');
+    }).join('');
+  },
+
+  // ── TEXTO-BASE ────────────────────────────────────────────
+  htmlTextoBase(q) {
+    const tb = q.texto_base;
+    if (!tb) return '';
+    // Suporte a objeto com titulo + paragrafos
+    const titulo  = tb.titulo  || tb.title  || '';
+    const paras   = Array.isArray(tb.paragrafos) ? tb.paragrafos
+                  : tb.texto   ? [tb.texto]
+                  : tb.text    ? [tb.text]
+                  : typeof tb === 'string' ? [tb] : [];
+    if (!titulo && paras.length === 0) return '';
+    return `
+      <div class="questao-texto-base">
+        ${titulo ? `<div class="texto-base-titulo">${titulo}</div>` : ''}
+        ${paras.map(p => `<p class="texto-base-para">${this._fmtTxt(String(p))}</p>`).join('')}
+      </div>`;
+  },
+
   // ── HTML TIPO C (Múltipla Escolha) ───────────────────────
   htmlTipoC(q, num) {
     const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
@@ -334,11 +384,12 @@ const QuestaoRenderer = {
           onclick="QuestaoRenderer.responderC('${q.id}', '${letra}')"
         >
           <span class="alt-letra">${letra}</span>
-          <span class="alt-texto">${altSource[letra]}</span>
+          <span class="alt-texto">${this._fmtTxt(altSource[letra])}</span>
         </button>
       `).join('');
 
     const stepsHtml = q.steps ? this.htmlSteps(q.steps) : '';
+    const textoBaseHtml     = this.htmlTextoBase(q);
     const elementosVisuaisHtml = this.htmlElementosVisuais(q);
 
     return `
@@ -353,8 +404,9 @@ const QuestaoRenderer = {
           <div class="questao-pts" id="pts-${q.id}"></div>
         </div>
 
+        ${textoBaseHtml}
         ${elementosVisuaisHtml}
-        <p class="questao-enunciado">${q.enunciado}</p>
+        <p class="questao-enunciado">${this._fmtTxt(q.enunciado)}</p>
 
         <div class="alternativas" id="alts-${q.id}">
           ${alternativasHtml}
@@ -371,7 +423,7 @@ const QuestaoRenderer = {
             ${stepsHtml}
           </div>
           <div class="explicacao-box" id="exp-${q.id}" style="display:none">
-            <p>${q.explicacao}</p>
+            <p>${this._fmtTxt(q.explicacao)}</p>
           </div>
           <button class="btn-ia-tutor" onclick="QuestaoRenderer.chamarTutor('${q.id}')" style="display:none" id="ia-${q.id}">
             🤖 Não entendi — explicar diferente
@@ -386,6 +438,7 @@ const QuestaoRenderer = {
   // ── HTML TIPO A (Certo/Errado) ───────────────────────────
   htmlTipoA(q, num) {
     const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
+    const textoBaseHtml      = this.htmlTextoBase(q);
     const elementosVisuaisHtml = this.htmlElementosVisuais(q);
 
     return `
@@ -400,8 +453,9 @@ const QuestaoRenderer = {
           <div class="questao-pts" id="pts-${q.id}"></div>
         </div>
 
+        ${textoBaseHtml}
         ${elementosVisuaisHtml}
-        <p class="questao-enunciado">${q.enunciado}</p>
+        <p class="questao-enunciado">${this._fmtTxt(q.enunciado)}</p>
 
         <div class="ce-btns" id="alts-${q.id}">
           <button class="ce-btn certo" onclick="QuestaoRenderer.responderA('${q.id}', 'CERTO')">
@@ -415,7 +469,7 @@ const QuestaoRenderer = {
         <div class="questao-feedback" id="fb-${q.id}" style="display:none">
           <div class="feedback-msg" id="fb-msg-${q.id}"></div>
           <div class="explicacao-box">
-            <p id="exp-${q.id}">${q.explicacao}</p>
+            <p id="exp-${q.id}">${this._fmtTxt(q.explicacao)}</p>
           </div>
           <button class="btn-ia-tutor" onclick="QuestaoRenderer.chamarTutor('${q.id}')" style="display:none" id="ia-${q.id}">
             🤖 Não entendi — explicar diferente

@@ -231,8 +231,13 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
 .eq-mode-btn.ativo{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);color:var(--ouro)}
 .eq-mode-btn code{display:block;font-size:11px;opacity:0.7;margin-top:2px;font-family:monospace}
 .eq-latex-row{font-size:12px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;margin-bottom:18px;min-height:36px;font-family:monospace;word-break:break-all;line-height:1.5}
-.eq-hints{font-size:11px;color:var(--text-muted);margin-bottom:18px;line-height:1.8;opacity:0.75}
-.eq-hints kbd{background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:10px;font-family:monospace}
+.eq-toolbar{margin-bottom:14px}
+.eq-toolbar-section{margin-bottom:10px}
+.eq-toolbar-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.eq-toolbar-row{display:flex;flex-wrap:wrap;gap:4px}
+.eq-tbtn{padding:4px 9px;min-width:34px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;text-align:center;line-height:1.5;white-space:nowrap}
+.eq-tbtn:hover{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);color:var(--ouro)}
+.eq-tbtn:active{transform:scale(0.93)}
 .eq-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .eq-footer-hint{font-size:11px;color:var(--text-muted);opacity:0.7}
 .eq-btns{display:flex;gap:10px}
@@ -2139,6 +2144,14 @@ function abrirEditorEquacao() {
   setTimeout(() => mf.focus(), 80);
 }
 
+// ── Inserir snippet pela toolbar ───────────────────────────────
+function eqInsert(latex) {
+  const mf = document.getElementById('equationField');
+  mf.insert(latex, { selectionMode: 'placeholder', feedback: false });
+  mf.focus();
+  _eqOnInput();
+}
+
 // ── Input no MathLive ──────────────────────────────────────────
 function _eqOnInput() {
   _eqAtualizarPreview();
@@ -2240,12 +2253,67 @@ function inserirEquacao() {
       <em>Escreva uma equação acima para ver o LaTeX gerado…</em>
     </div>
 
-    <!-- Quick hints -->
-    <div class="eq-hints">
-      <kbd>^</kbd> expoente &nbsp;·&nbsp; <kbd>_</kbd> subscrito &nbsp;·&nbsp;
-      <kbd>\frac</kbd>+Enter fração &nbsp;·&nbsp; <kbd>\sqrt</kbd>+Enter raiz &nbsp;·&nbsp;
-      <kbd>\int</kbd> integral &nbsp;·&nbsp; <kbd>\alpha</kbd> α &nbsp;·&nbsp;
-      <kbd>\Delta</kbd> Δ &nbsp;·&nbsp; <kbd>\ce{H2O}</kbd> química
+    <!-- Visual toolbar -->
+    <div class="eq-toolbar">
+      <div class="eq-toolbar-section">
+        <div class="eq-toolbar-label">Estruturas</div>
+        <div class="eq-toolbar-row">
+          <button class="eq-tbtn" onclick="eqInsert('\\frac{#?}{#?}')" title="Fração">a/b</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\sqrt{#?}')" title="Raiz quadrada">√x</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\sqrt[#?]{#?}')" title="Raiz n-ésima">ⁿ√x</button>
+          <button class="eq-tbtn" onclick="eqInsert('{#?}^{#?}')" title="Potência">xⁿ</button>
+          <button class="eq-tbtn" onclick="eqInsert('{#?}_{#?}')" title="Subscrito">xₙ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\left|#?\\right|')" title="Valor absoluto">|x|</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\left(#?\\right)')" title="Parênteses grandes">(x)</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\int_{#?}^{#?}')" title="Integral">∫</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\sum_{#?}^{#?}')" title="Somatório">Σ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\cdot')" title="Ponto de multiplicação">·</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\vec{#?}')" title="Vetor">v⃗</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\overline{#?}')" title="Média / barra superior">x̄</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\mathrm{#?}')" title="Texto romano (unidades)">rm</button>
+        </div>
+      </div>
+      <div class="eq-toolbar-section">
+        <div class="eq-toolbar-label">Letras gregas</div>
+        <div class="eq-toolbar-row">
+          <button class="eq-tbtn" onclick="eqInsert('\\alpha')">α</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\beta')">β</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\gamma')">γ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\delta')">δ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\Delta')">Δ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\lambda')">λ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\mu')">μ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\pi')">π</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\sigma')">σ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\Sigma')">Σ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\theta')">θ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\Omega')">Ω</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\phi')">φ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\epsilon')">ε</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\rho')">ρ</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\omega')">ω</button>
+        </div>
+      </div>
+      <div class="eq-toolbar-section">
+        <div class="eq-toolbar-label">Símbolos</div>
+        <div class="eq-toolbar-row">
+          <button class="eq-tbtn" onclick="eqInsert('\\rightarrow')">→</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\rightleftharpoons')">⇌</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\pm')">±</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\times')">×</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\div')">÷</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\approx')">≈</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\leq')">≤</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\geq')">≥</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\neq')">≠</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\infty')">∞</button>
+          <button class="eq-tbtn" onclick="eqInsert('^{\\circ}')">°</button>
+          <button class="eq-tbtn" onclick="eqInsert('^{\\circ}\\text{C}')">°C</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\%')">%</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\propto')">∝</button>
+          <button class="eq-tbtn" onclick="eqInsert('\\leftrightarrow')">↔</button>
+        </div>
+      </div>
     </div>
 
     <div class="eq-footer">

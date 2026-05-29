@@ -348,6 +348,13 @@ mjx-container[display="false"] {
 .eq-modo-btns-p{display:flex;gap:8px}
 .eq-modo-btn-p{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .eq-modo-btn-p.ativo{border-color:var(--ouro);background:rgba(201,168,76,.12);color:var(--ouro)}
+.eq-toolbar-p{display:flex;flex-direction:column;gap:8px}
+.eq-toolbar-section-p{}
+.eq-toolbar-label-p{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.eq-toolbar-row-p{display:flex;flex-wrap:wrap;gap:3px}
+.eq-tbtn-p{padding:3px 8px;min-width:32px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;text-align:center;line-height:1.5;white-space:nowrap}
+.eq-tbtn-p:hover{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);color:var(--ouro)}
+.eq-tbtn-p:active{transform:scale(0.93)}
 
 </style>
 <link rel="stylesheet" href="css/ds.css">
@@ -2790,6 +2797,15 @@ function _edRemoverImg(taId, url) {
   _edAtualizarImgPreview(taId);
 }
 
+// ── Inserir snippet pela toolbar (painel) ─────────────────────
+function eqInsertPainel(latex) {
+  const mf = document.getElementById('eqFieldPainel');
+  if (!mf) return;
+  mf.insert(latex, { selectionMode: 'placeholder', feedback: false });
+  mf.focus();
+  _eqPreviewPainel();
+}
+
 // ── Equation editor (painel) ──
 function abrirEqPainel(targetId) {
   const ta = document.getElementById(targetId);
@@ -2893,6 +2909,68 @@ async function excluirBadgeUnica(badgeRowId, imagemUrl) {
       <button class="eq-modo-btn-p" id="eqModoBlockP" onclick="setEqModoPainel('block')">Bloco  $$...$$</button>
     </div>
     <math-field id="eqFieldPainel" style="width:100%"></math-field>
+    <!-- Visual toolbar -->
+    <div class="eq-toolbar-p">
+      <div class="eq-toolbar-section-p">
+        <div class="eq-toolbar-label-p">Estruturas</div>
+        <div class="eq-toolbar-row-p">
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\frac{#?}{#?}')" title="Fração">a/b</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\sqrt{#?}')" title="Raiz quadrada">√x</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\sqrt[#?]{#?}')" title="Raiz n-ésima">ⁿ√x</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('{#?}^{#?}')" title="Potência">xⁿ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('{#?}_{#?}')" title="Subscrito">xₙ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\left|#?\\right|')" title="Valor absoluto">|x|</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\left(#?\\right)')" title="Parênteses grandes">(x)</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\int_{#?}^{#?}')" title="Integral">∫</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\sum_{#?}^{#?}')" title="Somatório">Σ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\cdot')" title="Ponto de multiplicação">·</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\vec{#?}')" title="Vetor">v⃗</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\overline{#?}')" title="Média / barra superior">x̄</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\mathrm{#?}')" title="Texto romano (unidades)">rm</button>
+        </div>
+      </div>
+      <div class="eq-toolbar-section-p">
+        <div class="eq-toolbar-label-p">Letras gregas</div>
+        <div class="eq-toolbar-row-p">
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\alpha')">α</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\beta')">β</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\gamma')">γ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\delta')">δ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\Delta')">Δ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\lambda')">λ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\mu')">μ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\pi')">π</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\sigma')">σ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\Sigma')">Σ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\theta')">θ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\Omega')">Ω</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\phi')">φ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\epsilon')">ε</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\rho')">ρ</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\omega')">ω</button>
+        </div>
+      </div>
+      <div class="eq-toolbar-section-p">
+        <div class="eq-toolbar-label-p">Símbolos</div>
+        <div class="eq-toolbar-row-p">
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\rightarrow')">→</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\rightleftharpoons')">⇌</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\pm')">±</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\times')">×</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\div')">÷</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\approx')">≈</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\leq')">≤</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\geq')">≥</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\neq')">≠</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\infty')">∞</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('^{\\circ}')">°</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('^{\\circ}\\text{C}')">°C</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\%')">%</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\propto')">∝</button>
+          <button class="eq-tbtn-p" onclick="eqInsertPainel('\\leftrightarrow')">↔</button>
+        </div>
+      </div>
+    </div>
     <div class="eq-preview-painel" id="eqPreviewPainel"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button onclick="fecharEqPainel()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">Cancelar</button>
