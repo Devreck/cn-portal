@@ -887,7 +887,11 @@ async function chamarGemini(
 
       if (!res.ok) {
         const err = await res.text();
-        throw new Error(`Gemini HTTP ${res.status}: ${err}`);
+        const isOverload = res.status === 503 || res.status === 429;
+        const msg = isOverload
+          ? `IA_SOBRECARGA: servidor Gemini temporariamente indisponível (${res.status})`
+          : `Gemini HTTP ${res.status}: ${err}`;
+        throw new Error(msg);
       }
 
       const data = await res.json();
@@ -899,7 +903,10 @@ async function chamarGemini(
     } catch (err) {
       console.error(`Tentativa ${i + 1} falhou:`, err.message);
       if (i === tentativas - 1) throw err;
-      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+      // 503/429 → espera progressiva mais longa; outros erros → espera curta
+      const isOverload = String(err.message).startsWith('IA_SOBRECARGA');
+      const delay = isOverload ? 4000 * (i + 1) : 1500 * (i + 1);
+      await new Promise(r => setTimeout(r, delay));
     }
   }
   throw new Error('Todas as tentativas falharam');

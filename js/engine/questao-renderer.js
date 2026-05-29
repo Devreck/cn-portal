@@ -1303,9 +1303,12 @@ const QuestaoRenderer = {
 
     } catch (e) {
       console.error('Erro Tutor IA:', e);
-      div.innerHTML = '<div class="ia-erro">❌ Tutor indisponível no momento. Consulte a explicação acima.</div>';
+      const msg = e?.message || '';
+      const ehSobrecarga = msg.includes('IA_SOBRECARGA') || msg.includes('503') || msg.includes('429') || msg.includes('high demand') || msg.includes('UNAVAILABLE');
+      div.innerHTML = ehSobrecarga
+        ? '<div class="ia-erro">⏳ O servidor da IA está sobrecarregado agora. Aguarde alguns segundos e tente novamente.</div>'
+        : '<div class="ia-erro">❌ Tutor indisponível no momento. Consulte a explicação acima.</div>';
       btn.disabled = false;
-      // Restaurar label correto conforme nível
       const labels = { 1: '🤖 Não entendi — explicar diferente', 2: '🔄 Explicar diferente', 3: '🔄 Ainda não, pode tentar outra vez?' };
       btn.textContent = labels[nivel] || labels[1];
     }
