@@ -829,6 +829,7 @@ mjx-container[display="false"] {
               <th>Usos</th>
               <th>Taxa Acerto</th>
               <th>Status</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="tabelaBancoAprovado"></tbody>
@@ -1820,8 +1821,9 @@ function renderizarBancoAprovado(questoes) {
           : '<span style="color:var(--text-muted)">—</span>'}
       </td>
       <td><span style="font-size:11px;color:var(--green)">${q.status}</span></td>
+      <td><button class="btn-editar" onclick="abrirEditorQuestao('${q.id}')" style="font-size:11px;padding:5px 10px">✏️ Editar</button></td>
     </tr>
-  `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma questão aprovada ainda.</td></tr>';
+  `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma questão aprovada ainda.</td></tr>';
 }
 
 function filtrarBanco(disc, btn) {
@@ -2567,14 +2569,24 @@ function _edAbrirModal(q, titulo, subtitulo) {
 }
 
 async function abrirEditorQuestao(qId) {
-  _edQuestaoId = qId;
+  try {
+    _edQuestaoId = qId;
 
-  // Buscar dados frescos do Supabase
-  const { data: q, error } = await sb.from('questoes_banco').select('*').eq('id', qId).single();
-  if (error || !q) { alert('Erro ao carregar questão: ' + (error?.message || '?')); return; }
+    // Buscar dados frescos do Supabase
+    const { data: q, error } = await sb.from('questoes_banco').select('*').eq('id', qId).single();
+    if (error || !q) {
+      alert('Erro ao carregar questão: ' + (error?.message || 'Questão não encontrada.'));
+      _edQuestaoId = null;
+      return;
+    }
 
-  _edTipo = q.tipo;
-  _edAbrirModal(q, '✏️ Editar Questão', '#' + qId);
+    _edTipo = q.tipo;
+    _edAbrirModal(q, '✏️ Editar Questão', '#' + qId.slice(0,8));
+  } catch(e) {
+    console.error('abrirEditorQuestao:', e);
+    alert('Erro ao abrir editor: ' + (e?.message || e));
+    _edQuestaoId = null;
+  }
 }
 
 function novaQuestaoManual() {
