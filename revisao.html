@@ -185,6 +185,33 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .gerar-field select{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px}
 .btn-gerar-ia{padding:11px 28px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
 .btn-gerar-ia:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.avulso-form{display:flex;flex-direction:column;gap:14px}
+.avulso-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.avulso-row.triple{grid-template-columns:1fr 1fr 1fr}
+.avulso-field{display:flex;flex-direction:column;gap:4px}
+.avulso-field label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px}
+.avulso-field select{padding:9px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%236b7a99' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:calc(100% - 10px) center}
+.avulso-field select:focus{border-color:rgba(201,168,76,.4)}
+.avulso-cenario-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.avulso-cenario-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;background:rgba(26,106,191,.1);border:1px solid rgba(26,106,191,.25);font-size:12px;color:var(--azul-light);cursor:pointer;transition:all .15s;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.avulso-cenario-tag:hover{background:rgba(26,106,191,.18)}
+.avulso-cenario-tag.auto{background:var(--surface2);border-color:var(--border);color:var(--text-muted)}
+/* Modal cenário avulso */
+.avulso-modal{display:none;position:fixed;inset:0;background:rgba(2,6,15,.85);z-index:600;align-items:center;justify-content:center;padding:20px}
+.avulso-modal.show{display:flex}
+.avulso-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;padding:28px}
+.avulso-modal-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px}
+.avulso-modal-sub{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:18px}
+.avulso-modal textarea{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;resize:vertical;min-height:90px;outline:none;line-height:1.6}
+.avulso-modal textarea:focus{border-color:rgba(201,168,76,.4)}
+.avulso-exemplos{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 18px}
+.avulso-pill{padding:4px 10px;border-radius:100px;border:1px solid var(--border);font-size:11px;color:var(--text-muted);cursor:pointer;transition:all .1s}
+.avulso-pill:hover{border-color:rgba(201,168,76,.3);color:var(--ouro);background:rgba(201,168,76,.05)}
+.avulso-modal-acoes{display:flex;gap:10px;justify-content:flex-end}
+.avulso-btn-conf{padding:10px 22px;border-radius:9px;border:none;background:var(--azul-mid);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
+.avulso-btn-conf:hover{background:var(--azul-light)}
+.avulso-btn-canc{padding:10px 18px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer}
+.avulso-btn-canc:hover{background:var(--surface2);color:var(--text)}
 .pas-tipos-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .pas-item-cfg{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text-muted)}
 .pas-item-cfg select{border:none;background:transparent;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;cursor:pointer}
@@ -410,12 +437,16 @@ html[data-theme="dark"] .icon-moon{display:none}
     <div class="gerar-extra" id="gerarExtra">
       <div class="gerar-estilo-tabs">
         <button class="gerar-estilo-btn ativo" id="btnEstiloENEM" onclick="setEstiloGerar('enem')">
-          📝 Estilo ENEM
-          <small>Um item independente</small>
+          📝 ENEM
+          <small>Item independente</small>
         </button>
         <button class="gerar-estilo-btn" id="btnEstiloPAS" onclick="setEstiloGerar('pas')">
-          📋 Estilo PAS
-          <small>Texto-base + múltiplos itens</small>
+          📋 PAS
+          <small>Texto-base + itens</small>
+        </button>
+        <button class="gerar-estilo-btn" id="btnEstiloAVULSO" onclick="setEstiloGerar('avulso')">
+          🎯 Item Avulso
+          <small>Qualquer tema · cenário livre</small>
         </button>
       </div>
 
@@ -474,10 +505,76 @@ html[data-theme="dark"] .icon-moon{display:none}
         <div id="pasTiposConfig" class="pas-tipos-row"></div>
         <button class="btn-gerar-ia" onclick="gerarPAS()">✨ Gerar conjunto PAS</button>
       </div>
+      <!-- Item Avulso options -->
+      <div id="opcoesAVULSO" style="display:none">
+        <div class="avulso-form">
+          <div class="avulso-row">
+            <div class="avulso-field">
+              <label>Tema principal</label>
+              <select id="avulsoPrincipal" onchange="avulsoOnTemaPrincipal()">
+                <option value="">Selecione um tema...</option>
+              </select>
+            </div>
+            <div class="avulso-field">
+              <label>Conectar com (opcional)</label>
+              <select id="avulsoSecundario">
+                <option value="">Sem conexão interdisciplinar</option>
+              </select>
+            </div>
+          </div>
+          <div class="avulso-row triple">
+            <div class="avulso-field">
+              <label>Tipo de item</label>
+              <select id="avulsoTipo">
+                <option value="C_calculo">C · Múltipla Escolha c/ cálculo</option>
+                <option value="C_teorica">C · Múltipla Escolha conceitual</option>
+                <option value="A">A · Certo ou Errado</option>
+                <option value="B">B · CDU (resposta numérica)</option>
+              </select>
+            </div>
+            <div class="avulso-field">
+              <label>Dificuldade</label>
+              <select id="avulsoNivel">
+                <option value="basico">🟢 Básico</option>
+                <option value="intermediario" selected>🟡 Intermediário</option>
+                <option value="avancado">🔴 Avançado</option>
+              </select>
+            </div>
+            <div class="avulso-field">
+              <label>Cenário</label>
+              <div class="avulso-cenario-row">
+                <span class="avulso-cenario-tag auto" id="avulsoCenarioTag" onclick="avulsoAbrirModal()">🎬 Automático</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-gerar-ia" onclick="gerarAvulso()">🎯 Gerar item avulso</button>
+        </div>
+      </div>
     </div>
     <div id="questoesExtras"></div>
   </div>
 </main>
+
+<!-- Modal cenário Item Avulso -->
+<div class="avulso-modal" id="avulsoModalCenario" onclick="if(event.target===this)avulsoCancelarCenario()">
+  <div class="avulso-modal-box">
+    <div class="avulso-modal-title">🎬 Descreva o cenário</div>
+    <div class="avulso-modal-sub">Conte em qual contexto a questão deve acontecer. A IA vai criar o enunciado em torno desse universo.</div>
+    <textarea id="avulsoModalTexto" placeholder="Ex: Um carro elétrico subindo uma serra, Uma missão na ISS, Diagnóstico genético hospitalar..."></textarea>
+    <div class="avulso-exemplos">
+      <span class="avulso-pill" onclick="document.getElementById('avulsoModalTexto').value='Um carro elétrico subindo uma serra'">Carro elétrico</span>
+      <span class="avulso-pill" onclick="document.getElementById('avulsoModalTexto').value='O superaquecimento de um celular durante jogo'">Celular superaquecendo</span>
+      <span class="avulso-pill" onclick="document.getElementById('avulsoModalTexto').value='Uma missão na Estação Espacial Internacional'">Missão espacial</span>
+      <span class="avulso-pill" onclick="document.getElementById('avulsoModalTexto').value='Diagnóstico genético em laboratório hospitalar'">Diagnóstico genético</span>
+      <span class="avulso-pill" onclick="document.getElementById('avulsoModalTexto').value='Produção de joias por galvanoplastia'">Galvanoplastia</span>
+      <span class="avulso-pill" onclick="document.getElementById('avulsoModalTexto').value='Monitoramento de bateria de drone agrícola'">Drone agrícola</span>
+    </div>
+    <div class="avulso-modal-acoes">
+      <button class="avulso-btn-canc" onclick="avulsoCancelarCenario()">Cancelar</button>
+      <button class="avulso-btn-conf" onclick="avulsoConfirmarCenario()">Confirmar cenário ✓</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── CONFIG ──
@@ -622,9 +719,12 @@ function setEstiloGerar(estilo) {
   _estiloGerar = estilo;
   document.getElementById('btnEstiloENEM').classList.toggle('ativo', estilo === 'enem');
   document.getElementById('btnEstiloPAS').classList.toggle('ativo', estilo === 'pas');
-  document.getElementById('opcoesENEM').style.display  = estilo === 'enem' ? '' : 'none';
-  document.getElementById('opcoesPAS').style.display   = estilo === 'pas'  ? '' : 'none';
-  if (estilo === 'pas') atualizarPasTipos();
+  document.getElementById('btnEstiloAVULSO').classList.toggle('ativo', estilo === 'avulso');
+  document.getElementById('opcoesENEM').style.display    = estilo === 'enem'   ? '' : 'none';
+  document.getElementById('opcoesPAS').style.display     = estilo === 'pas'    ? '' : 'none';
+  document.getElementById('opcoesAVULSO').style.display  = estilo === 'avulso' ? '' : 'none';
+  if (estilo === 'pas')    atualizarPasTipos();
+  if (estilo === 'avulso') avulsoPopularTemas();
 }
 
 function atualizarPasTipos() {
@@ -655,6 +755,143 @@ function gerarPAS() {
   const n     = parseInt(document.getElementById('iaNItens')?.value || '3');
   const tipos = Array.from({length: n}, (_, i) => document.getElementById(`pasTipo_${i}`)?.value || 'C');
   QuestaoRenderer.gerarQuestoesPAS(discAtual, tema, tipos, nivel);
+}
+
+// ── ITEM AVULSO ──
+const TEMAS_AVULSO = [
+  { disc:'bio', grupo:'🧬 Biologia', label:'Herança Ligada ao Sexo',      tema:'Herança ligada ao sexo — hemofilia e daltonismo (cromossomo X)' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Sistema ABO',                  tema:'Alelos múltiplos — Sistema ABO: genótipos, fenótipos e probabilidades' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Codominância',                 tema:'Codominância — expressão simultânea de alelos' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Pleiotropia',                  tema:'Pleiotropia — um gene, vários fenótipos' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Epistasia Recessiva Dupla',    tema:'Epistasia recessiva dupla e interação gênica' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Linkage e Recombinação',       tema:'Linkage e recombinação genética (centiMorgans)' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Herança Poligênica',           tema:'Herança quantitativa e poligênica' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Fator Rh',                     tema:'Fator Rh e doença hemolítica do recém-nascido' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Transgenia e Biotecnologia',   tema:'Transgenia, OGM e biotecnologia aplicada' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Probabilidade Genética',       tema:'Probabilidade genética — monoibridismo e diibridismo' },
+  { disc:'bio', grupo:'🧬 Biologia', label:'Anemia Falciforme',            tema:'Anemia falciforme — herança, genótipos e manifestações' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Células Galvânicas/Eletrolíticas', tema:'Células galvânicas e eletrolíticas — oxidação, redução, ânodo e cátodo' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Leis de Faraday',              tema:'Leis de Faraday — eletrólise quantitativa e deposição' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Galvanoplastia',               tema:'Galvanoplastia — revestimento metálico eletrolítico' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Baterias de Lítio',            tema:'Baterias de lítio — funcionamento, carga e descarga' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Equilíbrio Químico e Kc',      tema:'Equilíbrio químico — constante Kc e cálculo de concentrações' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Princípio de Le Chatelier',    tema:'Princípio de Le Chatelier — pressão, temperatura e concentração' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Soluções Tampão e pH',         tema:'Soluções tampão e cálculo de pH com Ka' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Catálise Enzimática',          tema:'Catálise enzimática — energia de ativação e inibição' },
+  { disc:'quim', grupo:'⚗️ Química', label:'Termoquímica (ΔH)',            tema:'Termoquímica — entalpia, gráficos de perfil energético e Hess' },
+  { disc:'fis',  grupo:'⚡ Física',  label:'Efeito Joule',                 tema:'Efeito Joule — potência elétrica e dissipação de calor (P = RI²)' },
+  { disc:'fis',  grupo:'⚡ Física',  label:'Potência e Energia Elétrica',  tema:'Potência elétrica, energia elétrica e consumo (kWh)' },
+  { disc:'fis',  grupo:'⚡ Física',  label:'Carga Elétrica e Corrente',    tema:'Carga elétrica (Q = It) e corrente contínua' },
+  { disc:'fis',  grupo:'⚡ Física',  label:'Circuitos em Série',           tema:'Circuitos elétricos com resistores em série — lei de Ohm' },
+  { disc:'fis',  grupo:'⚡ Física',  label:'Capacidade de Bateria',        tema:'Capacidade de bateria em mAh, carga total e autonomia' },
+  { disc:'fis',  grupo:'⚡ Física',  label:'Geradores em Série',           tema:'Associação de geradores em série — ddp total e corrente' },
+];
+
+let _avulsoCenario = 'Automatico';
+
+function avulsoPopularTemas() {
+  const selP = document.getElementById('avulsoPrincipal');
+  if (selP.options.length > 1) return; // já populado
+  const grupos = {};
+  TEMAS_AVULSO.forEach(t => { if (!grupos[t.grupo]) grupos[t.grupo] = []; grupos[t.grupo].push(t); });
+  Object.entries(grupos).forEach(([grupo, temas]) => {
+    const og = document.createElement('optgroup');
+    og.label = grupo;
+    temas.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = TEMAS_AVULSO.indexOf(t);
+      opt.textContent = t.label;
+      og.appendChild(opt);
+    });
+    selP.appendChild(og);
+  });
+  // Pre-selecionar o tema da disciplina atual
+  const primeiroDaDisc = TEMAS_AVULSO.findIndex(t => t.disc === discAtual);
+  if (primeiroDaDisc >= 0) selP.value = primeiroDaDisc;
+  avulsoOnTemaPrincipal();
+}
+
+function avulsoOnTemaPrincipal() {
+  const idx = document.getElementById('avulsoPrincipal').value;
+  const sel = document.getElementById('avulsoSecundario');
+  sel.innerHTML = '<option value="">Sem conexão interdisciplinar</option>';
+  if (idx === '') return;
+  const principal = TEMAS_AVULSO[Number(idx)];
+  const grupos = {};
+  TEMAS_AVULSO.filter((t, i) => i !== Number(idx)).forEach(t => {
+    if (!grupos[t.grupo]) grupos[t.grupo] = [];
+    grupos[t.grupo].push(t);
+  });
+  Object.entries(grupos).forEach(([grupo, temas]) => {
+    const og = document.createElement('optgroup');
+    og.label = grupo;
+    temas.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = TEMAS_AVULSO.indexOf(t);
+      opt.textContent = t.label;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+}
+
+function avulsoAbrirModal() {
+  document.getElementById('avulsoModalCenario').classList.add('show');
+  document.getElementById('avulsoModalTexto').focus();
+}
+
+function avulsoConfirmarCenario() {
+  const texto = document.getElementById('avulsoModalTexto').value.trim();
+  if (!texto) return;
+  _avulsoCenario = texto;
+  const tag = document.getElementById('avulsoCenarioTag');
+  tag.textContent = '🎬 ' + texto;
+  tag.classList.remove('auto');
+  document.getElementById('avulsoModalCenario').classList.remove('show');
+}
+
+function avulsoCancelarCenario() {
+  document.getElementById('avulsoModalCenario').classList.remove('show');
+  if (_avulsoCenario === 'Automatico') {
+    document.getElementById('avulsoModalTexto').value = '';
+  }
+}
+
+function avulsoLimparCenario() {
+  _avulsoCenario = 'Automatico';
+  const tag = document.getElementById('avulsoCenarioTag');
+  tag.textContent = '🎬 Automático';
+  tag.classList.add('auto');
+  document.getElementById('avulsoModalTexto').value = '';
+}
+
+function gerarAvulso() {
+  const idxP = document.getElementById('avulsoPrincipal').value;
+  if (!idxP) {
+    document.getElementById('avulsoPrincipal').style.borderColor = 'rgba(239,68,68,.5)';
+    setTimeout(() => document.getElementById('avulsoPrincipal').style.borderColor = '', 2000);
+    return;
+  }
+  const principal  = TEMAS_AVULSO[Number(idxP)];
+  const idxS       = document.getElementById('avulsoSecundario').value;
+  const secundario = idxS ? TEMAS_AVULSO[Number(idxS)] : null;
+  const tipoVal    = document.getElementById('avulsoTipo').value;
+  const tipo       = tipoVal.startsWith('C') ? 'C' : tipoVal;
+  const subtipo    = tipoVal === 'C_teorica' ? 'teorica' : tipoVal === 'C_calculo' ? 'calculo' : null;
+  const nivel      = document.getElementById('avulsoNivel').value;
+
+  QuestaoRenderer.gerarQuestaoExtra(
+    principal.disc,
+    principal.tema,
+    tipo,
+    nivel,
+    {
+      subtipo,
+      cenario:               _avulsoCenario,
+      tema_secundario:       secundario ? secundario.tema : null,
+      disciplinas_integradas: secundario ? [secundario.disc] : [],
+    }
+  );
 }
 </script>
 </body>

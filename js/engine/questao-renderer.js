@@ -1334,17 +1334,23 @@ const QuestaoRenderer = {
   },
 
   // ── GERAR QUESTÃO EXTRA (IA) ─────────────────────────────
-  async gerarQuestaoExtra(disciplina, tema, tipo, nivel) {
+  async gerarQuestaoExtra(disciplina, tema, tipo, nivel, opcoes = {}) {
     const container = document.getElementById('questoesExtras');
     if (!container) return;
 
     container.innerHTML = '<div class="loading-ia">🤖 Gerando questão com IA...</div>';
 
     try {
+      const subtipo    = opcoes.subtipo    || null;
+      const cenario    = opcoes.cenario    || 'Automatico';
+      const temaSec    = opcoes.tema_secundario    || null;
+      const discInter  = opcoes.disciplinas_integradas || [];
+
       const resp = await sb.functions.invoke('gemini', {
         body: {
           funcao: 'gerar_questao',
-          dados: { disciplina, tema, tipo, nivel, disciplinas_integradas: [] }
+          dados: { disciplina, tema, tipo, subtipo, nivel, cenario,
+                   tema_secundario: temaSec, disciplinas_integradas: discInter }
         }
       });
 
