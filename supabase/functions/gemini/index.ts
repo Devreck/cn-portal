@@ -278,6 +278,10 @@ Deno.serve(async (req) => {
         return await chat(GEMINI_KEY, dados);
       case 'resumo':
         return await resumo(GEMINI_KEY, dados);
+      case 'corrigir_dissertativa':
+        return await corrigirDissertativa(GEMINI_KEY, dados);
+      case 'gerar_questoes_pas':
+        return await gerarQuestoesPAS(GEMINI_KEY, dados);
       default:
         return json({ error: `Função desconhecida: ${funcao}` }, 400);
     }
@@ -938,6 +942,142 @@ function limparChunkConhecimento(row: any): string {
     `Seção: ${row.secao || 'sem seção'}`,
     `Conteúdo: ${conteudo.slice(0, 900)}`,
   ].join('\n');
+}
+
+// ── FUNÇÃO: CORRIGIR DISSERTATIVA (Tipo D) ───────────────────
+async function corrigirDissertativa(key: string, dados: any) {
+  const { enunciado, comando, texto_base, resposta_aluno, criterios, disciplina } = dados;
+
+  const contextoTB = typeof texto_base === 'string'
+    ? texto_base
+    : texto_base?.paragrafos
+      ? texto_base.paragrafos.join('\n')
+      : '';
+
+  const prompt = `
+${CONTEXTO_PROVA}
+
+═══════════════════════════════════════════
+TAREFA: Corrija a resposta dissertativa de um aluno do Ensino Médio.
+═══════════════════════════════════════════
+
+QUESTÃO (Tipo D — teórica, textual):
+${contextoTB ? `TEXTO BASE: ${contextoTB}\n` : ''}ENUNCIADO: ${enunciado}
+${comando ? `COMANDO: ${comando}` : ''}
+
+${criterios ? `CRITÉRIOS / GABARITO DE REFERÊNCIA:\n${criterios}\n` : ''}
+
+RESPOSTA DO ALUNO:
+${resposta_aluno}
+
+INSTRUÇÕES PARA CORREÇÃO:
+1. Avalie a resposta de forma construtiva e pedagógica.
+2. Estruture o feedback em dois blocos claros:
+   **Pontos Fortes** — o que o aluno acertou ou demonstrou bem.
+   **Pontos de Melhora** — o que está incompleto, impreciso ou incorreto, e como melhorar.
+3. Use linguagem direta, encorajadora, sem ser paternalista.
+4. Se a resposta estiver em branco ou for claramente evasiva, diga de forma gentil e redirecione.
+5. Não revele a resposta completa; guie o aluno para construir o raciocínio.
+6. Mencione conceitos relevantes de ${disciplina === 'bio' ? 'Biologia' : disciplina === 'quim' ? 'Química' : 'Física'} que o aluno poderia aprofundar.
+7. Use equações LaTeX com \\(...\\) para expressões inline quando necessário.
+8. Seja conciso — máximo de 250 palavras no total.
+
+Responda diretamente o texto do feedback (sem JSON, sem markdown extra).
+`;
+
+  const feedback = await chamarGemini(key, prompt, 2, 1024, false, 0.5);
+  // Remove possível prefixo de metadata
+  const limpo = feedback.replace(/^\(\d+\s+\w+\)\s*\*?\s*/g, '').trim();
+  return json({ feedback: limpo });
+}
+
+// ── FUNÇÃO: GERAR QUESTÕES PAS ───────────────────────────────
+async function gerarQuestoesPAS(key: string, dados: any) {
+  const { disciplina, tema, tipos, nivel, n_itens } = dados;
+  const n = n_itens || tipos?.length || 3;
+
+  const descNivel = {
+    basico: 'Fácil (conceito direto)',
+    intermediario: 'Intermediário (raciocínio e análise)',
+    avancado: 'Difícil (integração de conceitos)',
+  }[nivel] || nivel;
+
+  // Descrever cada tipo para o prompt
+  const descTipos = (tipos as string[]).map((t, i) => {
+    switch(t) {
+      case 'A': return `Item ${i+1}: Tipo A — Certo ou Errado. Uma afirmação sobre o texto para o aluno julgar. Inclua pegadinha conceitual sutil.`;
+      case 'B': return `Item ${i+1}: Tipo B — Múltipla Escolha com CÁLCULO numérico. 5 alternativas (A-E). O aluno precisa calcular.`;
+      case 'C': return `Item ${i+1}: Tipo C — Múltipla Escolha CONCEITUAL. 5 alternativas (A-E). Interpretação, análise, comparação.`;
+      case 'D': return `Item ${i+1}: Tipo D — Dissertativa TEÓRICA. O aluno escreve uma resposta textual. Sem cálculo. O campo "gabarito" deve conter os critérios de avaliação.`;
+      default:  return `Item ${i+1}: Tipo C — Múltipla Escolha.`;
+    }
+  }).join('\n');
+
+  const tiposComAlts = tipos.filter((t: string) => t === 'B' || t === 'C');
+  const tiposSemAlts = tipos.filter((t: string) => t === 'A' || t === 'D');
+
+  const prompt = `
+${CONTEXTO_PROVA}
+
+═══════════════════════════════════════════
+TAREFA: Gere um conjunto de itens no formato PAS (UnB-adaptado) para revisão.
+═══════════════════════════════════════════
+
+TEMA: "${tema}" — disciplina: ${disciplina}
+NÚMERO DE ITENS: ${n}
+NÍVEL: ${descNivel}
+
+ESTRUTURA DO CONJUNTO:
+Um texto-base contextualizado + ${n} itens vinculados a ele.
+
+DESCRIÇÃO DE CADA ITEM:
+${descTipos}
+
+REGRAS:
+1. O texto-base deve ter 3-5 parágrafos, ser fluido, contextualizado e conter TODOS os dados numéricos necessários para os itens de cálculo.
+2. Todos os itens devem depender do texto-base — não devem ser resolúveis sem ele.
+3. Itens Tipo D devem ser estritamente teóricos (conceituais, argumentativos) — NUNCA pedem cálculo.
+4. Use LaTeX com \\(...\\) para expressões inline em todos os campos textuais.
+5. Dados numéricos nos textos: use notação LaTeX ex: \\(V = 220\\,\\mathrm{V}\\), \\(I = 5{,}0\\,\\mathrm{A}\\).
+6. Responda APENAS com JSON válido, sem markdown, sem texto fora do JSON.
+7. Para Tipo B e C, alternativas erradas devem ser plausíveis (erros reais de raciocínio).
+8. Para Tipo D, o campo "gabarito" contém os critérios de avaliação (não a resposta completa), e "alternativas" é null.
+9. Para Tipo A, "alternativas" é null e "gabarito" é "CERTO" ou "ERRADO".
+
+SCHEMA OBRIGATÓRIO:
+{
+  "texto_base": {
+    "titulo": "string — título breve do texto (ex: TEXTO I — Tema)",
+    "paragrafos": ["string", "string", "string"]
+  },
+  "itens": [
+    {
+      "tipo": "A|B|C|D",
+      "nivel": "basico|intermediario|avancado",
+      "tema": "string",
+      "enunciado": "string — contexto/situação do item",
+      "comando": "string — instrução ao aluno (ex: 'Assinale a alternativa correta.' ou 'Julgue a afirmação:' ou 'Explique, com base no texto,')",
+      "alternativas": {"A":"...","B":"...","C":"...","D":"...","E":"..."} | null,
+      "gabarito": "A|B|C|D|E|CERTO|ERRADO|string com critérios",
+      "explicacao": "string — explicação completa com LaTeX"
+    }
+  ]
+}
+
+Antes de responder, verifique: o texto-base contém todos os dados para os itens de cálculo? O LaTeX está sintaticamente correto?
+`;
+
+  let ultimo = '';
+  for (let i = 0; i < 3; i++) {
+    const p = i === 0 ? prompt : `${prompt}\n\nATENÇÃO: Tentativa anterior retornou JSON inválido. Responda APENAS com JSON completo e válido.`;
+    ultimo = await chamarGemini(key, p, 3, 8192, true, 0.65);
+    const resultado = parsearJSON(ultimo);
+    if (resultado?.itens?.length) {
+      return json({ resultado });
+    }
+  }
+
+  return json({ error: 'Não foi possível gerar o conjunto PAS após 3 tentativas', detalhe: ultimo.slice(0, 300) }, 500);
 }
 
 function json(data: any, status = 200) {

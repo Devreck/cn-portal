@@ -389,6 +389,11 @@ main{max-width:900px;margin:0 auto;padding:36px 20px 80px}
         <span class="img-paste-hint">💡 Cole uma imagem com Ctrl+V em qualquer campo de texto</span>
         </div>
 
+        <div class="form-field">
+          <label class="form-label">Comando <span style="color:var(--text-muted);font-weight:400">(instrução para o aluno — ex: "Assinale a alternativa...")</span></label>
+          <textarea id="cmd-manual" class="form-input" rows="2" placeholder='Ex: "Assinale a alternativa correta." ou "Julgue a afirmação:"'></textarea>
+        </div>
+
         <!-- Container dinâmico: alternativas + gabarito -->
         <div id="m-alts-container"></div>
       </div>
@@ -1609,6 +1614,7 @@ async function salvarManual() {
       tipo,
       nivel,
       enunciado,
+      comando: document.getElementById('cmd-manual')?.value?.trim() || null,
       texto_base,
       alternativas,
       gabarito: manualGabarito,

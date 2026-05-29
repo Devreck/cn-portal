@@ -274,9 +274,7 @@ const QuestaoRenderer = {
     this.estado.questoes.forEach(q => this._embaralharAlts(q));
 
     container.innerHTML = this.estado.questoes.map((q, i) =>
-      q.tipo === 'C'
-        ? this.htmlTipoC(q, i + 1)
-        : this.htmlTipoA(q, i + 1)
+      this._htmlPorTipo(q, i + 1)
     ).join('');
 
     // Marcar questões já respondidas
@@ -369,6 +367,21 @@ const QuestaoRenderer = {
       </div>`;
   },
 
+  htmlComando(q) {
+    if (!q.comando) return '';
+    return `<p class="questao-comando">${this._fmtTxt(q.comando)}</p>`;
+  },
+
+  // ── DISPATCH POR TIPO ────────────────────────────────────
+  _htmlPorTipo(q, num) {
+    switch (q.tipo) {
+      case 'B': return this.htmlTipoB(q, num);
+      case 'C': return this.htmlTipoC(q, num);
+      case 'D': return this.htmlTipoD(q, num);
+      default:  return this.htmlTipoA(q, num);
+    }
+  },
+
   // ── HTML TIPO C (Múltipla Escolha) ───────────────────────
   htmlTipoC(q, num) {
     const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
@@ -407,6 +420,7 @@ const QuestaoRenderer = {
         ${textoBaseHtml}
         ${elementosVisuaisHtml}
         <p class="questao-enunciado">${this._fmtTxt(q.enunciado)}</p>
+        ${this.htmlComando(q)}
 
         <div class="alternativas" id="alts-${q.id}">
           ${alternativasHtml}
@@ -456,6 +470,7 @@ const QuestaoRenderer = {
         ${textoBaseHtml}
         ${elementosVisuaisHtml}
         <p class="questao-enunciado">${this._fmtTxt(q.enunciado)}</p>
+        ${this.htmlComando(q)}
 
         <div class="ce-btns" id="alts-${q.id}">
           <button class="ce-btn certo" onclick="QuestaoRenderer.responderA('${q.id}', 'CERTO')">
@@ -477,6 +492,114 @@ const QuestaoRenderer = {
           <div class="ia-resposta" id="ia-resp-${q.id}" style="display:none"></div>
           ${this._htmlAvaliacaoQuestao(q)}
         </div>
+      </div>
+    `;
+  },
+
+  // ── HTML TIPO B (Cálculo · Múltipla Escolha) ─────────────
+  htmlTipoB(q, num) {
+    const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
+    const alts = ['A','B','C','D','E'];
+
+    const altSource = q._altExibicao || q.alternativas;
+    const alternativasHtml = alts
+      .filter(letra => altSource[letra] != null)
+      .map(letra => `
+        <button
+          class="alt-btn"
+          id="alt-${q.id}-${letra}"
+          onclick="QuestaoRenderer.responderC('${q.id}', '${letra}')"
+        >
+          <span class="alt-letra">${letra}</span>
+          <span class="alt-texto">${this._fmtTxt(altSource[letra])}</span>
+        </button>
+      `).join('');
+
+    const stepsHtml = q.steps ? this.htmlSteps(q.steps) : '';
+    const textoBaseHtml     = this.htmlTextoBase(q);
+    const elementosVisuaisHtml = this.htmlElementosVisuais(q);
+
+    return `
+      <div class="questao-card" id="q-${num}" data-id="${q.id}" data-tipo="B">
+        <div class="questao-header">
+          <div class="questao-meta">
+            <span class="q-num">Questão ${num}</span>
+            <span class="q-tipo tipo-b">Cálculo · Múltipla Escolha</span>
+            <span class="q-nivel">${nivelEmoji[q.nivel]} ${q.nivel.charAt(0).toUpperCase()+q.nivel.slice(1)}</span>
+            <span class="q-tema" id="tema-${q.id}" style="display:none">${q.tema}</span>
+          </div>
+          <div class="questao-pts" id="pts-${q.id}"></div>
+        </div>
+
+        ${textoBaseHtml}
+        ${elementosVisuaisHtml}
+        <p class="questao-enunciado">${this._fmtTxt(q.enunciado)}</p>
+        ${this.htmlComando(q)}
+
+        <div class="alternativas" id="alts-${q.id}">
+          ${alternativasHtml}
+        </div>
+
+        <div class="questao-feedback" id="fb-${q.id}" style="display:none">
+          <div class="feedback-msg" id="fb-msg-${q.id}"></div>
+          ${q.steps ? `
+            <button class="btn-steps" onclick="QuestaoRenderer.toggleSteps('${q.id}')">
+              📖 Ver resolução passo a passo
+            </button>
+          ` : ''}
+          <div class="steps-container" id="steps-${q.id}" style="display:none">
+            ${stepsHtml}
+          </div>
+          <div class="explicacao-box" id="exp-${q.id}" style="display:none">
+            <p>${this._fmtTxt(q.explicacao)}</p>
+          </div>
+          <button class="btn-ia-tutor" onclick="QuestaoRenderer.chamarTutor('${q.id}')" style="display:none" id="ia-${q.id}">
+            🤖 Não entendi — explicar diferente
+          </button>
+          <div class="ia-resposta" id="ia-resp-${q.id}" style="display:none"></div>
+          ${this._htmlAvaliacaoQuestao(q)}
+        </div>
+      </div>
+    `;
+  },
+
+  // ── HTML TIPO D (Dissertativa) ───────────────────────────
+  htmlTipoD(q, num) {
+    const nivelEmoji = { basico: '🟢', intermediario: '🟡', avancado: '🔴' };
+    const textoBaseHtml        = this.htmlTextoBase(q);
+    const elementosVisuaisHtml = this.htmlElementosVisuais(q);
+
+    return `
+      <div class="questao-card" id="q-${num}" data-id="${q.id}" data-tipo="D">
+        <div class="questao-header">
+          <div class="questao-meta">
+            <span class="q-num">Questão ${num}</span>
+            <span class="q-tipo tipo-d">Dissertativa</span>
+            <span class="q-nivel">${nivelEmoji[q.nivel]} ${q.nivel.charAt(0).toUpperCase()+q.nivel.slice(1)}</span>
+            <span class="q-tema" id="tema-${q.id}" style="display:none">${q.tema}</span>
+          </div>
+          <div class="questao-pts" id="pts-${q.id}"></div>
+        </div>
+
+        ${textoBaseHtml}
+        ${elementosVisuaisHtml}
+        <p class="questao-enunciado">${this._fmtTxt(q.enunciado)}</p>
+        ${this.htmlComando(q)}
+
+        <textarea
+          class="tipo-d-resposta"
+          id="resp-${q.id}"
+          placeholder="Escreva sua resposta aqui. Esta questão é estritamente teórica — use seus próprios argumentos e conceitos."
+        ></textarea>
+
+        <button class="btn-corrigir" id="btn-corrigir-${q.id}" onclick="QuestaoRenderer.corrigirTipoD('${q.id}')">
+          ✏️ Enviar para correção pela IA
+        </button>
+
+        <div class="tipo-d-feedback" id="fb-${q.id}" style="display:none">
+          <div class="ia-resposta" id="ia-resp-${q.id}"></div>
+        </div>
+        ${this._htmlAvaliacaoQuestao(q)}
       </div>
     `;
   },
@@ -1092,6 +1215,7 @@ const QuestaoRenderer = {
         nivel: q.nivel || nivel,
         interdisciplinar_com: q.interdisciplinar_com || [],
         enunciado: q.enunciado,
+        comando: q.comando || null,
         texto_base: q.texto_base || null,
         alternativas: q.alternativas || null,
         gabarito: q.gabarito,
@@ -1117,9 +1241,7 @@ const QuestaoRenderer = {
       this.estado.questoes.push(q);
 
       const num = this.estado.questoes.length;
-      const html = q.tipo === 'C'
-        ? this.htmlTipoC(q, num)
-        : this.htmlTipoA(q, num);
+      const html = this._htmlPorTipo(q, num);
 
       container.innerHTML = html;
 
@@ -1130,6 +1252,132 @@ const QuestaoRenderer = {
     } catch(e) {
       console.error('Erro ao gerar questão IA:', e);
       container.innerHTML = '<div class="ia-erro">❌ Não foi possível gerar a questão. Tente novamente.</div>';
+    }
+  },
+
+  async gerarQuestoesPAS(disciplina, tema, tipos, nivel) {
+    const container = document.getElementById('questoesExtras');
+    if (!container) return;
+
+    const nItens = tipos.length;
+    container.innerHTML = `<div class="loading-ia">🤖 Gerando conjunto PAS (${nItens} itens) com IA...</div>`;
+
+    try {
+      const resp = await sb.functions.invoke('gemini', {
+        body: {
+          funcao: 'gerar_questoes_pas',
+          dados: { disciplina, tema, tipos, nivel, n_itens: nItens },
+        },
+      });
+
+      if (resp.error || resp.data?.error) throw new Error(resp.data?.detalhe || 'Erro na geração PAS');
+      const resultado = resp.data?.resultado;
+      if (!resultado?.itens?.length) throw new Error('IA não retornou itens PAS');
+
+      // Salvar e adicionar cada item
+      const itensHtml = [];
+      for (const q of resultado.itens) {
+        q.texto_base = q.texto_base || resultado.texto_base || null;
+        q.elementos_visuais = q.elementos_visuais || [];
+
+        const questaoBanco = {
+          origem: 'ia_gerada_pas',
+          gerada_para: this.estado.userId,
+          disciplina, tema: q.tema || tema,
+          tipo: q.tipo, nivel: q.nivel || nivel,
+          enunciado: q.enunciado,
+          comando: q.comando || null,
+          texto_base: q.texto_base || null,
+          alternativas: q.alternativas || null,
+          gabarito: q.gabarito,
+          explicacao: q.explicacao || '',
+          status: 'pendente',
+        };
+
+        const { data: salvo } = await sb.from('questoes_banco').insert(questaoBanco).select('id').single().catch(() => ({ data: null }));
+        q.id = salvo?.id ? `banco_${salvo.id}` : `ia_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+        this.estado.questoes.push(q);
+        const num = this.estado.questoes.length;
+        itensHtml.push(this._htmlPorTipo(q, num));
+      }
+
+      // Render com texto-base agrupado se houver
+      const tb = resultado.texto_base;
+      let html = '';
+      if (tb) {
+        const titulo = tb.titulo || tb.title || '';
+        const paras  = Array.isArray(tb.paragrafos) ? tb.paragrafos : tb.texto ? [tb.texto] : [];
+        html += `
+          <div class="grupo-questoes-wrapper">
+            <div class="grupo-texto-base-header">
+              ${titulo ? `<div class="grupo-texto-base-titulo">${titulo}</div>` : ''}
+              <div class="grupo-texto-base-corpo">${paras.map(p => `<p>${this._fmtTxt ? this._fmtTxt(String(p)) : p}</p>`).join('')}</div>
+            </div>
+            <div class="grupo-itens">${itensHtml.join('')}</div>
+          </div>`;
+      } else {
+        html = itensHtml.join('');
+      }
+
+      container.innerHTML = html;
+      await VisualRenderer.renderMath(container);
+      this.renderizarNavbar();
+
+    } catch (e) {
+      console.error('Erro ao gerar PAS:', e);
+      container.innerHTML = '<div class="ia-erro">❌ Não foi possível gerar o conjunto PAS. Tente novamente.</div>';
+    }
+  },
+
+  async corrigirTipoD(qId) {
+    const q       = this.estado.questoes.find(q => q.id === qId);
+    const resposta = document.getElementById(`resp-${qId}`)?.value?.trim();
+    const btn     = document.getElementById(`btn-corrigir-${qId}`);
+    const fb      = document.getElementById(`fb-${qId}`);
+    const iaDiv   = document.getElementById(`ia-resp-${qId}`);
+    if (!q || !fb || !iaDiv) return;
+
+    if (!resposta) {
+      iaDiv.innerHTML = '<div class="ia-erro">⚠️ Escreva sua resposta antes de enviar.</div>';
+      fb.style.display = 'block';
+      return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Analisando sua resposta...'; }
+    fb.style.display = 'block';
+    iaDiv.innerHTML = '<div class="ia-loading">🤖 A IA está avaliando sua resposta...</div>';
+
+    try {
+      const resp = await sb.functions.invoke('gemini', {
+        body: {
+          funcao: 'corrigir_dissertativa',
+          dados: {
+            enunciado:       q.enunciado,
+            comando:         q.comando || '',
+            texto_base:      q.texto_base || '',
+            resposta_aluno:  resposta,
+            criterios:       q.gabarito || q.explicacao || '',
+            disciplina:      q.disciplinas?.[0] || 'bio',
+          },
+        },
+      });
+
+      if (resp.error || resp.data?.error) throw new Error(resp.data?.detalhe || 'Erro na correção');
+      const feedback = resp.data?.feedback;
+      if (!feedback) throw new Error('IA não retornou feedback');
+
+      iaDiv.innerHTML = `
+        <div class="ia-card">
+          <div class="ia-header">✏️ Correção IA</div>
+          <div class="ia-texto">${feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>
+        </div>`;
+      if (window.MathJax?.typesetPromise) MathJax.typesetPromise([iaDiv]).catch(() => {});
+
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 Reenviar resposta'; }
+    } catch (e) {
+      console.error('Erro ao corrigir Tipo D:', e);
+      iaDiv.innerHTML = '<div class="ia-erro">❌ Correção indisponível no momento. Releia o material e tente novamente.</div>';
+      if (btn) { btn.disabled = false; btn.textContent = '✏️ Tentar novamente'; }
     }
   },
 

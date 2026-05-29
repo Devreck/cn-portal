@@ -2629,6 +2629,12 @@ function _edRenderForm(q) {
     </div>
     <div class="ed-img-preview" id="ed_img_enunciado"></div>
 
+    <div class="ed-section-title">Comando <small style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">(instrução ao aluno — opcional)</small></div>
+    <div class="ed-field">
+      <label class="ed-label">Comando <small style="font-weight:400;color:var(--text-muted)">(instrução ao aluno)</small></label>
+      <textarea class="ed-ta" id="ed_comando" rows="2" placeholder='Ex: "Assinale a alternativa correta." ou "Julgue a afirmação:"'>${_esc(q.comando||'')}</textarea>
+    </div>
+
     ${altsHtml}
 
     <div class="ed-section-title">Gabarito</div>
@@ -2707,8 +2713,11 @@ async function salvarEdicaoQuestao() {
     if (!enunciado)  { alert('O enunciado não pode estar vazio.'); btn.disabled=false; btn.textContent='💾 Salvar Alterações'; return; }
     if (!gabarito)   { alert('Selecione o gabarito antes de salvar.'); btn.disabled=false; btn.textContent='💾 Salvar Alterações'; return; }
 
+    const comando = document.getElementById('ed_comando')?.value?.trim() || null;
+
     const payload = {
       disciplina, nivel, tema, enunciado, explicacao, gabarito, status,
+      comando,
       texto_base: textBase,
       ...(alternativas ? { alternativas } : {}),
       revisada_por: userAtual?.id ?? null,

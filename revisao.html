@@ -144,6 +144,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .texto-base-titulo{font-size:12px;font-weight:700;color:var(--ouro);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
 .texto-base-para{font-size:14px;line-height:1.8;color:var(--text);margin:0 0 8px}
 .texto-base-para:last-child{margin-bottom:0}
+.questao-comando{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;padding:10px 14px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--ouro);line-height:1.6}
+.tipo-b{background:#e8f0fe;color:#1a73e8}
+.tipo-d{background:#e8f5e9;color:#2e7d32}
+.tipo-d-resposta{width:100%;min-height:120px;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;resize:vertical;background:var(--surface2);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:12px;box-sizing:border-box}
+.tipo-d-resposta:focus{outline:none;border-color:var(--ouro);box-shadow:0 0 0 2px rgba(201,168,76,.15)}
+.btn-corrigir{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:10px;border:none;background:var(--ouro);color:#1a1a2e;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
+.btn-corrigir:hover{filter:brightness(1.1)}
+.btn-corrigir:disabled{opacity:.5;cursor:not-allowed}
+.tipo-d-feedback{margin-top:14px}
+.grupo-questoes-wrapper{margin-bottom:28px}
+.grupo-texto-base-header{background:var(--surface2);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:22px 28px;border-bottom:none}
+.grupo-texto-base-titulo{font-size:11px;font-weight:800;color:var(--ouro);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.grupo-texto-base-corpo{font-size:14px;line-height:1.85;color:var(--text)}
+.grupo-texto-base-corpo p{margin:0 0 10px}
+.grupo-itens .questao-card{border-radius:0;border-top:none}
+.grupo-itens .questao-card:last-child{border-radius:0 0 18px 18px}
+.gerar-estilo-tabs{display:flex;gap:10px;margin-bottom:20px}
+.gerar-estilo-btn{flex:1;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:all .15s}
+.gerar-estilo-btn small{display:block;font-weight:400;font-size:11px;margin-top:3px;opacity:.7}
+.gerar-estilo-btn.ativo{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.08);color:var(--ouro)}
+.gerar-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.gerar-field{flex:1;min-width:140px;display:flex;flex-direction:column;gap:4px}
+.gerar-field label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px}
+.gerar-field select{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px}
+.btn-gerar-ia{padding:11px 28px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--azul-mid),var(--azul-light));color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-gerar-ia:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.pas-tipos-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pas-item-cfg{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text-muted)}
+.pas-item-cfg select{border:none;background:transparent;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;cursor:pointer}
 
 /* ── ALTERNATIVAS TIPO C ── */
 .alternativas{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
@@ -361,8 +390,72 @@ html[data-theme="dark"] .icon-moon{display:none}
 
     <!-- Gerar item com IA -->
     <div class="gerar-extra" id="gerarExtra">
-      <p>Crie um item inédito e personalizado no padrão da AV4 — escolha tema, cenário, tipo e dificuldade.</p>
-      <a href="gerador.html" class="btn-gerar-top" style="position:static;display:inline-flex;align-items:center;gap:8px;box-shadow:none">✨ Gerar item</a>
+      <div class="gerar-estilo-tabs">
+        <button class="gerar-estilo-btn ativo" id="btnEstiloENEM" onclick="setEstiloGerar('enem')">
+          📝 Estilo ENEM
+          <small>Um item independente</small>
+        </button>
+        <button class="gerar-estilo-btn" id="btnEstiloPAS" onclick="setEstiloGerar('pas')">
+          📋 Estilo PAS
+          <small>Texto-base + múltiplos itens</small>
+        </button>
+      </div>
+
+      <!-- ENEM options -->
+      <div id="opcoesENEM">
+        <div class="gerar-row">
+          <div class="gerar-field">
+            <label>Tema</label>
+            <select id="iaTemaAluno"></select>
+          </div>
+          <div class="gerar-field">
+            <label>Tipo de item</label>
+            <select id="iaTipoAluno">
+              <option value="C">Múltipla Escolha (Tipo C)</option>
+              <option value="A">Certo / Errado (Tipo A)</option>
+              <option value="B">Cálculo · Múltipla Escolha (Tipo B)</option>
+            </select>
+          </div>
+          <div class="gerar-field">
+            <label>Dificuldade</label>
+            <select id="iaNivelAluno">
+              <option value="basico">🟢 Básico</option>
+              <option value="intermediario" selected>🟡 Intermediário</option>
+              <option value="avancado">🔴 Avançado</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-gerar-ia" onclick="gerarExtra()">✨ Gerar item</button>
+      </div>
+
+      <!-- PAS options -->
+      <div id="opcoesPAS" style="display:none">
+        <div class="gerar-row">
+          <div class="gerar-field">
+            <label>Tema</label>
+            <select id="iaTemaPAS"></select>
+          </div>
+          <div class="gerar-field">
+            <label>Número de itens</label>
+            <select id="iaNItens" onchange="atualizarPasTipos()">
+              <option value="2">2 itens</option>
+              <option value="3" selected>3 itens</option>
+              <option value="4">4 itens</option>
+              <option value="5">5 itens</option>
+            </select>
+          </div>
+          <div class="gerar-field">
+            <label>Dificuldade</label>
+            <select id="iaNivelPAS">
+              <option value="basico">🟢 Básico</option>
+              <option value="intermediario" selected>🟡 Intermediário</option>
+              <option value="avancado">🔴 Avançado</option>
+            </select>
+          </div>
+        </div>
+        <div id="pasTiposConfig" class="pas-tipos-row"></div>
+        <button class="btn-gerar-ia" onclick="gerarPAS()">✨ Gerar conjunto PAS</button>
+      </div>
     </div>
     <div id="questoesExtras"></div>
   </div>
@@ -493,24 +586,57 @@ async function atualizarHeaderPts() {
 
 // ── GERAR QUESTÃO EXTRA ──
 function atualizarTemasIAAluno(disc) {
-  const select = document.getElementById('iaTemaAluno');
-  if (!select) return;
-
-  const temaAnterior = select.value;
   const temas = TEMAS_IA[disc] || [];
-  select.innerHTML = temas.map(tema => `<option value="${tema}">${tema}</option>`).join('');
+  const opts  = temas.map(t => `<option value="${t}">${t}</option>`).join('');
+  ['iaTemaAluno', 'iaTemaPAS'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = opts;
+    if (temas.includes(prev)) sel.value = prev;
+  });
+  atualizarPasTipos();
+}
 
-  if (temas.includes(temaAnterior)) {
-    select.value = temaAnterior;
-  }
+let _estiloGerar = 'enem';
+
+function setEstiloGerar(estilo) {
+  _estiloGerar = estilo;
+  document.getElementById('btnEstiloENEM').classList.toggle('ativo', estilo === 'enem');
+  document.getElementById('btnEstiloPAS').classList.toggle('ativo', estilo === 'pas');
+  document.getElementById('opcoesENEM').style.display  = estilo === 'enem' ? '' : 'none';
+  document.getElementById('opcoesPAS').style.display   = estilo === 'pas'  ? '' : 'none';
+  if (estilo === 'pas') atualizarPasTipos();
+}
+
+function atualizarPasTipos() {
+  const n = parseInt(document.getElementById('iaNItens')?.value || '3');
+  const cfg = document.getElementById('pasTiposConfig');
+  if (!cfg) return;
+  const tiposOpts = ['A','B','C','D'];
+  const defaults  = ['A','C','D'];
+  cfg.innerHTML = Array.from({length: n}, (_, i) => `
+    <div class="pas-item-cfg">
+      <span>Item ${i+1}:</span>
+      <select id="pasTipo_${i}">
+        ${tiposOpts.map(t => `<option value="${t}"${(defaults[i]||'C')===t?' selected':''}>${t === 'A' ? 'A · Certo/Errado' : t === 'B' ? 'B · Cálculo' : t === 'C' ? 'C · Múltipla Escolha' : 'D · Dissertativa'}</option>`).join('')}
+      </select>
+    </div>`).join('');
 }
 
 function gerarExtra() {
-  const tema = document.getElementById('iaTemaAluno')?.value || TEMAS_IA[discAtual]?.[0];
-  const tipo = document.getElementById('iaTipoAluno')?.value || 'C';
+  const tema  = document.getElementById('iaTemaAluno')?.value  || TEMAS_IA[discAtual]?.[0];
+  const tipo  = document.getElementById('iaTipoAluno')?.value  || 'C';
   const nivel = document.getElementById('iaNivelAluno')?.value || 'intermediario';
-
   QuestaoRenderer.gerarQuestaoExtra(discAtual, tema, tipo, nivel);
+}
+
+function gerarPAS() {
+  const tema  = document.getElementById('iaTemaPAS')?.value    || TEMAS_IA[discAtual]?.[0];
+  const nivel = document.getElementById('iaNivelPAS')?.value   || 'intermediario';
+  const n     = parseInt(document.getElementById('iaNItens')?.value || '3');
+  const tipos = Array.from({length: n}, (_, i) => document.getElementById(`pasTipo_${i}`)?.value || 'C');
+  QuestaoRenderer.gerarQuestoesPAS(discAtual, tema, tipos, nivel);
 }
 </script>
 </body>
