@@ -284,6 +284,12 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .step-latex-modal{font-size:14px;text-align:center;margin:8px 0;overflow-x:auto}
 .step-destaque-modal{font-size:15px;text-align:center;margin:10px 0;padding:10px;background:rgba(201,168,76,0.06);border-radius:8px;border:1px solid rgba(201,168,76,0.15);overflow-x:auto}
 
+/* Texto-base de questões */
+.questao-texto-base{background:var(--surface2);border-left:3px solid var(--ouro);border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:16px}
+.texto-base-titulo{font-size:11px;font-weight:700;color:var(--ouro);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.texto-base-para{font-size:14px;line-height:1.8;color:var(--text);margin:0 0 8px}
+.texto-base-para:last-child{margin-bottom:0}
+
 /* MathJax no modal */
 mjx-container { 
   color: var(--text) !important; 
@@ -977,6 +983,22 @@ function elementoVisualValidoPainel(el) {
   return true;
 }
 
+function htmlTextoBasePainel(q) {
+  const tb = q.texto_base;
+  if (!tb) return '';
+  const titulo = tb.titulo || tb.title || '';
+  const paras  = Array.isArray(tb.paragrafos) ? tb.paragrafos
+               : tb.texto   ? [tb.texto]
+               : tb.text    ? [tb.text]
+               : typeof tb === 'string' ? [tb] : [];
+  if (!titulo && paras.length === 0) return '';
+  return `
+    <div class="questao-texto-base" style="margin-bottom:16px">
+      ${titulo ? `<div class="texto-base-titulo">${htmlSeguro(titulo)}</div>` : ''}
+      ${paras.map(p => `<p class="texto-base-para">${htmlSeguro(String(p))}</p>`).join('')}
+    </div>`;
+}
+
 function htmlElementosVisuaisPainel(q) {
   if (typeof VisualRenderer === 'undefined') return '';
   garantirCSSVisualRendererPainel();
@@ -1024,9 +1046,7 @@ function htmlPreviewQuestaoPainel(q, opcoes = {}) {
     `;
   }
 
-  const textoBase = q.texto_base?.texto
-    ? `<div class="qp-explicacao"><strong>Texto-base:</strong> ${htmlSeguro(q.texto_base.texto)}</div>`
-    : '';
+  const textoBase = htmlTextoBasePainel(q);
 
   const teacherBox = mostrarGabarito ? `
     <div class="qp-preview-teacher">
@@ -1912,7 +1932,7 @@ function abrirQuestaoModal(qId) {
   const visualEl = document.getElementById('modalVisuals');
   if (visualEl) {
     visualEl.innerHTML = `
-      ${q.texto_base?.texto ? `<div class="qp-explicacao"><strong>Texto-base:</strong> ${htmlSeguro(q.texto_base.texto)}</div>` : ''}
+      ${htmlTextoBasePainel(q)}
       ${htmlElementosVisuaisPainel(q)}
     `;
   }
